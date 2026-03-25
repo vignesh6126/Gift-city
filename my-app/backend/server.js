@@ -1,132 +1,94 @@
 const express = require("express");
-const mysql = require("mysql2");
-const cors = require("cors");
-const bcrypt = require("bcrypt");
+const mysql   = require("mysql2");
+const cors    = require("cors");
+const bcrypt  = require("bcrypt");
+const db      = require("./db");
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-// ✅ MySQL connection
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "gift-city",
-});
-
-db.connect((err) => {
-  if (err) {
-    console.log("❌ DB Error:", err);
-  } else {
+// ── MySQL connection (used for auth + stats) ───────────────────────────────────
+db.getConnection((err, connection) => {
+  if (err) console.log("❌ DB Error:", err);
+  else {
     console.log("✅ MySQL Connected");
+    connection.release();
   }
 });
 
-// 📊 Stats for dashboard cards
-app.get("/api/stats/invested", (req, res) => {
-  const queries = {
-    total: "SELECT COUNT(*) AS count FROM invested_completed",
-    thisMonth: `SELECT COUNT(*) AS count FROM invested_completed 
-                WHERE MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())`,
-    totalValue: "SELECT SUM(amount) AS total FROM invested_completed",
-  };
+// ── Mount invested routes ──────────────────────────────────────────────────────
+const investedRoutes = require("./routes/investedRoutes");
+app.use("/api/invested", investedRoutes);   // ✅ this was missing entirely
 
-  Promise.all([
-    new Promise((resolve, reject) =>
-      db.query(queries.total, (err, r) => err ? reject(err) : resolve(r[0].count))),
-    new Promise((resolve, reject) =>
-      db.query(queries.thisMonth, (err, r) => err ? reject(err) : resolve(r[0].count))),
-    new Promise((resolve, reject) =>
-      db.query(queries.totalValue, (err, r) => err ? reject(err) : resolve(r[0].total || 0))),
-  ])
-    .then(([total, thisMonth, totalValue]) => {
-      res.json({ total, thisMonth, totalValue });
-    })
-    .catch((err) => res.json({ status: "error", message: err }));
+// ── Stats ──────────────────────────────────────────────────────────────────────
+app.get("/api/stats/invested", async (req, res) => {
+  try {
+    const [totalResult] = await db.query("SELECT COUNT(*) AS count FROM customers_completed");
+    const total = totalResult[0].count;
+
+    const [thisMonthResult] = await db.query(
+      "SELECT COUNT(*) AS count FROM customers_completed WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())"
+    );
+    const thisMonth = thisMonthResult[0].count;
+
+    const [totalValueResult] = await db.query("SELECT SUM(amount) AS total FROM customers_completed");
+    const totalValue = totalValueResult[0].total || 0;
+
+    res.json({ total, thisMonth, totalValue });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.get("/api/stats/empanelment", (req, res) => {
-  // Replace with your actual empanelment table name
-  db.query("SELECT COUNT(*) AS count FROM empanelment", (err, r) => {
-    if (err) return res.json({ status: "error", message: err });
-    res.json({ total: r[0].count });
-  });
+app.get("/api/stats/empanelment", async (req, res) => {
+  try {
+    const [result] = await db.query("SELECT COUNT(*) AS count FROM empanelment");
+    res.json({ total: result[0].count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.get("/api/stats/interested", (req, res) => {
-  // Replace with your actual interested/leads table name
-  db.query("SELECT COUNT(*) AS count FROM interested", (err, r) => {
-    if (err) return res.json({ status: "error", message: err });
-    res.json({ total: r[0].count });
-  });
+app.get("/api/stats/interested", async (req, res) => {
+  try {
+    const [result] = await db.query("SELECT COUNT(*) AS count FROM interested");
+    res.json({ total: result[0].count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-
-// 🔐 REGISTER API (creates user with hashed password)
+// ── Register ───────────────────────────────────────────────────────────────────
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
-
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-
-    db.query(sql, [name, email, hashedPassword], (err, result) => {
-      if (err) {
-        return res.json({ status: "error", message: err });
-      }
-
-      res.json({ status: "success", message: "User registered" });
-    });
+    await db.query(
+      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+      [name, email, hashedPassword]
+    );
+    res.json({ status: "success", message: "User registered" });
   } catch (error) {
-    res.json({ status: "error", message: error });
+    res.json({ status: "error", message: error.message });
   }
 });
 
-
-// 🔐 LOGIN API (compare hashed password)
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-
-  const sql = "SELECT * FROM users WHERE email = ?";
-
-  db.query(sql, [email], async (err, result) => {
-    if (err) return res.json({ status: "error", message: err });
-
-    if (result.length > 0) {
-      const user = result[0];
-
-      // ✅ Compare hashed password
-      const isMatch = await bcrypt.compare(password, user.password);
-
-      if (isMatch) {
-        res.json({
-          status: "success",
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-          },
-        });
-      } else {
-        res.json({
-          status: "error",
-          message: "Wrong password",
-        });
-      }
+// ── Login ──────────────────────────────────────────────────────────────────────
+app.post("/login", async (req, res) => {
+  try {
+    const [result] = await db.query("SELECT * FROM users WHERE email = ?", [req.body.email]);
+    if (result.length === 0) return res.json({ status: "error", message: "User not found" });
+    const isMatch = await bcrypt.compare(req.body.password, result[0].password);
+    if (isMatch) {
+      res.json({ status: "success", user: { id: result[0].id, name: result[0].name, email: result[0].email } });
     } else {
-      res.json({
-        status: "error",
-        message: "User not found",
-      });
+      res.json({ status: "error", message: "Wrong password" });
     }
-  });
+  } catch (err) {
+    res.json({ status: "error", message: err.message });
+  }
 });
 
-
-// 🚀 Start server
-app.listen(5000, () => {
-  console.log("🚀 Server running on http://localhost:5000");
-});
+// ── Start ──────────────────────────────────────────────────────────────────────
+app.listen(5000, () => console.log("🚀 Server running on http://localhost:5000"));

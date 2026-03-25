@@ -1,13 +1,11 @@
-// routes/investedRoutes.js
 const express = require("express");
-const router = express.Router();
-const db = require("../db"); // your existing mysql2 connection pool
+const router  = express.Router();
+const db      = require("../db");
 
 // ─────────────────────────────────────────────
 // CUSTOMERS COMPLETED
 // ─────────────────────────────────────────────
 
-// GET all
 router.get("/completed", async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM customers_completed ORDER BY id DESC");
@@ -17,7 +15,6 @@ router.get("/completed", async (req, res) => {
   }
 });
 
-// POST add new
 router.post("/completed", async (req, res) => {
   const { client_name, first_investment, amount, scheme, bank } = req.body;
   try {
@@ -32,7 +29,6 @@ router.post("/completed", async (req, res) => {
   }
 });
 
-// PUT update
 router.put("/completed/:id", async (req, res) => {
   const { client_name, first_investment, amount, scheme, bank } = req.body;
   try {
@@ -47,7 +43,6 @@ router.put("/completed/:id", async (req, res) => {
   }
 });
 
-// DELETE
 router.delete("/completed/:id", async (req, res) => {
   try {
     await db.query("DELETE FROM customers_completed WHERE id = ?", [req.params.id]);
@@ -61,7 +56,6 @@ router.delete("/completed/:id", async (req, res) => {
 // CUSTOMERS PENDING
 // ─────────────────────────────────────────────
 
-// GET all
 router.get("/pending", async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM customers_pending ORDER BY id DESC");
@@ -71,7 +65,6 @@ router.get("/pending", async (req, res) => {
   }
 });
 
-// POST add new
 router.post("/pending", async (req, res) => {
   const { client_name, amount_tobe_invested, scheme, bank, submission_date, status } = req.body;
   try {
@@ -86,7 +79,6 @@ router.post("/pending", async (req, res) => {
   }
 });
 
-// PUT update
 router.put("/pending/:id", async (req, res) => {
   const { client_name, amount_tobe_invested, scheme, bank, submission_date, status } = req.body;
   try {
@@ -101,7 +93,6 @@ router.put("/pending/:id", async (req, res) => {
   }
 });
 
-// DELETE
 router.delete("/pending/:id", async (req, res) => {
   try {
     await db.query("DELETE FROM customers_pending WHERE id = ?", [req.params.id]);
