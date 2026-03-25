@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // ✅ Add Link import
+import { useNavigate } from "react-router-dom";
 import logo from "../assets/fd_logo.png";
 
 import {
@@ -16,18 +16,23 @@ import {
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const Login = () => {
-  const navigate = useNavigate(); // ✅ Move useNavigate inside component
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(""); // Add error state
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email || !password) {
-      alert("Please fill all fields");
+      setError("Please fill all fields");
       return;
     }
+
+    setLoading(true);
+    setError(""); // Clear previous errors
 
     try {
       const response = await fetch("http://localhost:5000/login", {
@@ -41,23 +46,31 @@ const Login = () => {
       const data = await response.json();
 
       if (data.status === "success") {
-        alert("Login Successful 🚀");
-        console.log(data.user);
+        // ✅ Store user data
+        localStorage.setItem("user", JSON.stringify(data.user));
+        
+        // ✅ Directly navigate to dashboard WITHOUT alert
+        navigate("/dashboard");
       } else {
-        alert(data.message);
+        // Show error message for failed login
+        setError(data.message);
       }
     } catch (error) {
       console.error(error);
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Box
       sx={{
-        height: "100vh",
+        height: "98vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        overflow: "hidden",
         background: "linear-gradient(to right, #2c3e50, #4ca1af)",
       }}
     >
@@ -103,6 +116,18 @@ const Login = () => {
             Wealth Management
           </Typography>
 
+          {/* Error Message */}
+          {error && (
+            <Typography
+              color="error"
+              variant="body2"
+              align="center"
+              sx={{ mb: 2, mt: 1 }}
+            >
+              {error}
+            </Typography>
+          )}
+
           {/* FORM */}
           <form onSubmit={handleSubmit}>
             <TextField
@@ -112,6 +137,8 @@ const Login = () => {
               margin="normal"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              error={!!error}
             />
 
             <TextField
@@ -121,12 +148,15 @@ const Login = () => {
               margin="normal"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              error={!!error}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
+                      disabled={loading}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -139,6 +169,7 @@ const Login = () => {
               type="submit"
               variant="contained"
               fullWidth
+              disabled={loading}
               sx={{
                 mt: 2,
                 py: 1.3,
@@ -150,29 +181,9 @@ const Login = () => {
                 },
               }}
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
-
-          {/* ✅ Register Link - Moved outside the form but inside CardContent */}
-          <Box sx={{ mt: 2, textAlign: "center" }}>
-            <Typography variant="body2" color="text.secondary">
-              Don't have an account?{" "}
-              <Link
-                to="/register"  // ✅ Use 'to' instead of onClick with navigate
-                style={{
-                  textDecoration: "none",
-                  fontWeight: "bold",
-                  color: "#2c3e50",
-                }}
-                onMouseEnter={(e) => e.target.style.textDecoration = "underline"}
-                onMouseLeave={(e) => e.target.style.textDecoration = "none"}
-              >
-                Register here
-              </Link>
-            </Typography>
-          </Box>
-
         </CardContent>
       </Card>
     </Box>
