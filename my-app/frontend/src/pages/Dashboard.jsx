@@ -148,13 +148,13 @@ const Dashboard = () => {
                 return (
                   <Box key={opt.id} onClick={() => setSelected(opt.id)}
                     sx={{ cursor: "pointer",
-                      px: { xs: 2, sm: 3 }, py: { xs: 0.7, sm: 0.9 },
+                      px: { xs: 2.5, sm: 4 }, py: { xs: 0.9, sm: 1.2 },
                       borderRadius: "50px",
                       border: `2px solid ${isActive ? opt.color : "#D0D5DD"}`,
                       bgcolor: isActive ? opt.color : "#fff",
                       color: isActive ? "#fff" : opt.color,
                       fontWeight: 700,
-                      fontSize: { xs: "0.72rem", sm: "0.8rem" },
+                      fontSize: { xs: "0.78rem", sm: "0.88rem" },
                       letterSpacing: "0.06em",
                       transition: "all 0.3s cubic-bezier(0.34,1.4,0.64,1)",
                       boxShadow: isActive ? `0 3px 10px ${opt.color}44` : "0 1px 3px rgba(0,0,0,0.07)",
