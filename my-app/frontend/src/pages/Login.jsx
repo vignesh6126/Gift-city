@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom"; // ✅ Add Link import
 import logo from "../assets/fd_logo.png";
 
 import {
@@ -15,39 +16,40 @@ import {
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const Login = () => {
+  const navigate = useNavigate(); // ✅ Move useNavigate inside component
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!email || !password) {
-    alert("Please fill all fields");
-    return;
-  }
-
-  try {
-    const response = await fetch("http://localhost:5000/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (data.status === "success") {
-      alert("Login Successful 🚀");
-      console.log(data.user);
-    } else {
-      alert(data.message);
+    if (!email || !password) {
+      alert("Please fill all fields");
+      return;
     }
-  } catch (error) {
-    console.error(error);
-  }
-};
+
+    try {
+      const response = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "success") {
+        alert("Login Successful 🚀");
+        console.log(data.user);
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <Box
@@ -56,7 +58,7 @@ const handleSubmit = async (e) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "linear-gradient(to right, #2c3e50, #4ca1af)", // finance theme
+        background: "linear-gradient(to right, #2c3e50, #4ca1af)",
       }}
     >
       <Card
@@ -68,8 +70,7 @@ const handleSubmit = async (e) => {
         }}
       >
         <CardContent>
-
-          {/* 🔹 LOGO */}
+          {/* LOGO */}
           <Box display="flex" justifyContent="center" mb={2}>
             <Box
               component="img"
@@ -80,14 +81,11 @@ const handleSubmit = async (e) => {
                 height: "auto",
                 p: 1,
                 backgroundColor: "#fff",
-
-
-
               }}
             />
           </Box>
 
-          {/* 🔹 TITLE */}
+          {/* TITLE */}
           <Typography
             variant="h6"
             align="center"
@@ -105,7 +103,7 @@ const handleSubmit = async (e) => {
             Wealth Management
           </Typography>
 
-          {/* 🔹 FORM */}
+          {/* FORM */}
           <form onSubmit={handleSubmit}>
             <TextField
               label="Email"
@@ -130,11 +128,7 @@ const handleSubmit = async (e) => {
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                     >
-                      {showPassword ? (
-                        <VisibilityOff />
-                      ) : (
-                        <Visibility />
-                      )}
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -159,6 +153,25 @@ const handleSubmit = async (e) => {
               Login
             </Button>
           </form>
+
+          {/* ✅ Register Link - Moved outside the form but inside CardContent */}
+          <Box sx={{ mt: 2, textAlign: "center" }}>
+            <Typography variant="body2" color="text.secondary">
+              Don't have an account?{" "}
+              <Link
+                to="/register"  // ✅ Use 'to' instead of onClick with navigate
+                style={{
+                  textDecoration: "none",
+                  fontWeight: "bold",
+                  color: "#2c3e50",
+                }}
+                onMouseEnter={(e) => e.target.style.textDecoration = "underline"}
+                onMouseLeave={(e) => e.target.style.textDecoration = "none"}
+              >
+                Register here
+              </Link>
+            </Typography>
+          </Box>
 
         </CardContent>
       </Card>
