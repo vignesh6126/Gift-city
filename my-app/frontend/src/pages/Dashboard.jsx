@@ -90,21 +90,22 @@ const Dashboard = () => {
 
       {/* ── Main ── */}
       <Container maxWidth="lg" sx={{ flex: 1, display: "flex", flexDirection: "column",
-          alignItems: "center", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 4, sm: 6 } }}>
+          alignItems: "center", px: { xs: 2, sm: 3, md: 4 },
+          pt: selected ? { xs: 2, sm: 3 } : { xs: 4, sm: 6 },
+          pb: { xs: 4, sm: 6 } }}>
 
-        {/* Welcome */}
-        <Box sx={{ textAlign: "center", mb: selected ? 4 : 6,
-            transition: "margin 0.4s ease",
-            animation: "fadeUp 0.5s ease both" }}>
-          <Typography variant="h4"
-            sx={{ color: "#2C3E50", fontWeight: 700, mb: 0.5,
-              fontSize: { xs: "1.75rem", sm: "2rem" } }}>
-            Welcome back, {user.name || "User"}! 👋
-          </Typography>
-          <Typography variant="body1" sx={{ color: "#6C757D" }}>
-            {selected ? "Switch sections below or go back" : "Select an option to view details"}
-          </Typography>
-        </Box>
+        {/* Welcome — hidden once a section is selected */}
+        {!selected && (
+          <Box sx={{ textAlign: "center", mb: 6, animation: "fadeUp 0.5s ease both" }}>
+            <Typography variant="h4"
+              sx={{ color: "#2C3E50", fontWeight: 700, mb: 0.5, fontSize: { xs: "1.75rem", sm: "2rem" } }}>
+              Welcome back, {user.name || "User"}! 👋
+            </Typography>
+            <Typography variant="body1" sx={{ color: "#6C757D" }}>
+              Select an option to view details
+            </Typography>
+          </Box>
+        )}
 
         {/* ── CARD VIEW (no selection) ── */}
         {!selected && (
@@ -139,28 +140,28 @@ const Dashboard = () => {
         {selected && (
           <Box sx={{ width: "100%", animation: "fadeUp 0.4s ease both" }}>
 
-            {/* Top Tab Row */}
-            <Box sx={{ display: "flex", justifyContent: "center", gap: { xs: 1.5, sm: 3 },
-                flexWrap: "wrap", mb: 4 }}>
+            {/* Top Tab Row — compact, close to top */}
+            <Box sx={{ display: "flex", justifyContent: "center", gap: { xs: 1, sm: 2 },
+                flexWrap: "wrap", mb: 3 }}>
               {options.map((opt) => {
                 const isActive = selected === opt.id;
                 return (
                   <Box key={opt.id} onClick={() => setSelected(opt.id)}
                     sx={{ cursor: "pointer",
-                      px: { xs: 3, sm: 5 }, py: { xs: 1.2, sm: 1.6 },
+                      px: { xs: 2, sm: 3 }, py: { xs: 0.7, sm: 0.9 },
                       borderRadius: "50px",
                       border: `2px solid ${isActive ? opt.color : "#D0D5DD"}`,
                       bgcolor: isActive ? opt.color : "#fff",
                       color: isActive ? "#fff" : opt.color,
                       fontWeight: 700,
-                      fontSize: { xs: "0.82rem", sm: "0.95rem" },
+                      fontSize: { xs: "0.72rem", sm: "0.8rem" },
                       letterSpacing: "0.06em",
                       transition: "all 0.3s cubic-bezier(0.34,1.4,0.64,1)",
-                      boxShadow: isActive ? `0 4px 16px ${opt.color}44` : "0 1px 4px rgba(0,0,0,0.07)",
+                      boxShadow: isActive ? `0 3px 10px ${opt.color}44` : "0 1px 3px rgba(0,0,0,0.07)",
                       userSelect: "none",
                       "&:hover": {
                         transform: "translateY(-2px)",
-                        boxShadow: `0 6px 20px ${opt.color}33`,
+                        boxShadow: `0 5px 14px ${opt.color}33`,
                         borderColor: opt.color,
                         bgcolor: isActive ? opt.color : opt.bgColor,
                       },
