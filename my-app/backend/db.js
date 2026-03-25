@@ -1,10 +1,15 @@
 const mysql = require("mysql2");
+require("dotenv").config();
 
 const db = mysql.createPool({
-  host:     "localhost",
-  user:     "root",
-  password: "",
-  database: "gift-city",
-}).promise();  // .promise() lets us use async/await in routes
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT, // 🔥 important for Railway
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+}).promise();
 
 module.exports = db;

@@ -9,7 +9,7 @@ import Invested from "./Invested";
 import Interested from "./Interested";
 import Empanelment from "./Empanelment";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API = import.meta.env.VITE_API_URL;
 
 const OPTIONS_CONFIG = [
   {
@@ -71,7 +71,7 @@ const Dashboard = () => {
   useEffect(() => {
     ["invested", "empanelment", "interested"].forEach(async (id) => {
       try {
-        const res = await fetch(`${API}/stats/${id}`);
+        const res = await fetch(`${API}/api/stats/${id}`);
         const data = await res.json();
         setStats((prev) => ({ ...prev, [id]: data }));
       } catch {

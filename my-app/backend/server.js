@@ -2,6 +2,8 @@ const express = require("express");
 const cors    = require("cors");
 const bcrypt  = require("bcrypt");
 const db      = require("./db");
+const PORT = process.env.PORT || 5000;
+require("dotenv").config();
 
 const app = express();
 app.use(cors());
@@ -15,9 +17,9 @@ const empanelmentRoutes = require("./routes/empanelmentRoutes");
 
 console.log("Routes loaded");
 
-app.use("/api/empanelment", empanelmentRoutes);
-app.use("/api/invested",   investedRoutes);
-app.use("/api/interested", interestedRoutes);
+app.use("/empanelment", empanelmentRoutes);
+app.use("/invested",   investedRoutes);
+app.use("/interested", interestedRoutes);
 
 // Test route
 app.get("/test", (req, res) => res.send("Test route works"));
@@ -25,7 +27,7 @@ app.get("/test", (req, res) => res.send("Test route works"));
 console.log("Routes mounted");
 
 // ── Stats: invested ────────────────────────────────────────────────────────────
-app.get("/api/stats/invested", async (req, res) => {
+app.get("/stats/invested", async (req, res) => {
   try {
     const [totalResult]      = await db.query("SELECT COUNT(*) AS count FROM customers_completed");
     const [thisMonthResult]  = await db.query(
@@ -44,7 +46,7 @@ app.get("/api/stats/invested", async (req, res) => {
 });
 
 // ── Stats: empanelment ─────────────────────────────────────────────────────────
-app.get("/api/stats/empanelment", async (req, res) => {
+app.get("/stats/empanelment", async (req, res) => {
   try {
     const [result] = await db.query("SELECT COUNT(*) AS count FROM empanelment");
     res.json({ total: result[0].count });
@@ -54,7 +56,7 @@ app.get("/api/stats/empanelment", async (req, res) => {
 });
 
 // ── Stats: interested ──────────────────────────────────────────────────────────
-app.get("/api/stats/interested", async (req, res) => {
+app.get("/stats/interested", async (req, res) => {
   try {
     const [result] = await db.query("SELECT COUNT(*) AS count FROM customers_interested");
     res.json({ total: result[0].count });
@@ -100,6 +102,6 @@ app.post("/login", async (req, res) => {
 });
 
 // ── Start ──────────────────────────────────────────────────────────────────────
-app.listen(5000, () => {
-  console.log("🚀 Server running on http://localhost:5000");
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
