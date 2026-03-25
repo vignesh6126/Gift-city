@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Invested from "./pages/Invested"; // ✅ Add this
 import Interested from "./pages/Interested";
+import Empanelment from "./pages/Empanelment";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/invested" element={<Invested />} /> 
         <Route path="/interested" element={<Interested />} />
+        <Route path="/empanelment" element={<Empanelment />} />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </Router>

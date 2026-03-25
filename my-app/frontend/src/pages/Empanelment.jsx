@@ -7,7 +7,7 @@ import {
   MenuItem, Select, FormControl, InputLabel, Chip, CircularProgress,
   Snackbar, Alert, Tooltip,
 } from "@mui/material";
-import { createTheme, ThemeProvider, alpha } from "@mui/material/styles";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -15,11 +15,11 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const theme = createTheme({
   palette: {
     mode: "light",
-    background: { default: "#F0F7FF", paper: "#FFFFFF" },
+    background: { default: "#F3F0FF", paper: "#FFFFFF" },
     text: { primary: "#1A2B3C", secondary: "#5A7A99" },
   },
   typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
-  shape: { borderRadius: 4 }, // reduced globally
+  shape: { borderRadius: 4 },
   components: {
     MuiTableCell: {
       styleOverrides: {
@@ -29,34 +29,31 @@ const theme = createTheme({
   },
 });
 
-const BLUE = {
-  main:   "#64B5F6",
-  light:  "#F0F8FF",
-  mid:    "#DDEEFF",
-  border: "#B3D9FF",
-  text:   "#2979A0",
+const PURPLE = {
+  main:   "#6C63FF",
+  light:  "#F0EFFE",
+  mid:    "#E0DCFF",
+  border: "#C4BFFF",
+  text:   "#3D35A0",
 };
 
 const TABS = [
-  { id: "completed", label: "Customers Completed" },
-  { id: "pending",   label: "Customers Pending"   },
+  { id: "completed", label: "Empanelment Completed" },
+  { id: "pending",   label: "Empanelment Pending"   },
 ];
 
 const COMPLETED_COLS = [
-  { key: "client_name",      label: "Client Name",      type: "text"   },
-  { key: "first_investment", label: "First Investment",  type: "date"   },
-  { key: "amount",           label: "Amount",            type: "number" },
-  { key: "scheme",           label: "Scheme",            type: "text"   },
-  { key: "bank",             label: "Bank",              type: "select", options: ["gift", "savings", "both"] },
+  { key: "AMC_name",         label: "AMC Name",          type: "text" },
+  { key: "products",         label: "Products",           type: "number" },
+  { key: "Empanelment_date", label: "Empanelment Date",   type: "date" },
+  { key: "boardings",        label: "Boardings",          type: "number" },
 ];
 
 const PENDING_COLS = [
-  { key: "client_name",          label: "Client Name",          type: "text"   },
-  { key: "amount_tobe_invested", label: "Amount to be Invested", type: "number" },
-  { key: "scheme",               label: "Scheme",               type: "text"   },
-  { key: "bank",                 label: "Bank",                  type: "select", options: ["gift", "savings", "both"] },
-  { key: "submission_date",      label: "Submission Date",       type: "date"   },
-  { key: "status",               label: "Status",                type: "text"   },
+  { key: "AMC_name",        label: "AMC Name",        type: "text" },
+  { key: "products",        label: "Products",         type: "number" },
+  { key: "submission_date", label: "Submission Date",  type: "date" },
+  { key: "status",          label: "Status",           type: "text" },
 ];
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -90,8 +87,8 @@ const BackIcon = () => (
   </svg>
 );
 
-const emptyCompleted = () => ({ client_name: "", first_investment: "", amount: "", scheme: "", bank: "savings" });
-const emptyPending   = () => ({ client_name: "", amount_tobe_invested: "", scheme: "", bank: "savings", submission_date: "", status: "" });
+const emptyCompleted = () => ({ AMC_name: "", products: "", Empanelment_date: "", boardings: "" });
+const emptyPending   = () => ({ AMC_name: "", products: "", submission_date: "", status: "" });
 
 function FieldInput({ col, value, onChange }) {
   if (col.type === "select") {
@@ -117,7 +114,7 @@ function FieldInput({ col, value, onChange }) {
   );
 }
 
-export default function Invested({ inline = false }) {
+export default function Empanelment({ inline = false }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab]     = useState("completed");
   const [rows, setRows]               = useState([]);
@@ -134,7 +131,7 @@ export default function Invested({ inline = false }) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/invested/${activeTab}`);
+      const res  = await fetch(`${API}/empanelment/${activeTab}`);
       const data = await res.json();
       setRows(Array.isArray(data) ? data : []);
     } catch {
@@ -146,19 +143,20 @@ export default function Invested({ inline = false }) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const showSnack = (msg, severity = "success") => setSnack({ open: true, msg, severity });
-
-  const openAdd  = () => {
+  const showSnack   = (msg, severity = "success") => setSnack({ open: true, msg, severity });
+  const openAdd     = () => {
     setEditRow(null);
     setFormData(activeTab === "completed" ? emptyCompleted() : emptyPending());
     setDialogOpen(true);
   };
-  const openEdit = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
+  const openEdit    = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
   const closeDialog = () => setDialogOpen(false);
   const handleField = (key, val) => setFormData((prev) => ({ ...prev, [key]: val }));
 
   const handleSave = async () => {
-    const url    = editRow ? `${API}/invested/${activeTab}/${editRow.id}` : `${API}/invested/${activeTab}`;
+    const url    = editRow
+      ? `${API}/empanelment/${activeTab}/${editRow.id}`
+      : `${API}/empanelment/${activeTab}`;
     const method = editRow ? "PUT" : "POST";
     try {
       const res = await fetch(url, {
@@ -175,10 +173,10 @@ export default function Invested({ inline = false }) {
     }
   };
 
-  const askDelete   = (id) => { setDeleteId(id); setConfirmOpen(true); };
+  const askDelete    = (id) => { setDeleteId(id); setConfirmOpen(true); };
   const handleDelete = async () => {
     try {
-      const res = await fetch(`${API}/invested/${activeTab}/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`${API}/empanelment/${activeTab}/${deleteId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       showSnack("Record deleted");
       setConfirmOpen(false);
@@ -193,10 +191,10 @@ export default function Invested({ inline = false }) {
       {/* ── AppBar — standalone only ── */}
       {!inline && (
         <AppBar position="static" elevation={0}
-          sx={{ bgcolor: "#fff", borderBottom: `1px solid ${BLUE.border}` }}>
+          sx={{ bgcolor: "#fff", borderBottom: `1px solid ${PURPLE.border}` }}>
           <Toolbar>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexGrow: 1 }}>
-              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: BLUE.main,
+              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: PURPLE.main,
                   display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Typography variant="caption" fontWeight={900} color="#fff" fontSize="0.68rem">FD</Typography>
               </Box>
@@ -204,14 +202,14 @@ export default function Invested({ inline = false }) {
             </Box>
             <Button onClick={() => navigate("/dashboard")} startIcon={<BackIcon />}
               variant="outlined" size="small"
-              sx={{ color: BLUE.text, borderColor: BLUE.border, textTransform: "none", mr: 1,
-                "&:hover": { borderColor: BLUE.main, bgcolor: BLUE.light } }}>
+              sx={{ color: PURPLE.text, borderColor: PURPLE.border, textTransform: "none", mr: 1,
+                "&:hover": { borderColor: PURPLE.main, bgcolor: PURPLE.light } }}>
               Dashboard
             </Button>
             <Button onClick={() => { localStorage.removeItem("user"); navigate("/login"); }}
               variant="outlined" size="small"
-              sx={{ color: BLUE.main, borderColor: BLUE.border, textTransform: "none",
-                "&:hover": { bgcolor: BLUE.light } }}>
+              sx={{ color: PURPLE.main, borderColor: PURPLE.border, textTransform: "none",
+                "&:hover": { bgcolor: PURPLE.light } }}>
               Logout
             </Button>
           </Toolbar>
@@ -221,13 +219,13 @@ export default function Invested({ inline = false }) {
       {/* ── Body ── */}
       <Box sx={{
         minHeight: inline ? "unset" : "calc(100vh - 64px)",
-        bgcolor:   inline ? "transparent" : "#F0F7FF",
+        bgcolor:   inline ? "transparent" : "#F3F0FF",
         px: inline ? 0 : { xs: 2, md: 4 },
         py: inline ? 0 : 3,
       }}>
         {!inline && (
-          <Typography variant="h5" fontWeight={800} color={BLUE.text} sx={{ mb: 3 }}>
-            Invested Customers
+          <Typography variant="h5" fontWeight={800} color={PURPLE.text} sx={{ mb: 3 }}>
+            Empanelment
           </Typography>
         )}
 
@@ -239,18 +237,18 @@ export default function Invested({ inline = false }) {
               <Box key={tab.id} onClick={() => setActiveTab(tab.id)}
                 sx={{
                   cursor: "pointer", px: 3, py: 1, borderRadius: "50px",
-                  border: `2px solid ${isActive ? BLUE.main : BLUE.border}`,
-                  bgcolor: isActive ? BLUE.main : "#fff",
-                  color:   isActive ? "#fff"    : BLUE.text,
+                  border: `2px solid ${isActive ? PURPLE.main : PURPLE.border}`,
+                  bgcolor: isActive ? PURPLE.main : "#fff",
+                  color:   isActive ? "#fff"     : PURPLE.text,
                   fontWeight: 700, fontSize: "0.85rem",
                   transition: "all 0.25s ease",
-                  boxShadow: isActive ? `0 3px 10px ${BLUE.main}44` : "0 1px 3px rgba(0,0,0,0.07)",
+                  boxShadow: isActive ? `0 3px 10px ${PURPLE.main}44` : "0 1px 3px rgba(0,0,0,0.07)",
                   userSelect: "none",
                   "&:hover": {
                     transform: "translateY(-2px)",
-                    boxShadow: `0 5px 14px ${BLUE.main}33`,
-                    borderColor: BLUE.main,
-                    bgcolor: isActive ? BLUE.main : BLUE.light,
+                    boxShadow: `0 5px 14px ${PURPLE.main}33`,
+                    borderColor: PURPLE.main,
+                    bgcolor: isActive ? PURPLE.main : PURPLE.light,
                   },
                 }}>
                 {tab.label}
@@ -261,25 +259,25 @@ export default function Invested({ inline = false }) {
 
         {/* ── Table card ── */}
         <Paper elevation={0}
-          sx={{ border: `1.5px solid ${BLUE.border}`, borderRadius: 2, overflow: "hidden" }}>
+          sx={{ border: `1.5px solid ${PURPLE.border}`, borderRadius: 2, overflow: "hidden" }}>
 
           {/* Card header */}
           <Box sx={{
-            px: 3, py: 2, bgcolor: BLUE.light,
-            borderBottom: `1px solid ${BLUE.mid}`,
+            px: 3, py: 2, bgcolor: PURPLE.light,
+            borderBottom: `1px solid ${PURPLE.mid}`,
             display: "flex", justifyContent: "space-between", alignItems: "center",
           }}>
-            <Typography fontWeight={700} sx={{ color: BLUE.text, fontSize: "0.95rem" }}>
-              {TABS.find((t) => t.id === activeTab).label}
+            <Typography fontWeight={700} sx={{ color: PURPLE.text, fontSize: "0.95rem" }}>
+              {TABS.find((t) => t.id === activeTab)?.label}
               {!loading && (
                 <Chip label={`${rows.length} records`} size="small"
-                  sx={{ ml: 1.5, bgcolor: BLUE.mid, color: BLUE.text,
+                  sx={{ ml: 1.5, bgcolor: PURPLE.mid, color: PURPLE.text,
                     fontWeight: 700, fontSize: "0.7rem", height: 20 }} />
               )}
             </Typography>
             <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
-              sx={{ bgcolor: BLUE.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
-                borderRadius: "6px", "&:hover": { bgcolor: "#42A5F5", boxShadow: "none" } }}>
+              sx={{ bgcolor: PURPLE.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
+                borderRadius: "6px", "&:hover": { bgcolor: "#5A52D5", boxShadow: "none" } }}>
               Add Row
             </Button>
           </Box>
@@ -287,19 +285,18 @@ export default function Invested({ inline = false }) {
           {/* Table */}
           {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-              <CircularProgress sx={{ color: BLUE.main }} />
+              <CircularProgress sx={{ color: PURPLE.main }} />
             </Box>
           ) : (
             <TableContainer>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ bgcolor: BLUE.light }}>
-                    <TableCell sx={{ color: BLUE.text, width: 50 }}>#</TableCell>
+                  <TableRow sx={{ bgcolor: PURPLE.light }}>
+                    <TableCell sx={{ color: PURPLE.text, width: 50 }}>#</TableCell>
                     {cols.map((col) => (
-                      <TableCell key={col.key} sx={{ color: BLUE.text }}>{col.label}</TableCell>
+                      <TableCell key={col.key} sx={{ color: PURPLE.text }}>{col.label}</TableCell>
                     ))}
-                    {/* ── Actions column ── */}
-                    <TableCell align="center" sx={{ color: BLUE.text, width: 90 }}>Actions</TableCell>
+                    <TableCell align="center" sx={{ color: PURPLE.text, width: 90 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -314,7 +311,7 @@ export default function Invested({ inline = false }) {
                     rows.map((row, idx) => (
                       <TableRow key={row.id}
                         sx={{
-                          "&:hover": { bgcolor: BLUE.light },
+                          "&:hover": { bgcolor: PURPLE.light },
                           "&:last-child td": { borderBottom: 0 },
                         }}>
                         <TableCell sx={{ color: "text.secondary", fontSize: "0.78rem" }}>{idx + 1}</TableCell>
@@ -323,18 +320,15 @@ export default function Invested({ inline = false }) {
                             {row[col.key] ?? "—"}
                           </TableCell>
                         ))}
-
-                        {/* ── Edit + Delete buttons ── */}
+                        {/* ── Edit + Delete ── */}
                         <TableCell align="center">
                           <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
                             <Tooltip title="Edit" arrow>
                               <IconButton size="small" onClick={() => openEdit(row)}
                                 sx={{
-                                  color: BLUE.text,
-                                  bgcolor: BLUE.mid,
-                                  borderRadius: "6px",
-                                  width: 28, height: 28,
-                                  "&:hover": { bgcolor: BLUE.main, color: "#fff" },
+                                  color: PURPLE.text, bgcolor: PURPLE.mid,
+                                  borderRadius: "6px", width: 28, height: 28,
+                                  "&:hover": { bgcolor: PURPLE.main, color: "#fff" },
                                 }}>
                                 <EditIcon />
                               </IconButton>
@@ -342,10 +336,8 @@ export default function Invested({ inline = false }) {
                             <Tooltip title="Delete" arrow>
                               <IconButton size="small" onClick={() => askDelete(row.id)}
                                 sx={{
-                                  color: "#E53935",
-                                  bgcolor: "#FFEBEE",
-                                  borderRadius: "6px",
-                                  width: 28, height: 28,
+                                  color: "#E53935", bgcolor: "#FFEBEE",
+                                  borderRadius: "6px", width: 28, height: 28,
                                   "&:hover": { bgcolor: "#E53935", color: "#fff" },
                                 }}>
                                 <DeleteIcon />
@@ -353,7 +345,6 @@ export default function Invested({ inline = false }) {
                             </Tooltip>
                           </Box>
                         </TableCell>
-
                       </TableRow>
                     ))
                   )}
@@ -366,9 +357,9 @@ export default function Invested({ inline = false }) {
 
       {/* ── Add / Edit Dialog ── */}
       <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="sm" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: `1.5px solid ${BLUE.border}`, borderRadius: 2 } }}>
+        PaperProps={{ elevation: 0, sx: { border: `1.5px solid ${PURPLE.border}`, borderRadius: 2 } }}>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: BLUE.main }} />
+          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: PURPLE.main }} />
           <Typography fontWeight={700}>{editRow ? "Edit Record" : "Add New Record"}</Typography>
         </DialogTitle>
         <DialogContent>
@@ -380,13 +371,13 @@ export default function Invested({ inline = false }) {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={closeDialog} variant="outlined" size="small"
-            sx={{ borderColor: BLUE.border, color: BLUE.text, textTransform: "none", borderRadius: "6px",
-              "&:hover": { borderColor: BLUE.main, bgcolor: BLUE.light } }}>
+            sx={{ borderColor: PURPLE.border, color: PURPLE.text, textTransform: "none", borderRadius: "6px",
+              "&:hover": { borderColor: PURPLE.main, bgcolor: PURPLE.light } }}>
             Cancel
           </Button>
           <Button onClick={handleSave} variant="contained" size="small"
-            sx={{ bgcolor: BLUE.main, boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: "#42A5F5", boxShadow: "none" } }}>
+            sx={{ bgcolor: PURPLE.main, boxShadow: "none", textTransform: "none", fontWeight: 700,
+              borderRadius: "6px", "&:hover": { bgcolor: "#5A52D5", boxShadow: "none" } }}>
             {editRow ? "Update" : "Save"}
           </Button>
         </DialogActions>
@@ -406,7 +397,7 @@ export default function Invested({ inline = false }) {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={() => setConfirmOpen(false)} variant="outlined" size="small"
-            sx={{ borderColor: BLUE.border, color: BLUE.text, textTransform: "none", borderRadius: "6px" }}>
+            sx={{ borderColor: PURPLE.border, color: PURPLE.text, textTransform: "none", borderRadius: "6px" }}>
             Cancel
           </Button>
           <Button onClick={handleDelete} variant="contained" size="small"

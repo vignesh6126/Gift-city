@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import Invested from "./Invested";
 import Interested from "./Interested";
+import Empanelment from "./Empanelment";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -62,7 +63,10 @@ const Dashboard = () => {
   const [selected, setSelected] = useState(null);
   const [stats, setStats] = useState({});
 
-  const handleLogout = () => { localStorage.removeItem("user"); navigate("/login"); };
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   useEffect(() => {
     ["invested", "empanelment", "interested"].forEach(async (id) => {
@@ -99,35 +103,52 @@ const Dashboard = () => {
         @keyframes slideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
       `}</style>
 
-      {/* AppBar */}
+      {/* ── AppBar ── */}
       <AppBar position="static" elevation={0}
         sx={{ bgcolor: "#fff", borderBottom: "1px solid #E9ECEF", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
         <Toolbar sx={{ minHeight: { xs: "auto", sm: "64px" }, py: { xs: 1, sm: 0 } }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexGrow: 1 }}>
-            <Box component="img" src={logo} alt="Finance Doctor"
-              sx={{ height: "45px", width: "auto", borderRadius: 1, p: 0.5 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#2C3E50" }}>Finance Doctor</Typography>
+            <Box
+              component="img"
+              src={logo}
+              alt="Finance Doctor"
+              sx={{ height: "45px", width: "auto", borderRadius: 1, p: 0.5 }}
+            />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "#2C3E50" }}>
+              Finance Doctor
+            </Typography>
           </Box>
-          <Button onClick={handleLogout} variant="outlined"
-            sx={{ color: "#E67E22", borderColor: "#E67E22", textTransform: "none", fontWeight: 600,
-              "&:hover": { borderColor: "#E67E22", bgcolor: "rgba(230,126,34,0.04)" } }}>
+          <Button
+            onClick={handleLogout}
+            variant="outlined"
+            sx={{
+              color: "#E67E22",
+              borderColor: "#E67E22",
+              textTransform: "none",
+              fontWeight: 600,
+              "&:hover": { borderColor: "#E67E22", bgcolor: "rgba(230,126,34,0.04)" },
+            }}>
             Logout
           </Button>
         </Toolbar>
       </AppBar>
 
-      {/* Main */}
+      {/* ── Main ── */}
       <Container maxWidth="lg" sx={{
-        flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         px: { xs: 2, sm: 3, md: 4 },
         pt: selected ? { xs: 2, sm: 3 } : { xs: 4, sm: 6 },
         pb: { xs: 4, sm: 6 },
       }}>
 
-        {/* Welcome */}
+        {/* ── Welcome ── */}
         {!selected && (
           <Box sx={{ textAlign: "center", mb: 6, animation: "fadeUp 0.5s ease both" }}>
-            <Typography variant="h4"
+            <Typography
+              variant="h4"
               sx={{ color: "#2C3E50", fontWeight: 700, mb: 0.5, fontSize: { xs: "1.75rem", sm: "2rem" } }}>
               Welcome back, {user.name || "User"}! 👋
             </Typography>
@@ -137,23 +158,36 @@ const Dashboard = () => {
           </Box>
         )}
 
-        {/* Cards */}
+        {/* ── Cards ── */}
         {!selected && (
           <Box sx={{
-            display: "flex", justifyContent: "center", gap: 4,
-            flexWrap: "wrap", width: "100%", animation: "fadeUp 0.5s ease 0.1s both",
+            display: "flex",
+            justifyContent: "center",
+            gap: 4,
+            flexWrap: "wrap",
+            width: "100%",
+            animation: "fadeUp 0.5s ease 0.1s both",
           }}>
             {options.map((opt) => (
-              <Card key={opt.id} onClick={() => handleCardClick(opt)}
+              <Card
+                key={opt.id}
+                onClick={() => handleCardClick(opt)}
                 sx={{
-                  width: 280, bgcolor: "#fff", borderRadius: 3,
+                  width: 280,
+                  bgcolor: "#fff",
+                  borderRadius: 3,
                   border: `2px solid ${opt.borderColor}`,
                   boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                  transition: "all 0.3s ease", cursor: "pointer",
-                  "&:hover": { transform: "translateY(-8px)", boxShadow: `0 12px 28px ${opt.color}25` },
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
+                  "&:hover": {
+                    transform: "translateY(-8px)",
+                    boxShadow: `0 12px 28px ${opt.color}25`,
+                  },
                 }}>
                 <CardContent sx={{ p: 3, textAlign: "center" }}>
-                  <Typography variant="h5"
+                  <Typography
+                    variant="h5"
                     sx={{ color: opt.color, fontWeight: 800, letterSpacing: 1, mb: 2 }}>
                     {opt.title}
                   </Typography>
@@ -165,39 +199,55 @@ const Dashboard = () => {
                   ) : (
                     <Box sx={{ mb: 2 }}>
                       {opt.details.map((line, i) => (
-                        <Typography key={i} variant="caption"
+                        <Typography
+                          key={i}
+                          variant="caption"
                           sx={{ display: "block", color: opt.color, fontWeight: 600, lineHeight: 1.8 }}>
                           {line}
                         </Typography>
                       ))}
                     </Box>
                   )}
-                  <Chip label="Click to view details" size="small"
-                    sx={{ bgcolor: opt.bgColor, color: opt.color, fontWeight: 600 }} />
+                  <Chip
+                    label="Click to view details"
+                    size="small"
+                    sx={{ bgcolor: opt.bgColor, color: opt.color, fontWeight: 600 }}
+                  />
                 </CardContent>
               </Card>
             ))}
           </Box>
         )}
 
-        {/* Selected view */}
+        {/* ── Selected view ── */}
         {selected && (
           <Box sx={{ width: "100%", animation: "fadeUp 0.4s ease both" }}>
 
-            {/* Sub-tabs */}
-            <Box sx={{ display: "flex", justifyContent: "center", gap: { xs: 1, sm: 2 }, flexWrap: "wrap", mb: 3 }}>
+            {/* ── Top nav tabs ── */}
+            <Box sx={{
+              display: "flex",
+              justifyContent: "center",
+              gap: { xs: 1, sm: 2 },
+              flexWrap: "wrap",
+              mb: 3,
+            }}>
               {options.map((opt) => {
                 const isActive = selected === opt.id;
                 return (
-                  <Box key={opt.id} onClick={() => setSelected(opt.id)}
+                  <Box
+                    key={opt.id}
+                    onClick={() => setSelected(opt.id)}
                     sx={{
                       cursor: "pointer",
-                      px: { xs: 2.5, sm: 4 }, py: { xs: 0.9, sm: 1.2 },
+                      px: { xs: 2.5, sm: 4 },
+                      py: { xs: 0.9, sm: 1.2 },
                       borderRadius: "50px",
                       border: `2px solid ${isActive ? opt.color : "#D0D5DD"}`,
                       bgcolor: isActive ? opt.color : "#fff",
                       color: isActive ? "#fff" : opt.color,
-                      fontWeight: 700, fontSize: { xs: "0.78rem", sm: "0.88rem" }, letterSpacing: "0.06em",
+                      fontWeight: 700,
+                      fontSize: { xs: "0.78rem", sm: "0.88rem" },
+                      letterSpacing: "0.06em",
                       transition: "all 0.3s cubic-bezier(0.34,1.4,0.64,1)",
                       boxShadow: isActive ? `0 3px 10px ${opt.color}44` : "0 1px 3px rgba(0,0,0,0.07)",
                       userSelect: "none",
@@ -214,8 +264,10 @@ const Dashboard = () => {
               })}
             </Box>
 
-            {/* Content — each section renders its own inline component */}
-            <Box key={active?.id} sx={{ width: "100%", animation: "slideIn 0.38s cubic-bezier(0.34,1.2,0.64,1) both" }}>
+            {/* ── Content ── */}
+            <Box
+              key={active?.id}
+              sx={{ width: "100%", animation: "slideIn 0.38s cubic-bezier(0.34,1.2,0.64,1) both" }}>
               {renderContent()}
             </Box>
 
@@ -223,6 +275,7 @@ const Dashboard = () => {
         )}
       </Container>
 
+      {/* ── Footer ── */}
       <Box sx={{ textAlign: "center", py: 3, borderTop: "1px solid #E9ECEF", mt: "auto" }}>
         <Typography variant="body2" sx={{ color: "#6C757D" }}>
           © 2024 Finance Doctor Wealth Management System

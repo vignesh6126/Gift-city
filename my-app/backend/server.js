@@ -10,9 +10,12 @@ app.use(express.json());
 // ── Mount routes ───────────────────────────────────────────────────────────────
 const investedRoutes   = require("./routes/investedRoutes");
 const interestedRoutes = require("./routes/interestedRoutes");
+const empanelmentRoutes = require("./routes/empanelmentRoutes");
+
 
 console.log("Routes loaded");
 
+app.use("/api/empanelment", empanelmentRoutes);
 app.use("/api/invested",   investedRoutes);
 app.use("/api/interested", interestedRoutes);
 
