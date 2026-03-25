@@ -19,17 +19,35 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!email || !password) {
-      alert("Please fill all fields");
-      return;
+  if (!email || !password) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:5000/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+      alert("Login Successful 🚀");
+      console.log(data.user);
+    } else {
+      alert(data.message);
     }
-
-    console.log(email, password);
-    alert("Login Successful 🚀");
-  };
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   return (
     <Box
@@ -60,10 +78,11 @@ const Login = () => {
               sx={{
                 width: "240px",
                 height: "auto",
-            
+                p: 1,
                 backgroundColor: "#fff",
-                
-                boxShadow: 3,
+
+
+
               }}
             />
           </Box>
