@@ -6,6 +6,7 @@ import {
   AppBar, Toolbar, Container, Chip, CircularProgress,
 } from "@mui/material";
 import Invested from "./Invested";
+import Interested from "./Interested";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -17,7 +18,6 @@ const OPTIONS_CONFIG = [
     bgColor: "#F0EFFE",
     borderColor: "#6C63FF",
     description: "Manage and view all empaneled partners and associates.",
-    route: null,
   },
   {
     id: "invested",
@@ -26,7 +26,6 @@ const OPTIONS_CONFIG = [
     bgColor: "#E6F9F4",
     borderColor: "#00A67E",
     description: "Track all customers who have invested in various products.",
-    route: null,
   },
   {
     id: "interested",
@@ -35,7 +34,6 @@ const OPTIONS_CONFIG = [
     bgColor: "#FEF5E8",
     borderColor: "#E67E22",
     description: "Follow up with potential customers showing interest.",
-    route: null,
   },
 ];
 
@@ -85,6 +83,14 @@ const Dashboard = () => {
 
   const handleCardClick = (opt) => setSelected(opt.id);
   const active = options.find((o) => o.id === selected);
+
+  const renderContent = () => {
+    if (!active) return null;
+    if (active.id === "invested")    return <Invested inline />;
+    if (active.id === "interested")  return <Interested inline />;
+    if (active.id === "empanelment") return <Empanelment inline />;
+    return null;
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F8F9FA", display: "flex", flexDirection: "column" }}>
@@ -208,61 +214,11 @@ const Dashboard = () => {
               })}
             </Box>
 
-            {/* Content */}
-            {active && (
-              active.id === "invested" ? (
-                // ── Invested renders inline ──
-                <Invested inline />
-              ) : (
-                // ── Generic card for empanelment / interested ──
-                <Box key={active.id}
-                  sx={{
-                    width: "100%", maxWidth: 820, mx: "auto", bgcolor: "#fff", borderRadius: 4,
-                    border: `2px solid ${active.borderColor}`, boxShadow: `0 6px 32px ${active.color}18`,
-                    overflow: "hidden", animation: "slideIn 0.38s cubic-bezier(0.34,1.2,0.64,1) both",
-                  }}>
-                  <Box sx={{
-                    bgcolor: active.bgColor, px: 4, py: 2.5,
-                    borderBottom: `1px solid ${active.borderColor}`,
-                    display: "flex", justifyContent: "space-between", alignItems: "center",
-                  }}>
-                    <Typography variant="h5" sx={{ color: active.color, fontWeight: 800, letterSpacing: 1 }}>
-                      {active.title}
-                    </Typography>
-                    <Button onClick={() => setSelected(null)} variant="outlined" size="small"
-                      sx={{
-                        color: active.color, borderColor: active.color, textTransform: "none",
-                        fontWeight: 600, borderRadius: "20px",
-                        "&:hover": { bgcolor: `${active.color}12`, borderColor: active.color },
-                      }}>
-                      ← Back
-                    </Button>
-                  </Box>
-                  <CardContent sx={{ p: 4 }}>
-                    <Typography variant="body1"
-                      sx={{ color: "#495057", fontSize: "1.05rem", lineHeight: 1.7, mb: 3 }}>
-                      {active.description}
-                    </Typography>
-                    <Box sx={{ bgcolor: active.bgColor, p: 3, borderRadius: 2 }}>
-                      <Typography variant="subtitle2"
-                        sx={{ color: active.color, fontWeight: 700, mb: 2, textTransform: "uppercase", letterSpacing: 1 }}>
-                        Key Metrics
-                      </Typography>
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                        {active.details.map((line, i) => (
-                          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: active.color, flexShrink: 0 }} />
-                            <Typography variant="body1" sx={{ color: "#2C3E50", fontWeight: 500 }}>
-                              {line}
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Box>
-              )
-            )}
+            {/* Content — each section renders its own inline component */}
+            <Box key={active?.id} sx={{ width: "100%", animation: "slideIn 0.38s cubic-bezier(0.34,1.2,0.64,1) both" }}>
+              {renderContent()}
+            </Box>
+
           </Box>
         )}
       </Container>

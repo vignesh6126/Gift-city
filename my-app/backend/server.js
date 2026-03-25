@@ -1,5 +1,4 @@
 const express = require("express");
-const mysql   = require("mysql2");
 const cors    = require("cors");
 const bcrypt  = require("bcrypt");
 const db      = require("./db");
@@ -8,39 +7,40 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ── MySQL connection (used for auth + stats) ───────────────────────────────────
-db.getConnection((err, connection) => {
-  if (err) console.log("❌ DB Error:", err);
-  else {
-    console.log("✅ MySQL Connected");
-    connection.release();
-  }
-});
+// ── Mount routes ───────────────────────────────────────────────────────────────
+const investedRoutes   = require("./routes/investedRoutes");
+const interestedRoutes = require("./routes/interestedRoutes");
 
-// ── Mount invested routes ──────────────────────────────────────────────────────
-const investedRoutes = require("./routes/investedRoutes");
-app.use("/api/invested", investedRoutes);   // ✅ this was missing entirely
+console.log("Routes loaded");
 
-// ── Stats ──────────────────────────────────────────────────────────────────────
+app.use("/api/invested",   investedRoutes);
+app.use("/api/interested", interestedRoutes);
+
+// Test route
+app.get("/test", (req, res) => res.send("Test route works"));
+
+console.log("Routes mounted");
+
+// ── Stats: invested ────────────────────────────────────────────────────────────
 app.get("/api/stats/invested", async (req, res) => {
   try {
-    const [totalResult] = await db.query("SELECT COUNT(*) AS count FROM customers_completed");
-    const total = totalResult[0].count;
-
-    const [thisMonthResult] = await db.query(
+    const [totalResult]      = await db.query("SELECT COUNT(*) AS count FROM customers_completed");
+    const [thisMonthResult]  = await db.query(
       "SELECT COUNT(*) AS count FROM customers_completed WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())"
     );
-    const thisMonth = thisMonthResult[0].count;
-
     const [totalValueResult] = await db.query("SELECT SUM(amount) AS total FROM customers_completed");
-    const totalValue = totalValueResult[0].total || 0;
 
-    res.json({ total, thisMonth, totalValue });
+    res.json({
+      total:      totalResult[0].count,
+      thisMonth:  thisMonthResult[0].count,
+      totalValue: totalValueResult[0].total || 0,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// ── Stats: empanelment ─────────────────────────────────────────────────────────
 app.get("/api/stats/empanelment", async (req, res) => {
   try {
     const [result] = await db.query("SELECT COUNT(*) AS count FROM empanelment");
@@ -50,9 +50,10 @@ app.get("/api/stats/empanelment", async (req, res) => {
   }
 });
 
+// ── Stats: interested ──────────────────────────────────────────────────────────
 app.get("/api/stats/interested", async (req, res) => {
   try {
-    const [result] = await db.query("SELECT COUNT(*) AS count FROM interested");
+    const [result] = await db.query("SELECT COUNT(*) AS count FROM customers_interested");
     res.json({ total: result[0].count });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -78,10 +79,15 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const [result] = await db.query("SELECT * FROM users WHERE email = ?", [req.body.email]);
-    if (result.length === 0) return res.json({ status: "error", message: "User not found" });
+    if (result.length === 0)
+      return res.json({ status: "error", message: "User not found" });
+
     const isMatch = await bcrypt.compare(req.body.password, result[0].password);
     if (isMatch) {
-      res.json({ status: "success", user: { id: result[0].id, name: result[0].name, email: result[0].email } });
+      res.json({
+        status: "success",
+        user: { id: result[0].id, name: result[0].name, email: result[0].email },
+      });
     } else {
       res.json({ status: "error", message: "Wrong password" });
     }
@@ -91,4 +97,6 @@ app.post("/login", async (req, res) => {
 });
 
 // ── Start ──────────────────────────────────────────────────────────────────────
-app.listen(5000, () => console.log("🚀 Server running on http://localhost:5000"));
+app.listen(5000, () => {
+  console.log("🚀 Server running on http://localhost:5000");
+});
