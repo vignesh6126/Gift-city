@@ -1,8 +1,8 @@
-// App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard"; // ✅ Import Dashboard
+import Dashboard from "./pages/Dashboard";
+import Invested from "./pages/Invested"; // ✅ Add this
 
 function App() {
   return (
@@ -10,6 +10,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/invested" element={<Invested />} /> {/* ✅ Add this */}
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </Router>

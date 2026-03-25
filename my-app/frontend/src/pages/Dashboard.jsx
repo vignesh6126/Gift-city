@@ -1,20 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/fd_logo.png";
-
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  AppBar,
-  Toolbar,
-  Container,
-  Chip,
+  Box, Card, CardContent, Typography, Button,
+  AppBar, Toolbar, Container, Chip, CircularProgress,
 } from "@mui/material";
+import Invested from "./Invested";
 
-const options = [
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+const OPTIONS_CONFIG = [
   {
     id: "empanelment",
     title: "EMPANELMENT",
@@ -22,7 +17,7 @@ const options = [
     bgColor: "#F0EFFE",
     borderColor: "#6C63FF",
     description: "Manage and view all empaneled partners and associates.",
-    details: ["Total Empaneled: 284", "Active Partners: 241", "Pending Approvals: 43"],
+    route: null,
   },
   {
     id: "invested",
@@ -31,7 +26,7 @@ const options = [
     bgColor: "#E6F9F4",
     borderColor: "#00A67E",
     description: "Track all customers who have invested in various products.",
-    details: ["Total Customers: 1,847", "This Month: 142", "Total Value: ₹48.6 Cr"],
+    route: null,
   },
   {
     id: "interested",
@@ -40,45 +35,72 @@ const options = [
     bgColor: "#FEF5E8",
     borderColor: "#E67E22",
     description: "Follow up with potential customers showing interest.",
-    details: ["Total Leads: 532", "Hot Leads: 87", "Follow-ups Due: 145"],
+    route: null,
   },
 ];
+
+function formatStats(id, data) {
+  if (!data) return ["No data available"];
+  if (id === "invested") {
+    const crore = ((data.totalValue || 0) / 10000000).toFixed(1);
+    return [
+      `Total Customers: ${(data.total || 0).toLocaleString()}`,
+      `This Month: ${data.thisMonth || 0}`,
+      `Total Value: ₹${crore} Cr`,
+    ];
+  }
+  if (id === "empanelment") {
+    return [`Total Empaneled: ${(data.total || 0).toLocaleString()}`];
+  }
+  if (id === "interested") {
+    return [`Total Leads: ${(data.total || 0).toLocaleString()}`];
+  }
+  return [];
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const [selected, setSelected] = useState(null);
+  const [stats, setStats] = useState({});
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
+  const handleLogout = () => { localStorage.removeItem("user"); navigate("/login"); };
 
+  useEffect(() => {
+    ["invested", "empanelment", "interested"].forEach(async (id) => {
+      try {
+        const res = await fetch(`${API}/stats/${id}`);
+        const data = await res.json();
+        setStats((prev) => ({ ...prev, [id]: data }));
+      } catch {
+        setStats((prev) => ({ ...prev, [id]: null }));
+      }
+    });
+  }, []);
+
+  const options = OPTIONS_CONFIG.map((opt) => ({
+    ...opt,
+    details: formatStats(opt.id, stats[opt.id]),
+  }));
+
+  const handleCardClick = (opt) => setSelected(opt.id);
   const active = options.find((o) => o.id === selected);
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F8F9FA", display: "flex", flexDirection: "column" }}>
       <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(24px); }
-          to   { opacity: 1; transform: none; }
-        }
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(16px); }
-          to   { opacity: 1; transform: none; }
-        }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+        @keyframes slideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
       `}</style>
 
-      {/* ── Header ── */}
+      {/* AppBar */}
       <AppBar position="static" elevation={0}
         sx={{ bgcolor: "#fff", borderBottom: "1px solid #E9ECEF", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
         <Toolbar sx={{ minHeight: { xs: "auto", sm: "64px" }, py: { xs: 1, sm: 0 } }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexGrow: 1 }}>
             <Box component="img" src={logo} alt="Finance Doctor"
               sx={{ height: "45px", width: "auto", borderRadius: 1, p: 0.5 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#2C3E50" }}>
-              Finance Doctor
-            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "#2C3E50" }}>Finance Doctor</Typography>
           </Box>
           <Button onClick={handleLogout} variant="outlined"
             sx={{ color: "#E67E22", borderColor: "#E67E22", textTransform: "none", fontWeight: 600,
@@ -88,13 +110,15 @@ const Dashboard = () => {
         </Toolbar>
       </AppBar>
 
-      {/* ── Main ── */}
-      <Container maxWidth="lg" sx={{ flex: 1, display: "flex", flexDirection: "column",
-          alignItems: "center", px: { xs: 2, sm: 3, md: 4 },
-          pt: selected ? { xs: 2, sm: 3 } : { xs: 4, sm: 6 },
-          pb: { xs: 4, sm: 6 } }}>
+      {/* Main */}
+      <Container maxWidth="lg" sx={{
+        flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+        px: { xs: 2, sm: 3, md: 4 },
+        pt: selected ? { xs: 2, sm: 3 } : { xs: 4, sm: 6 },
+        pb: { xs: 4, sm: 6 },
+      }}>
 
-        {/* Welcome — hidden once a section is selected */}
+        {/* Welcome */}
         {!selected && (
           <Box sx={{ textAlign: "center", mb: 6, animation: "fadeUp 0.5s ease both" }}>
             <Typography variant="h4"
@@ -107,19 +131,21 @@ const Dashboard = () => {
           </Box>
         )}
 
-        {/* ── CARD VIEW (no selection) ── */}
+        {/* Cards */}
         {!selected && (
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 4,
-              flexWrap: "wrap", width: "100%",
-              animation: "fadeUp 0.5s ease 0.1s both" }}>
+          <Box sx={{
+            display: "flex", justifyContent: "center", gap: 4,
+            flexWrap: "wrap", width: "100%", animation: "fadeUp 0.5s ease 0.1s both",
+          }}>
             {options.map((opt) => (
-              <Card key={opt.id} onClick={() => setSelected(opt.id)}
-                sx={{ width: 280, bgcolor: "#fff", borderRadius: 3,
+              <Card key={opt.id} onClick={() => handleCardClick(opt)}
+                sx={{
+                  width: 280, bgcolor: "#fff", borderRadius: 3,
                   border: `2px solid ${opt.borderColor}`,
                   boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                   transition: "all 0.3s ease", cursor: "pointer",
-                  "&:hover": { transform: "translateY(-8px)",
-                    boxShadow: `0 12px 28px ${opt.color}25` } }}>
+                  "&:hover": { transform: "translateY(-8px)", boxShadow: `0 12px 28px ${opt.color}25` },
+                }}>
                 <CardContent sx={{ p: 3, textAlign: "center" }}>
                   <Typography variant="h5"
                     sx={{ color: opt.color, fontWeight: 800, letterSpacing: 1, mb: 2 }}>
@@ -128,6 +154,18 @@ const Dashboard = () => {
                   <Typography variant="body2" sx={{ color: "#6C757D", lineHeight: 1.7, mb: 2 }}>
                     {opt.description}
                   </Typography>
+                  {stats[opt.id] === undefined ? (
+                    <CircularProgress size={16} sx={{ color: opt.color, mb: 1 }} />
+                  ) : (
+                    <Box sx={{ mb: 2 }}>
+                      {opt.details.map((line, i) => (
+                        <Typography key={i} variant="caption"
+                          sx={{ display: "block", color: opt.color, fontWeight: 600, lineHeight: 1.8 }}>
+                          {line}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
                   <Chip label="Click to view details" size="small"
                     sx={{ bgcolor: opt.bgColor, color: opt.color, fontWeight: 600 }} />
                 </CardContent>
@@ -136,26 +174,24 @@ const Dashboard = () => {
           </Box>
         )}
 
-        {/* ── TAB + CONTENT VIEW (after selection) ── */}
+        {/* Selected view */}
         {selected && (
           <Box sx={{ width: "100%", animation: "fadeUp 0.4s ease both" }}>
 
-            {/* Top Tab Row — compact, close to top */}
-            <Box sx={{ display: "flex", justifyContent: "center", gap: { xs: 1, sm: 2 },
-                flexWrap: "wrap", mb: 3 }}>
+            {/* Sub-tabs */}
+            <Box sx={{ display: "flex", justifyContent: "center", gap: { xs: 1, sm: 2 }, flexWrap: "wrap", mb: 3 }}>
               {options.map((opt) => {
                 const isActive = selected === opt.id;
                 return (
                   <Box key={opt.id} onClick={() => setSelected(opt.id)}
-                    sx={{ cursor: "pointer",
+                    sx={{
+                      cursor: "pointer",
                       px: { xs: 2.5, sm: 4 }, py: { xs: 0.9, sm: 1.2 },
                       borderRadius: "50px",
                       border: `2px solid ${isActive ? opt.color : "#D0D5DD"}`,
                       bgcolor: isActive ? opt.color : "#fff",
                       color: isActive ? "#fff" : opt.color,
-                      fontWeight: 700,
-                      fontSize: { xs: "0.78rem", sm: "0.88rem" },
-                      letterSpacing: "0.06em",
+                      fontWeight: 700, fontSize: { xs: "0.78rem", sm: "0.88rem" }, letterSpacing: "0.06em",
                       transition: "all 0.3s cubic-bezier(0.34,1.4,0.64,1)",
                       boxShadow: isActive ? `0 3px 10px ${opt.color}44` : "0 1px 3px rgba(0,0,0,0.07)",
                       userSelect: "none",
@@ -172,79 +208,65 @@ const Dashboard = () => {
               })}
             </Box>
 
-            {/* Content Panel */}
+            {/* Content */}
             {active && (
-              <Box key={active.id}
-                sx={{ width: "100%", maxWidth: 820, mx: "auto",
-                  bgcolor: "#fff", borderRadius: 4,
-                  border: `2px solid ${active.borderColor}`,
-                  boxShadow: `0 6px 32px ${active.color}18`,
-                  overflow: "hidden",
-                  animation: "slideIn 0.38s cubic-bezier(0.34,1.2,0.64,1) both" }}>
-
-                {/* Coloured header band */}
-                <Box sx={{ bgcolor: active.bgColor, px: 4, py: 2.5,
+              active.id === "invested" ? (
+                // ── Invested renders inline ──
+                <Invested inline />
+              ) : (
+                // ── Generic card for empanelment / interested ──
+                <Box key={active.id}
+                  sx={{
+                    width: "100%", maxWidth: 820, mx: "auto", bgcolor: "#fff", borderRadius: 4,
+                    border: `2px solid ${active.borderColor}`, boxShadow: `0 6px 32px ${active.color}18`,
+                    overflow: "hidden", animation: "slideIn 0.38s cubic-bezier(0.34,1.2,0.64,1) both",
+                  }}>
+                  <Box sx={{
+                    bgcolor: active.bgColor, px: 4, py: 2.5,
                     borderBottom: `1px solid ${active.borderColor}`,
-                    display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="h5"
-                    sx={{ color: active.color, fontWeight: 800, letterSpacing: 1 }}>
-                    {active.title}
-                  </Typography>
-                  <Button onClick={() => setSelected(null)} variant="outlined" size="small"
-                    sx={{ color: active.color, borderColor: active.color,
-                      textTransform: "none", fontWeight: 600, borderRadius: "20px",
-                      "&:hover": { bgcolor: `${active.color}12`, borderColor: active.color } }}>
-                    ← Back to Dashboard
-                  </Button>
-                </Box>
-
-                <CardContent sx={{ p: 4 }}>
-                  <Typography variant="body1"
-                    sx={{ color: "#495057", fontSize: "1.05rem", lineHeight: 1.7, mb: 3 }}>
-                    {active.description}
-                  </Typography>
-
-                  {/* Key Metrics */}
-                  <Box sx={{ bgcolor: active.bgColor, p: 3, borderRadius: 2 }}>
-                    <Typography variant="subtitle2"
-                      sx={{ color: active.color, fontWeight: 700, mb: 2,
-                        textTransform: "uppercase", letterSpacing: 1 }}>
-                      Key Metrics
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                  }}>
+                    <Typography variant="h5" sx={{ color: active.color, fontWeight: 800, letterSpacing: 1 }}>
+                      {active.title}
                     </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                      {active.details.map((line, i) => (
-                        <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                          <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: active.color, flexShrink: 0 }} />
-                          <Typography variant="body1" sx={{ color: "#2C3E50", fontWeight: 500 }}>
-                            {line}
-                          </Typography>
-                        </Box>
-                      ))}
+                    <Button onClick={() => setSelected(null)} variant="outlined" size="small"
+                      sx={{
+                        color: active.color, borderColor: active.color, textTransform: "none",
+                        fontWeight: 600, borderRadius: "20px",
+                        "&:hover": { bgcolor: `${active.color}12`, borderColor: active.color },
+                      }}>
+                      ← Back
+                    </Button>
+                  </Box>
+                  <CardContent sx={{ p: 4 }}>
+                    <Typography variant="body1"
+                      sx={{ color: "#495057", fontSize: "1.05rem", lineHeight: 1.7, mb: 3 }}>
+                      {active.description}
+                    </Typography>
+                    <Box sx={{ bgcolor: active.bgColor, p: 3, borderRadius: 2 }}>
+                      <Typography variant="subtitle2"
+                        sx={{ color: active.color, fontWeight: 700, mb: 2, textTransform: "uppercase", letterSpacing: 1 }}>
+                        Key Metrics
+                      </Typography>
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                        {active.details.map((line, i) => (
+                          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: active.color, flexShrink: 0 }} />
+                            <Typography variant="body1" sx={{ color: "#2C3E50", fontWeight: 500 }}>
+                              {line}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
                     </Box>
-                  </Box>
-
-                  <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
-                    <Button variant="contained"
-                      sx={{ bgcolor: active.color, textTransform: "none", borderRadius: "8px",
-                        boxShadow: `0 4px 12px ${active.color}44`,
-                        "&:hover": { bgcolor: active.color, opacity: 0.9 } }}>
-                      View All {active.title.charAt(0) + active.title.slice(1).toLowerCase()}
-                    </Button>
-                    <Button variant="outlined" onClick={() => setSelected(null)}
-                      sx={{ borderColor: active.color, color: active.color,
-                        textTransform: "none", borderRadius: "8px",
-                        "&:hover": { bgcolor: active.bgColor } }}>
-                      Back
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Box>
+                  </CardContent>
+                </Box>
+              )
             )}
           </Box>
         )}
       </Container>
 
-      {/* Footer */}
       <Box sx={{ textAlign: "center", py: 3, borderTop: "1px solid #E9ECEF", mt: "auto" }}>
         <Typography variant="body2" sx={{ color: "#6C757D" }}>
           © 2024 Finance Doctor Wealth Management System

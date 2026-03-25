@@ -24,6 +24,45 @@ db.connect((err) => {
   }
 });
 
+// 📊 Stats for dashboard cards
+app.get("/api/stats/invested", (req, res) => {
+  const queries = {
+    total: "SELECT COUNT(*) AS count FROM invested_completed",
+    thisMonth: `SELECT COUNT(*) AS count FROM invested_completed 
+                WHERE MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())`,
+    totalValue: "SELECT SUM(amount) AS total FROM invested_completed",
+  };
+
+  Promise.all([
+    new Promise((resolve, reject) =>
+      db.query(queries.total, (err, r) => err ? reject(err) : resolve(r[0].count))),
+    new Promise((resolve, reject) =>
+      db.query(queries.thisMonth, (err, r) => err ? reject(err) : resolve(r[0].count))),
+    new Promise((resolve, reject) =>
+      db.query(queries.totalValue, (err, r) => err ? reject(err) : resolve(r[0].total || 0))),
+  ])
+    .then(([total, thisMonth, totalValue]) => {
+      res.json({ total, thisMonth, totalValue });
+    })
+    .catch((err) => res.json({ status: "error", message: err }));
+});
+
+app.get("/api/stats/empanelment", (req, res) => {
+  // Replace with your actual empanelment table name
+  db.query("SELECT COUNT(*) AS count FROM empanelment", (err, r) => {
+    if (err) return res.json({ status: "error", message: err });
+    res.json({ total: r[0].count });
+  });
+});
+
+app.get("/api/stats/interested", (req, res) => {
+  // Replace with your actual interested/leads table name
+  db.query("SELECT COUNT(*) AS count FROM interested", (err, r) => {
+    if (err) return res.json({ status: "error", message: err });
+    res.json({ total: r[0].count });
+  });
+});
+
 
 // 🔐 REGISTER API (creates user with hashed password)
 app.post("/register", async (req, res) => {
