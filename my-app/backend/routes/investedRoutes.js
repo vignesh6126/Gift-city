@@ -16,11 +16,11 @@ router.get("/completed", async (req, res) => {
 });
 
 router.post("/completed", async (req, res) => {
-  const { client_name, first_investment, amount, scheme, bank } = req.body;
+  const { client_name, first_investment, amount, scheme, amc_name, bank } = req.body;
   try {
     const [result] = await db.query(
-      "INSERT INTO customers_completed (client_name, first_investment, amount, scheme, bank) VALUES (?, ?, ?, ?, ?)",
-      [client_name, first_investment, amount, scheme, bank]
+      "INSERT INTO customers_completed (client_name, first_investment, amount, scheme, amc_name, bank) VALUES (?, ?, ?, ?, ?, ?)",
+      [client_name, first_investment, amount, scheme, amc_name, bank]
     );
     const [rows] = await db.query("SELECT * FROM customers_completed WHERE id = ?", [result.insertId]);
     res.status(201).json(rows[0]);
@@ -30,11 +30,11 @@ router.post("/completed", async (req, res) => {
 });
 
 router.put("/completed/:id", async (req, res) => {
-  const { client_name, first_investment, amount, scheme, bank } = req.body;
+  const { client_name, first_investment, amount, scheme, amc_name, bank } = req.body;
   try {
     await db.query(
-      "UPDATE customers_completed SET client_name=?, first_investment=?, amount=?, scheme=?, bank=? WHERE id=?",
-      [client_name, first_investment, amount, scheme, bank, req.params.id]
+      "UPDATE customers_completed SET client_name=?, first_investment=?, amount=?, scheme=?, amc_name=?, bank=? WHERE id=?",
+      [client_name, first_investment, amount, scheme, amc_name, bank, req.params.id]
     );
     const [rows] = await db.query("SELECT * FROM customers_completed WHERE id = ?", [req.params.id]);
     res.json(rows[0]);
@@ -66,11 +66,11 @@ router.get("/pending", async (req, res) => {
 });
 
 router.post("/pending", async (req, res) => {
-  const { client_name, amount_tobe_invested, scheme, bank, submission_date, status } = req.body;
+  const { client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status } = req.body;
   try {
     const [result] = await db.query(
-      "INSERT INTO customers_pending (client_name, amount_tobe_invested, scheme, bank, submission_date, status) VALUES (?, ?, ?, ?, ?, ?)",
-      [client_name, amount_tobe_invested, scheme, bank, submission_date, status]
+      "INSERT INTO customers_pending (client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status]
     );
     const [rows] = await db.query("SELECT * FROM customers_pending WHERE id = ?", [result.insertId]);
     res.status(201).json(rows[0]);
@@ -80,11 +80,11 @@ router.post("/pending", async (req, res) => {
 });
 
 router.put("/pending/:id", async (req, res) => {
-  const { client_name, amount_tobe_invested, scheme, bank, submission_date, status } = req.body;
+  const { client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status } = req.body;
   try {
     await db.query(
-      "UPDATE customers_pending SET client_name=?, amount_tobe_invested=?, scheme=?, bank=?, submission_date=?, status=? WHERE id=?",
-      [client_name, amount_tobe_invested, scheme, bank, submission_date, status, req.params.id]
+      "UPDATE customers_pending SET client_name=?, amount_tobe_invested=?, scheme=?, amc_name=?, bank=?, submission_date=?, status=? WHERE id=?",
+      [client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status, req.params.id]
     );
     const [rows] = await db.query("SELECT * FROM customers_pending WHERE id = ?", [req.params.id]);
     res.json(rows[0]);

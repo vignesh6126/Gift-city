@@ -7,7 +7,7 @@ import {
   MenuItem, Select, FormControl, InputLabel, Chip, CircularProgress,
   Snackbar, Alert, Tooltip,
 } from "@mui/material";
-import { createTheme, ThemeProvider, alpha } from "@mui/material/styles";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 
 const API = import.meta.env.VITE_API_URL;
@@ -19,7 +19,7 @@ const theme = createTheme({
     text: { primary: "#1A2B3C", secondary: "#5A7A99" },
   },
   typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
-  shape: { borderRadius: 4 }, // reduced globally
+  shape: { borderRadius: 4 },
   components: {
     MuiTableCell: {
       styleOverrides: {
@@ -30,73 +30,121 @@ const theme = createTheme({
 });
 
 const BLUE = {
-  main:   "#64B5F6",
-  light:  "#F0F8FF",
-  mid:    "#DDEEFF",
+  main: "#64B5F6",
+  light: "#F0F8FF",
+  mid: "#DDEEFF",
   border: "#B3D9FF",
-  text:   "#2979A0",
+  text: "#2979A0",
+};
+
+const GREEN = {
+  main: "#43A047",
+  light: "#E8F5E9",
+  hover: "#2E7D32",
 };
 
 const TABS = [
   { id: "completed", label: "Customers Completed" },
-  { id: "pending",   label: "Customers Pending"   },
+  { id: "pending", label: "Customers Pending" },
 ];
 
 const COMPLETED_COLS = [
-  { key: "client_name",      label: "Client Name",      type: "text"   },
-  { key: "first_investment", label: "First Investment",  type: "date"   },
-  { key: "amount",           label: "Amount",            type: "number" },
-  { key: "scheme",           label: "Scheme",            type: "text"   },
-  { key: "bank",             label: "Bank",              type: "select", options: ["gift", "savings", "both"] },
+  { key: "client_name", label: "Client Name", type: "text" },
+  { key: "first_investment", label: "First Investment", type: "date" },
+  { key: "amount", label: "Amount", type: "number" },
+  { key: "amc_name", label: "AMC Name", type: "text" },
+  { key: "scheme", label: "Scheme", type: "text" },
+  { key: "bank", label: "Bank", type: "select", options: ["gift", "savings", "both"] },
 ];
 
 const PENDING_COLS = [
-  { key: "client_name",          label: "Client Name",          type: "text"   },
+  { key: "client_name", label: "Client Name", type: "text" },
   { key: "amount_tobe_invested", label: "Amount to be Invested", type: "number" },
-  { key: "scheme",               label: "Scheme",               type: "text"   },
-  { key: "bank",                 label: "Bank",                  type: "select", options: ["gift", "savings", "both"] },
-  { key: "submission_date",      label: "Submission Date",       type: "date"   },
-  { key: "status",               label: "Status",                type: "text"   },
+  { key: "amc_name", label: "AMC Name", type: "text" },
+  { key: "scheme", label: "Scheme", type: "text" },
+  { key: "bank", label: "Bank", type: "select", options: ["gift", "savings", "both"] },
+  { key: "submission_date", label: "Submission Date", type: "date" },
+  { key: "status", label: "Status", type: "text" },
 ];
+
+// Maps pending fields → completed fields where keys differ
+const PENDING_TO_COMPLETED_MAP = {
+  client_name: "client_name",
+  amount_tobe_invested: "amount",   // maps to amount
+  amc_name: "amc_name",
+  scheme: "scheme",
+  bank: "bank",
+  // submission_date → first_investment (manual, user should confirm)
+  // status → no match (manual)
+};
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const EditIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 const DeleteIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 const PlusIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+const ShareIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+    <circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 const BackIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
-const emptyCompleted = () => ({ client_name: "", first_investment: "", amount: "", scheme: "", bank: "savings" });
-const emptyPending   = () => ({ client_name: "", amount_tobe_invested: "", scheme: "", bank: "savings", submission_date: "", status: "" });
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+};
 
-function FieldInput({ col, value, onChange }) {
+const emptyCompleted = () => ({ client_name: "", first_investment: "", amount: "", scheme: "", amc_name: "", bank: "savings" });
+const emptyPending   = () => ({ client_name: "", amount_tobe_invested: "", scheme: "", amc_name: "", bank: "savings", submission_date: "", status: "" });
+
+// Build a pre-filled completed form from a pending row
+const pendingToCompletedForm = (pendingRow) => ({
+  client_name:      pendingRow.client_name      || "",
+  amount:           pendingRow.amount_tobe_invested || "",  // mapped
+  amc_name:         pendingRow.amc_name         || "",
+  scheme:           pendingRow.scheme           || "",
+  bank:             pendingRow.bank             || "savings",
+  first_investment: "",   // no direct match → manual entry
+});
+
+function FieldInput({ col, value, onChange, highlight = false }) {
+  const highlightSx = highlight
+    ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#FFA726", borderWidth: 2 } } }
+    : {};
+
   if (col.type === "select") {
     return (
-      <FormControl fullWidth size="small">
+      <FormControl fullWidth size="small" sx={highlight ? { "& .MuiOutlinedInput-notchedOutline": { borderColor: "#FFA726", borderWidth: 2 } } : {}}>
         <InputLabel>{col.label}</InputLabel>
         <Select value={value || ""} label={col.label} onChange={(e) => onChange(col.key, e.target.value)}>
           {col.options.map((o) => (
@@ -113,28 +161,40 @@ function FieldInput({ col, value, onChange }) {
       value={value || ""}
       onChange={(e) => onChange(col.key, e.target.value)}
       InputLabelProps={col.type === "date" ? { shrink: true } : undefined}
+      sx={highlightSx}
     />
   );
 }
 
 export default function Invested({ inline = false }) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab]     = useState("completed");
-  const [rows, setRows]               = useState([]);
-  const [loading, setLoading]         = useState(false);
-  const [dialogOpen, setDialogOpen]   = useState(false);
-  const [editRow, setEditRow]         = useState(null);
-  const [formData, setFormData]       = useState({});
-  const [deleteId, setDeleteId]       = useState(null);
+  const [activeTab, setActiveTab] = useState("completed");
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Add/Edit dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editRow, setEditRow] = useState(null);
+  const [formData, setFormData] = useState({});
+
+  // Delete confirm
+  const [deleteId, setDeleteId] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [snack, setSnack]             = useState({ open: false, msg: "", severity: "success" });
+
+  // Promote pending → completed
+  const [promoteOpen, setPromoteOpen] = useState(false);
+  const [promoteSourceId, setPromoteSourceId] = useState(null);   // pending row id to delete after save
+  const [promoteForm, setPromoteForm] = useState({});
+  const [promoteLoading, setPromoteLoading] = useState(false);
+
+  const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
 
   const cols = activeTab === "completed" ? COMPLETED_COLS : PENDING_COLS;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/invested/${activeTab}`);
+      const res = await fetch(`${API}/invested/${activeTab}`);
       const data = await res.json();
       setRows(Array.isArray(data) ? data : []);
     } catch {
@@ -148,7 +208,8 @@ export default function Invested({ inline = false }) {
 
   const showSnack = (msg, severity = "success") => setSnack({ open: true, msg, severity });
 
-  const openAdd  = () => {
+  // ── Normal add/edit ──
+  const openAdd = () => {
     setEditRow(null);
     setFormData(activeTab === "completed" ? emptyCompleted() : emptyPending());
     setDialogOpen(true);
@@ -158,7 +219,7 @@ export default function Invested({ inline = false }) {
   const handleField = (key, val) => setFormData((prev) => ({ ...prev, [key]: val }));
 
   const handleSave = async () => {
-    const url    = editRow ? `${API}/invested/${activeTab}/${editRow.id}` : `${API}/invested/${activeTab}`;
+    const url = editRow ? `${API}/invested/${activeTab}/${editRow.id}` : `${API}/invested/${activeTab}`;
     const method = editRow ? "PUT" : "POST";
     try {
       const res = await fetch(url, {
@@ -175,7 +236,8 @@ export default function Invested({ inline = false }) {
     }
   };
 
-  const askDelete   = (id) => { setDeleteId(id); setConfirmOpen(true); };
+  // ── Delete ──
+  const askDelete = (id) => { setDeleteId(id); setConfirmOpen(true); };
   const handleDelete = async () => {
     try {
       const res = await fetch(`${API}/invested/${activeTab}/${deleteId}`, { method: "DELETE" });
@@ -188,30 +250,63 @@ export default function Invested({ inline = false }) {
     }
   };
 
+  // ── Promote pending → completed ──
+  const openPromote = (pendingRow) => {
+    setPromoteSourceId(pendingRow.id);
+    setPromoteForm(pendingToCompletedForm(pendingRow));
+    setPromoteOpen(true);
+  };
+  const closePromote = () => { setPromoteOpen(false); setPromoteSourceId(null); setPromoteForm({}); };
+  const handlePromoteField = (key, val) => setPromoteForm((prev) => ({ ...prev, [key]: val }));
+
+  const handlePromoteSave = async () => {
+    setPromoteLoading(true);
+    try {
+      // 1. Add to customers_completed
+      const addRes = await fetch(`${API}/invested/completed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(promoteForm),
+      });
+      if (!addRes.ok) throw new Error("Failed to add to completed");
+
+      // 2. Delete from customers_pending
+      const delRes = await fetch(`${API}/invested/pending/${promoteSourceId}`, { method: "DELETE" });
+      if (!delRes.ok) throw new Error("Failed to remove from pending");
+
+      showSnack("✓ Moved to Customers Completed!", "success");
+      closePromote();
+      fetchData();
+    } catch (e) {
+      showSnack(e.message || "Operation failed", "error");
+    } finally {
+      setPromoteLoading(false);
+    }
+  };
+
+  // Fields that were auto-filled vs need manual entry
+  const autoFilledKeys = new Set(["client_name", "amount", "amc_name", "scheme", "bank"]);
+  const manualKeys = new Set(["first_investment"]);
+
   const content = (
     <>
-      {/* ── AppBar — standalone only ── */}
+      {/* ── AppBar ── */}
       {!inline && (
         <AppBar position="static" elevation={0}
           sx={{ bgcolor: "#fff", borderBottom: `1px solid ${BLUE.border}` }}>
           <Toolbar>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexGrow: 1 }}>
-              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: BLUE.main,
-                  display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: BLUE.main, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Typography variant="caption" fontWeight={900} color="#fff" fontSize="0.68rem">FD</Typography>
               </Box>
               <Typography variant="h6" fontWeight={800} color="text.primary">Finance Doctor</Typography>
             </Box>
-            <Button onClick={() => navigate("/dashboard")} startIcon={<BackIcon />}
-              variant="outlined" size="small"
-              sx={{ color: BLUE.text, borderColor: BLUE.border, textTransform: "none", mr: 1,
-                "&:hover": { borderColor: BLUE.main, bgcolor: BLUE.light } }}>
+            <Button onClick={() => navigate("/dashboard")} startIcon={<BackIcon />} variant="outlined" size="small"
+              sx={{ color: BLUE.text, borderColor: BLUE.border, textTransform: "none", mr: 1, "&:hover": { borderColor: BLUE.main, bgcolor: BLUE.light } }}>
               Dashboard
             </Button>
-            <Button onClick={() => { localStorage.removeItem("user"); navigate("/login"); }}
-              variant="outlined" size="small"
-              sx={{ color: BLUE.main, borderColor: BLUE.border, textTransform: "none",
-                "&:hover": { bgcolor: BLUE.light } }}>
+            <Button onClick={() => { localStorage.removeItem("user"); navigate("/login"); }} variant="outlined" size="small"
+              sx={{ color: BLUE.main, borderColor: BLUE.border, textTransform: "none", "&:hover": { bgcolor: BLUE.light } }}>
               Logout
             </Button>
           </Toolbar>
@@ -219,16 +314,9 @@ export default function Invested({ inline = false }) {
       )}
 
       {/* ── Body ── */}
-      <Box sx={{
-        minHeight: inline ? "unset" : "calc(100vh - 64px)",
-        bgcolor:   inline ? "transparent" : "#F0F7FF",
-        px: inline ? 0 : { xs: 2, md: 4 },
-        py: inline ? 0 : 3,
-      }}>
+      <Box sx={{ minHeight: inline ? "unset" : "calc(100vh - 64px)", bgcolor: inline ? "transparent" : "#F0F7FF", px: inline ? 0 : { xs: 2, md: 4 }, py: inline ? 0 : 3 }}>
         {!inline && (
-          <Typography variant="h5" fontWeight={800} color={BLUE.text} sx={{ mb: 3 }}>
-            Invested Customers
-          </Typography>
+          <Typography variant="h5" fontWeight={800} color={BLUE.text} sx={{ mb: 3 }}>Invested Customers</Typography>
         )}
 
         {/* ── Sub-tabs ── */}
@@ -241,17 +329,12 @@ export default function Invested({ inline = false }) {
                   cursor: "pointer", px: 3, py: 1, borderRadius: "50px",
                   border: `2px solid ${isActive ? BLUE.main : BLUE.border}`,
                   bgcolor: isActive ? BLUE.main : "#fff",
-                  color:   isActive ? "#fff"    : BLUE.text,
+                  color: isActive ? "#fff" : BLUE.text,
                   fontWeight: 700, fontSize: "0.85rem",
                   transition: "all 0.25s ease",
                   boxShadow: isActive ? `0 3px 10px ${BLUE.main}44` : "0 1px 3px rgba(0,0,0,0.07)",
                   userSelect: "none",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: `0 5px 14px ${BLUE.main}33`,
-                    borderColor: BLUE.main,
-                    bgcolor: isActive ? BLUE.main : BLUE.light,
-                  },
+                  "&:hover": { transform: "translateY(-2px)", boxShadow: `0 5px 14px ${BLUE.main}33`, borderColor: BLUE.main, bgcolor: isActive ? BLUE.main : BLUE.light },
                 }}>
                 {tab.label}
               </Box>
@@ -260,31 +343,21 @@ export default function Invested({ inline = false }) {
         </Box>
 
         {/* ── Table card ── */}
-        <Paper elevation={0}
-          sx={{ border: `1.5px solid ${BLUE.border}`, borderRadius: 2, overflow: "hidden" }}>
-
-          {/* Card header */}
-          <Box sx={{
-            px: 3, py: 2, bgcolor: BLUE.light,
-            borderBottom: `1px solid ${BLUE.mid}`,
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-          }}>
+        <Paper elevation={0} sx={{ border: `1.5px solid ${BLUE.border}`, borderRadius: 2, overflow: "hidden" }}>
+          <Box sx={{ px: 3, py: 2, bgcolor: BLUE.light, borderBottom: `1px solid ${BLUE.mid}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Typography fontWeight={700} sx={{ color: BLUE.text, fontSize: "0.95rem" }}>
               {TABS.find((t) => t.id === activeTab).label}
               {!loading && (
                 <Chip label={`${rows.length} records`} size="small"
-                  sx={{ ml: 1.5, bgcolor: BLUE.mid, color: BLUE.text,
-                    fontWeight: 700, fontSize: "0.7rem", height: 20 }} />
+                  sx={{ ml: 1.5, bgcolor: BLUE.mid, color: BLUE.text, fontWeight: 700, fontSize: "0.7rem", height: 20 }} />
               )}
             </Typography>
             <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
-              sx={{ bgcolor: BLUE.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
-                borderRadius: "6px", "&:hover": { bgcolor: "#42A5F5", boxShadow: "none" } }}>
+              sx={{ bgcolor: BLUE.main, boxShadow: "none", textTransform: "none", fontWeight: 600, borderRadius: "6px", "&:hover": { bgcolor: "#42A5F5", boxShadow: "none" } }}>
               Add Row
             </Button>
           </Box>
 
-          {/* Table */}
           {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
               <CircularProgress sx={{ color: BLUE.main }} />
@@ -298,8 +371,7 @@ export default function Invested({ inline = false }) {
                     {cols.map((col) => (
                       <TableCell key={col.key} sx={{ color: BLUE.text }}>{col.label}</TableCell>
                     ))}
-                    {/* ── Actions column ── */}
-                    <TableCell align="center" sx={{ color: BLUE.text, width: 90 }}>Actions</TableCell>
+                    <TableCell align="center" sx={{ color: BLUE.text, width: activeTab === "pending" ? 120 : 90 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -313,47 +385,40 @@ export default function Invested({ inline = false }) {
                   ) : (
                     rows.map((row, idx) => (
                       <TableRow key={row.id}
-                        sx={{
-                          "&:hover": { bgcolor: BLUE.light },
-                          "&:last-child td": { borderBottom: 0 },
-                        }}>
+                        sx={{ "&:hover": { bgcolor: BLUE.light }, "&:last-child td": { borderBottom: 0 } }}>
                         <TableCell sx={{ color: "text.secondary", fontSize: "0.78rem" }}>{idx + 1}</TableCell>
                         {cols.map((col) => (
                           <TableCell key={col.key} sx={{ fontSize: "0.88rem", color: "text.primary" }}>
-                            {row[col.key] ?? "—"}
+                            {col.type === "date" ? formatDate(row[col.key]) : row[col.key] ?? "—"}
                           </TableCell>
                         ))}
-
-                        {/* ── Edit + Delete buttons ── */}
                         <TableCell align="center">
                           <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
                             <Tooltip title="Edit" arrow>
                               <IconButton size="small" onClick={() => openEdit(row)}
-                                sx={{
-                                  color: BLUE.text,
-                                  bgcolor: BLUE.mid,
-                                  borderRadius: "6px",
-                                  width: 28, height: 28,
-                                  "&:hover": { bgcolor: BLUE.main, color: "#fff" },
-                                }}>
+                                sx={{ color: BLUE.text, bgcolor: BLUE.mid, borderRadius: "6px", width: 28, height: 28, "&:hover": { bgcolor: BLUE.main, color: "#fff" } }}>
                                 <EditIcon />
                               </IconButton>
                             </Tooltip>
+
+                            {/* ── Share/Promote button — only on pending tab ── */}
+                            {activeTab === "pending" && (
+                              <Tooltip title="Move to Completed" arrow>
+                                <IconButton size="small" onClick={() => openPromote(row)}
+                                  sx={{ color: GREEN.main, bgcolor: GREEN.light, borderRadius: "6px", width: 28, height: 28, "&:hover": { bgcolor: GREEN.main, color: "#fff" } }}>
+                                  <ShareIcon />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+
                             <Tooltip title="Delete" arrow>
                               <IconButton size="small" onClick={() => askDelete(row.id)}
-                                sx={{
-                                  color: "#E53935",
-                                  bgcolor: "#FFEBEE",
-                                  borderRadius: "6px",
-                                  width: 28, height: 28,
-                                  "&:hover": { bgcolor: "#E53935", color: "#fff" },
-                                }}>
+                                sx={{ color: "#E53935", bgcolor: "#FFEBEE", borderRadius: "6px", width: 28, height: 28, "&:hover": { bgcolor: "#E53935", color: "#fff" } }}>
                                 <DeleteIcon />
                               </IconButton>
                             </Tooltip>
                           </Box>
                         </TableCell>
-
                       </TableRow>
                     ))
                   )}
@@ -380,14 +445,60 @@ export default function Invested({ inline = false }) {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={closeDialog} variant="outlined" size="small"
-            sx={{ borderColor: BLUE.border, color: BLUE.text, textTransform: "none", borderRadius: "6px",
-              "&:hover": { borderColor: BLUE.main, bgcolor: BLUE.light } }}>
+            sx={{ borderColor: BLUE.border, color: BLUE.text, textTransform: "none", borderRadius: "6px", "&:hover": { borderColor: BLUE.main, bgcolor: BLUE.light } }}>
             Cancel
           </Button>
           <Button onClick={handleSave} variant="contained" size="small"
-            sx={{ bgcolor: BLUE.main, boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: "#42A5F5", boxShadow: "none" } }}>
+            sx={{ bgcolor: BLUE.main, boxShadow: "none", textTransform: "none", fontWeight: 700, borderRadius: "6px", "&:hover": { bgcolor: "#42A5F5", boxShadow: "none" } }}>
             {editRow ? "Update" : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Promote Dialog (Pending → Completed) ── */}
+      <Dialog open={promoteOpen} onClose={closePromote} maxWidth="sm" fullWidth
+        PaperProps={{ elevation: 0, sx: { border: `1.5px solid ${GREEN.main}55`, borderRadius: 2 } }}>
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1 }}>
+          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: GREEN.main }} />
+          <Box>
+            <Typography fontWeight={700}>Move to Customers Completed</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Fields highlighted in orange require manual entry
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            {COMPLETED_COLS.map((col) => (
+              <Box key={col.key}>
+                <FieldInput
+                  col={col}
+                  value={promoteForm[col.key]}
+                  onChange={handlePromoteField}
+                  highlight={manualKeys.has(col.key)}
+                />
+                {manualKeys.has(col.key) && (
+                  <Typography variant="caption" sx={{ color: "#FFA726", ml: 0.5 }}>
+                    ⚠ No matching field in pending — please fill manually
+                  </Typography>
+                )}
+                {autoFilledKeys.has(col.key) && (
+                  <Typography variant="caption" sx={{ color: GREEN.main, ml: 0.5 }}>
+                    ✓ Auto-filled from pending record
+                  </Typography>
+                )}
+              </Box>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={closePromote} variant="outlined" size="small" disabled={promoteLoading}
+            sx={{ borderColor: BLUE.border, color: BLUE.text, textTransform: "none", borderRadius: "6px" }}>
+            Cancel
+          </Button>
+          <Button onClick={handlePromoteSave} variant="contained" size="small" disabled={promoteLoading}
+            sx={{ bgcolor: GREEN.main, boxShadow: "none", textTransform: "none", fontWeight: 700, borderRadius: "6px", "&:hover": { bgcolor: GREEN.hover, boxShadow: "none" } }}>
+            {promoteLoading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Save & Move to Completed"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -410,8 +521,7 @@ export default function Invested({ inline = false }) {
             Cancel
           </Button>
           <Button onClick={handleDelete} variant="contained" size="small"
-            sx={{ bgcolor: "#E53935", boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: "#C62828", boxShadow: "none" } }}>
+            sx={{ bgcolor: "#E53935", boxShadow: "none", textTransform: "none", fontWeight: 700, borderRadius: "6px", "&:hover": { bgcolor: "#C62828", boxShadow: "none" } }}>
             Delete
           </Button>
         </DialogActions>
@@ -421,19 +531,11 @@ export default function Invested({ inline = false }) {
       <Snackbar open={snack.open} autoHideDuration={3000}
         onClose={() => setSnack((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity={snack.severity} variant="filled" sx={{ fontWeight: 600 }}>
-          {snack.msg}
-        </Alert>
+        <Alert severity={snack.severity} variant="filled" sx={{ fontWeight: 600 }}>{snack.msg}</Alert>
       </Snackbar>
     </>
   );
 
   if (inline) return <ThemeProvider theme={theme}>{content}</ThemeProvider>;
-
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {content}
-    </ThemeProvider>
-  );
+  return <ThemeProvider theme={theme}><CssBaseline />{content}</ThemeProvider>;
 }

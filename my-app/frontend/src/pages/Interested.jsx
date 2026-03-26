@@ -63,6 +63,16 @@ const DeleteIcon = () => (
       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  const date = new Date(dateStr);
+
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 const PlusIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
     <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -278,7 +288,9 @@ export default function Interested({ inline = false }) {
                                 }}
                               />
                             ) : (
-                              row[col.key] ?? "—"
+                              col.type === "date"
+  ? formatDate(row[col.key])
+  : row[col.key] ?? "—"
                             )}
                           </TableCell>
                         ))}
