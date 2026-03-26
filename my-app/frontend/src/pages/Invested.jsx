@@ -45,40 +45,41 @@ const GREEN = {
 
 const TABS = [
   { id: "completed", label: "Customers Completed" },
-  { id: "pending", label: "Customers Pending" },
+  { id: "pending",   label: "Customers Pending"   },
 ];
 
 const COMPLETED_COLS = [
-  { key: "client_name", label: "Client Name", type: "text" },
-  { key: "first_investment", label: "First Investment", type: "date" },
-  { key: "amount", label: "Amount", type: "number" },
-  { key: "amc_name", label: "AMC Name", type: "text" },
-  { key: "scheme", label: "Scheme", type: "text" },
-  { key: "bank", label: "Bank", type: "select", options: ["gift", "savings", "both"] },
+  { key: "client_name",       label: "Client Name",       type: "text"   },
+  { key: "first_investment",  label: "First Investment",   type: "date"   },
+  { key: "amount",            label: "Amount",             type: "number" },
+  { key: "amc_name",          label: "AMC Name",           type: "text"   },
+  { key: "scheme",            label: "Scheme",             type: "text"   },
+  { key: "bank",              label: "Bank",               type: "select", options: ["gift", "savings", "both"] },
 ];
 
 const PENDING_COLS = [
-  { key: "client_name", label: "Client Name", type: "text" },
-  { key: "amount_tobe_invested", label: "Amount to be Invested", type: "number" },
-  { key: "amc_name", label: "AMC Name", type: "text" },
-  { key: "scheme", label: "Scheme", type: "text" },
-  { key: "bank", label: "Bank", type: "select", options: ["gift", "savings", "both"] },
-  { key: "submission_date", label: "Submission Date", type: "date" },
-  { key: "status", label: "Status", type: "text" },
+  { key: "client_name",           label: "Client Name",            type: "text"   },
+  { key: "amount_tobe_invested",  label: "Amount to be Invested",  type: "number" },
+  { key: "amc_name",              label: "AMC Name",               type: "text"   },
+  { key: "scheme",                label: "Scheme",                 type: "text"   },
+  { key: "bank",                  label: "Bank",                   type: "select", options: ["gift", "savings", "both"] },
+  { key: "submission_date",       label: "Submission Date",        type: "date"   },
+  { key: "status",                label: "Status",                 type: "text"   },
 ];
 
-// Maps pending fields → completed fields where keys differ
-const PENDING_TO_COMPLETED_MAP = {
-  client_name: "client_name",
-  amount_tobe_invested: "amount",   // maps to amount
-  amc_name: "amc_name",
-  scheme: "scheme",
-  bank: "bank",
-  // submission_date → first_investment (manual, user should confirm)
-  // status → no match (manual)
-};
+const autoFilledKeys = new Set(["client_name", "amount", "amc_name", "scheme", "bank"]);
+const manualKeys     = new Set(["first_investment"]);
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
+const pendingToCompletedForm = (pendingRow) => ({
+  client_name:      pendingRow.client_name             || "",
+  amount:           pendingRow.amount_tobe_invested    || "",
+  amc_name:         pendingRow.amc_name                || "",
+  scheme:           pendingRow.scheme                  || "",
+  bank:             pendingRow.bank                    || "savings",
+  first_investment: "",
+});
+
+// ── Icons ──────────────────────────────────────────────────────────────────────
 const EditIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
@@ -99,17 +100,17 @@ const DeleteIcon = () => (
 );
 const PlusIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <line x1="12" y1="5"  x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <line x1="5"  y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 const ShareIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="18" cy="5"  r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="6"  cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="8.59"  y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="15.41" y1="6.51"  x2="8.59"  y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 const BackIcon = () => (
@@ -120,22 +121,11 @@ const BackIcon = () => (
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "—";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 };
 
 const emptyCompleted = () => ({ client_name: "", first_investment: "", amount: "", scheme: "", amc_name: "", bank: "savings" });
 const emptyPending   = () => ({ client_name: "", amount_tobe_invested: "", scheme: "", amc_name: "", bank: "savings", submission_date: "", status: "" });
-
-// Build a pre-filled completed form from a pending row
-const pendingToCompletedForm = (pendingRow) => ({
-  client_name:      pendingRow.client_name      || "",
-  amount:           pendingRow.amount_tobe_invested || "",  // mapped
-  amc_name:         pendingRow.amc_name         || "",
-  scheme:           pendingRow.scheme           || "",
-  bank:             pendingRow.bank             || "savings",
-  first_investment: "",   // no direct match → manual entry
-});
 
 function FieldInput({ col, value, onChange, highlight = false }) {
   const highlightSx = highlight
@@ -144,7 +134,8 @@ function FieldInput({ col, value, onChange, highlight = false }) {
 
   if (col.type === "select") {
     return (
-      <FormControl fullWidth size="small" sx={highlight ? { "& .MuiOutlinedInput-notchedOutline": { borderColor: "#FFA726", borderWidth: 2 } } : {}}>
+      <FormControl fullWidth size="small"
+        sx={highlight ? { "& .MuiOutlinedInput-notchedOutline": { borderColor: "#FFA726", borderWidth: 2 } } : {}}>
         <InputLabel>{col.label}</InputLabel>
         <Select value={value || ""} label={col.label} onChange={(e) => onChange(col.key, e.target.value)}>
           {col.options.map((o) => (
@@ -166,26 +157,24 @@ function FieldInput({ col, value, onChange, highlight = false }) {
   );
 }
 
-export default function Invested({ inline = false }) {
+// ── onDataChange prop added ────────────────────────────────────────────────────
+export default function Invested({ inline = false, onDataChange }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("completed");
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [rows, setRows]           = useState([]);
+  const [loading, setLoading]     = useState(false);
 
-  // Add/Edit dialog
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editRow, setEditRow] = useState(null);
-  const [formData, setFormData] = useState({});
+  const [editRow, setEditRow]       = useState(null);
+  const [formData, setFormData]     = useState({});
 
-  // Delete confirm
-  const [deleteId, setDeleteId] = useState(null);
+  const [deleteId, setDeleteId]       = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // Promote pending → completed
-  const [promoteOpen, setPromoteOpen] = useState(false);
-  const [promoteSourceId, setPromoteSourceId] = useState(null);   // pending row id to delete after save
-  const [promoteForm, setPromoteForm] = useState({});
-  const [promoteLoading, setPromoteLoading] = useState(false);
+  const [promoteOpen, setPromoteOpen]         = useState(false);
+  const [promoteSourceId, setPromoteSourceId] = useState(null);
+  const [promoteForm, setPromoteForm]         = useState({});
+  const [promoteLoading, setPromoteLoading]   = useState(false);
 
   const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
 
@@ -194,7 +183,7 @@ export default function Invested({ inline = false }) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/invested/${activeTab}`);
+      const res  = await fetch(`${API}/invested/${activeTab}`);
       const data = await res.json();
       setRows(Array.isArray(data) ? data : []);
     } catch {
@@ -208,36 +197,29 @@ export default function Invested({ inline = false }) {
 
   const showSnack = (msg, severity = "success") => setSnack({ open: true, msg, severity });
 
-  // ── Normal add/edit ──
-  const openAdd = () => {
-    setEditRow(null);
-    setFormData(activeTab === "completed" ? emptyCompleted() : emptyPending());
-    setDialogOpen(true);
-  };
-  const openEdit = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
+  // ── Add / Edit ──
+  const openAdd     = () => { setEditRow(null); setFormData(activeTab === "completed" ? emptyCompleted() : emptyPending()); setDialogOpen(true); };
+  const openEdit    = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
   const closeDialog = () => setDialogOpen(false);
   const handleField = (key, val) => setFormData((prev) => ({ ...prev, [key]: val }));
 
   const handleSave = async () => {
-    const url = editRow ? `${API}/invested/${activeTab}/${editRow.id}` : `${API}/invested/${activeTab}`;
+    const url    = editRow ? `${API}/invested/${activeTab}/${editRow.id}` : `${API}/invested/${activeTab}`;
     const method = editRow ? "PUT" : "POST";
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
       if (!res.ok) throw new Error();
       showSnack(editRow ? "Record updated!" : "Record added!");
       closeDialog();
       fetchData();
+      if (onDataChange) onDataChange(); // ← notify Dashboard
     } catch {
       showSnack("Save failed", "error");
     }
   };
 
   // ── Delete ──
-  const askDelete = (id) => { setDeleteId(id); setConfirmOpen(true); };
+  const askDelete    = (id) => { setDeleteId(id); setConfirmOpen(true); };
   const handleDelete = async () => {
     try {
       const res = await fetch(`${API}/invested/${activeTab}/${deleteId}`, { method: "DELETE" });
@@ -245,38 +227,32 @@ export default function Invested({ inline = false }) {
       showSnack("Record deleted");
       setConfirmOpen(false);
       fetchData();
+      if (onDataChange) onDataChange(); // ← notify Dashboard
     } catch {
       showSnack("Delete failed", "error");
     }
   };
 
   // ── Promote pending → completed ──
-  const openPromote = (pendingRow) => {
-    setPromoteSourceId(pendingRow.id);
-    setPromoteForm(pendingToCompletedForm(pendingRow));
-    setPromoteOpen(true);
-  };
-  const closePromote = () => { setPromoteOpen(false); setPromoteSourceId(null); setPromoteForm({}); };
+  const openPromote        = (row) => { setPromoteSourceId(row.id); setPromoteForm(pendingToCompletedForm(row)); setPromoteOpen(true); };
+  const closePromote       = () => { setPromoteOpen(false); setPromoteSourceId(null); setPromoteForm({}); };
   const handlePromoteField = (key, val) => setPromoteForm((prev) => ({ ...prev, [key]: val }));
 
   const handlePromoteSave = async () => {
     setPromoteLoading(true);
     try {
-      // 1. Add to customers_completed
       const addRes = await fetch(`${API}/invested/completed`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(promoteForm),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(promoteForm),
       });
       if (!addRes.ok) throw new Error("Failed to add to completed");
 
-      // 2. Delete from customers_pending
       const delRes = await fetch(`${API}/invested/pending/${promoteSourceId}`, { method: "DELETE" });
       if (!delRes.ok) throw new Error("Failed to remove from pending");
 
       showSnack("✓ Moved to Customers Completed!", "success");
       closePromote();
       fetchData();
+      if (onDataChange) onDataChange(); // ← notify Dashboard
     } catch (e) {
       showSnack(e.message || "Operation failed", "error");
     } finally {
@@ -284,13 +260,8 @@ export default function Invested({ inline = false }) {
     }
   };
 
-  // Fields that were auto-filled vs need manual entry
-  const autoFilledKeys = new Set(["client_name", "amount", "amc_name", "scheme", "bank"]);
-  const manualKeys = new Set(["first_investment"]);
-
   const content = (
     <>
-      {/* ── AppBar ── */}
       {!inline && (
         <AppBar position="static" elevation={0}
           sx={{ bgcolor: "#fff", borderBottom: `1px solid ${BLUE.border}` }}>
@@ -313,13 +284,11 @@ export default function Invested({ inline = false }) {
         </AppBar>
       )}
 
-      {/* ── Body ── */}
       <Box sx={{ minHeight: inline ? "unset" : "calc(100vh - 64px)", bgcolor: inline ? "transparent" : "#F0F7FF", px: inline ? 0 : { xs: 2, md: 4 }, py: inline ? 0 : 3 }}>
         {!inline && (
           <Typography variant="h5" fontWeight={800} color={BLUE.text} sx={{ mb: 3 }}>Invested Customers</Typography>
         )}
 
-        {/* ── Sub-tabs ── */}
         <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -330,8 +299,7 @@ export default function Invested({ inline = false }) {
                   border: `2px solid ${isActive ? BLUE.main : BLUE.border}`,
                   bgcolor: isActive ? BLUE.main : "#fff",
                   color: isActive ? "#fff" : BLUE.text,
-                  fontWeight: 700, fontSize: "0.85rem",
-                  transition: "all 0.25s ease",
+                  fontWeight: 700, fontSize: "0.85rem", transition: "all 0.25s ease",
                   boxShadow: isActive ? `0 3px 10px ${BLUE.main}44` : "0 1px 3px rgba(0,0,0,0.07)",
                   userSelect: "none",
                   "&:hover": { transform: "translateY(-2px)", boxShadow: `0 5px 14px ${BLUE.main}33`, borderColor: BLUE.main, bgcolor: isActive ? BLUE.main : BLUE.light },
@@ -342,7 +310,6 @@ export default function Invested({ inline = false }) {
           })}
         </Box>
 
-        {/* ── Table card ── */}
         <Paper elevation={0} sx={{ border: `1.5px solid ${BLUE.border}`, borderRadius: 2, overflow: "hidden" }}>
           <Box sx={{ px: 3, py: 2, bgcolor: BLUE.light, borderBottom: `1px solid ${BLUE.mid}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Typography fontWeight={700} sx={{ color: BLUE.text, fontSize: "0.95rem" }}>
@@ -368,24 +335,20 @@ export default function Invested({ inline = false }) {
                 <TableHead>
                   <TableRow sx={{ bgcolor: BLUE.light }}>
                     <TableCell sx={{ color: BLUE.text, width: 50 }}>#</TableCell>
-                    {cols.map((col) => (
-                      <TableCell key={col.key} sx={{ color: BLUE.text }}>{col.label}</TableCell>
-                    ))}
+                    {cols.map((col) => <TableCell key={col.key} sx={{ color: BLUE.text }}>{col.label}</TableCell>)}
                     <TableCell align="center" sx={{ color: BLUE.text, width: activeTab === "pending" ? 120 : 90 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {rows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={cols.length + 2} align="center"
-                        sx={{ py: 6, color: "text.secondary", fontStyle: "italic" }}>
+                      <TableCell colSpan={cols.length + 2} align="center" sx={{ py: 6, color: "text.secondary", fontStyle: "italic" }}>
                         No records found. Click "Add Row" to get started.
                       </TableCell>
                     </TableRow>
                   ) : (
                     rows.map((row, idx) => (
-                      <TableRow key={row.id}
-                        sx={{ "&:hover": { bgcolor: BLUE.light }, "&:last-child td": { borderBottom: 0 } }}>
+                      <TableRow key={row.id} sx={{ "&:hover": { bgcolor: BLUE.light }, "&:last-child td": { borderBottom: 0 } }}>
                         <TableCell sx={{ color: "text.secondary", fontSize: "0.78rem" }}>{idx + 1}</TableCell>
                         {cols.map((col) => (
                           <TableCell key={col.key} sx={{ fontSize: "0.88rem", color: "text.primary" }}>
@@ -400,8 +363,6 @@ export default function Invested({ inline = false }) {
                                 <EditIcon />
                               </IconButton>
                             </Tooltip>
-
-                            {/* ── Share/Promote button — only on pending tab ── */}
                             {activeTab === "pending" && (
                               <Tooltip title="Move to Completed" arrow>
                                 <IconButton size="small" onClick={() => openPromote(row)}
@@ -410,7 +371,6 @@ export default function Invested({ inline = false }) {
                                 </IconButton>
                               </Tooltip>
                             )}
-
                             <Tooltip title="Delete" arrow>
                               <IconButton size="small" onClick={() => askDelete(row.id)}
                                 sx={{ color: "#E53935", bgcolor: "#FFEBEE", borderRadius: "6px", width: 28, height: 28, "&:hover": { bgcolor: "#E53935", color: "#fff" } }}>
@@ -438,9 +398,7 @@ export default function Invested({ inline = false }) {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            {cols.map((col) => (
-              <FieldInput key={col.key} col={col} value={formData[col.key]} onChange={handleField} />
-            ))}
+            {cols.map((col) => <FieldInput key={col.key} col={col} value={formData[col.key]} onChange={handleField} />)}
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
@@ -455,37 +413,26 @@ export default function Invested({ inline = false }) {
         </DialogActions>
       </Dialog>
 
-      {/* ── Promote Dialog (Pending → Completed) ── */}
+      {/* ── Promote Dialog ── */}
       <Dialog open={promoteOpen} onClose={closePromote} maxWidth="sm" fullWidth
         PaperProps={{ elevation: 0, sx: { border: `1.5px solid ${GREEN.main}55`, borderRadius: 2 } }}>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1 }}>
           <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: GREEN.main }} />
           <Box>
             <Typography fontWeight={700}>Move to Customers Completed</Typography>
-            <Typography variant="caption" color="text.secondary">
-              Fields highlighted in orange require manual entry
-            </Typography>
+            <Typography variant="caption" color="text.secondary">Fields highlighted in orange require manual entry</Typography>
           </Box>
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             {COMPLETED_COLS.map((col) => (
               <Box key={col.key}>
-                <FieldInput
-                  col={col}
-                  value={promoteForm[col.key]}
-                  onChange={handlePromoteField}
-                  highlight={manualKeys.has(col.key)}
-                />
+                <FieldInput col={col} value={promoteForm[col.key]} onChange={handlePromoteField} highlight={manualKeys.has(col.key)} />
                 {manualKeys.has(col.key) && (
-                  <Typography variant="caption" sx={{ color: "#FFA726", ml: 0.5 }}>
-                    ⚠ No matching field in pending — please fill manually
-                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#FFA726", ml: 0.5 }}>⚠ No matching field in pending — please fill manually</Typography>
                 )}
                 {autoFilledKeys.has(col.key) && (
-                  <Typography variant="caption" sx={{ color: GREEN.main, ml: 0.5 }}>
-                    ✓ Auto-filled from pending record
-                  </Typography>
+                  <Typography variant="caption" sx={{ color: GREEN.main, ml: 0.5 }}>✓ Auto-filled from pending record</Typography>
                 )}
               </Box>
             ))}
@@ -511,9 +458,7 @@ export default function Invested({ inline = false }) {
           <Typography fontWeight={700}>Confirm Delete</Typography>
         </DialogTitle>
         <DialogContent>
-          <Typography color="text.secondary">
-            Are you sure you want to delete this record? This action cannot be undone.
-          </Typography>
+          <Typography color="text.secondary">Are you sure you want to delete this record? This action cannot be undone.</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={() => setConfirmOpen(false)} variant="outlined" size="small"
@@ -527,7 +472,6 @@ export default function Invested({ inline = false }) {
         </DialogActions>
       </Dialog>
 
-      {/* ── Snackbar ── */}
       <Snackbar open={snack.open} autoHideDuration={3000}
         onClose={() => setSnack((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>

@@ -13,6 +13,8 @@ app.use(express.json());
 const investedRoutes   = require("./routes/investedRoutes");
 const interestedRoutes = require("./routes/interestedRoutes");
 const empanelmentRoutes = require("./routes/empanelmentRoutes");
+const countRoutes = require("./routes/count");
+const giftCityRoutes = require("./routes/giftCityRoutes");
 
 
 console.log("Routes loaded");
@@ -20,6 +22,8 @@ console.log("Routes loaded");
 app.use("/empanelment", empanelmentRoutes);
 app.use("/invested",   investedRoutes);
 app.use("/interested", interestedRoutes);
+app.use("/api/count", countRoutes);
+app.use("/gift-city", giftCityRoutes);
 
 // Test route
 app.get("/test", (req, res) => res.send("Test route works"));
@@ -60,6 +64,16 @@ app.get("/stats/interested", async (req, res) => {
   try {
     const [result] = await db.query("SELECT COUNT(*) AS count FROM customers_interested");
     res.json({ total: result[0].count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/stats/giftcity", async (req, res) => {
+  try {
+    const [[{ active }]]   = await db.query("SELECT COUNT(*) AS active FROM gift_city_ac_active");
+    const [[{ inactive }]] = await db.query("SELECT COUNT(*) AS inactive FROM gift_city_ac_inactive");
+    res.json({ active, inactive });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
