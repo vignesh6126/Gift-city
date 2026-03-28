@@ -30,37 +30,39 @@ const theme = createTheme({
 });
 
 const ORANGE = {
-  main:   "#E67E22",
-  light:  "#FEF5E8",
-  mid:    "#FDEBD0",
+  main: "#E67E22",
+  light: "#FEF5E8",
+  mid: "#FDEBD0",
   border: "#F5CBA7",
-  text:   "#A04000",
+  text: "#A04000",
 };
 
 const COLS = [
-  { key: "client_name",   label: "Client Name",   type: "text" },
-  { key: "last_meeting",  label: "Last Meeting",   type: "date" },
-  { key: "next_meeting",  label: "Next Meeting",   type: "date" },
-  { key: "invested",      label: "Interested",       type: "select", options: ["yes", "no"] },
+  { key: "client_name",     label: "Client Name",      type: "text"   },
+  { key: "esops_rsu",       label: "ESOPS/RSU",         type: "select", options: ["yes", "no"] },
+  { key: "discussion_date", label: "Discussion Date",   type: "date"   },
+  { key: "next_action",     label: "Next Action",       type: "text"   },
 ];
+
+const emptyRow = () => ({ client_name: "", esops_rsu: "no", discussion_date: "", next_action: "" });
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const EditIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 const DeleteIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 const formatDate = (dateStr) => {
@@ -75,17 +77,15 @@ const formatDate = (dateStr) => {
 };
 const PlusIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 const BackIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
-
-const emptyRow = () => ({ client_name: "", last_meeting: "", next_meeting: "", invested: "no" });
 
 function FieldInput({ col, value, onChange }) {
   if (col.type === "select") {
@@ -113,19 +113,19 @@ function FieldInput({ col, value, onChange }) {
 
 export default function Interested({ inline = false }) {
   const navigate = useNavigate();
-  const [rows, setRows]               = useState([]);
-  const [loading, setLoading]         = useState(false);
-  const [dialogOpen, setDialogOpen]   = useState(false);
-  const [editRow, setEditRow]         = useState(null);
-  const [formData, setFormData]       = useState({});
-  const [deleteId, setDeleteId]       = useState(null);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editRow, setEditRow] = useState(null);
+  const [formData, setFormData] = useState({});
+  const [deleteId, setDeleteId] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [snack, setSnack]             = useState({ open: false, msg: "", severity: "success" });
+  const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/interested`);
+      const res = await fetch(`${API}/interested`);
       const data = await res.json();
       setRows(Array.isArray(data) ? data : []);
     } catch {
@@ -137,14 +137,14 @@ export default function Interested({ inline = false }) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const showSnack   = (msg, severity = "success") => setSnack({ open: true, msg, severity });
-  const openAdd     = () => { setEditRow(null); setFormData(emptyRow()); setDialogOpen(true); };
-  const openEdit    = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
+  const showSnack = (msg, severity = "success") => setSnack({ open: true, msg, severity });
+  const openAdd = () => { setEditRow(null); setFormData(emptyRow()); setDialogOpen(true); };
+  const openEdit = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
   const closeDialog = () => setDialogOpen(false);
   const handleField = (key, val) => setFormData((prev) => ({ ...prev, [key]: val }));
 
   const handleSave = async () => {
-    const url    = editRow ? `${API}/interested/${editRow.id}` : `${API}/interested`;
+    const url = editRow ? `${API}/interested/${editRow.id}` : `${API}/interested`;
     const method = editRow ? "PUT" : "POST";
     try {
       const res = await fetch(url, {
@@ -161,7 +161,7 @@ export default function Interested({ inline = false }) {
     }
   };
 
-  const askDelete    = (id) => { setDeleteId(id); setConfirmOpen(true); };
+  const askDelete = (id) => { setDeleteId(id); setConfirmOpen(true); };
   const handleDelete = async () => {
     try {
       const res = await fetch(`${API}/interested/${deleteId}`, { method: "DELETE" });
@@ -182,22 +182,28 @@ export default function Interested({ inline = false }) {
           sx={{ bgcolor: "#fff", borderBottom: `1px solid ${ORANGE.border}` }}>
           <Toolbar>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexGrow: 1 }}>
-              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: ORANGE.main,
-                  display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box sx={{
+                width: 32, height: 32, borderRadius: 1.5, bgcolor: ORANGE.main,
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>
                 <Typography variant="caption" fontWeight={900} color="#fff" fontSize="0.68rem">FD</Typography>
               </Box>
               <Typography variant="h6" fontWeight={800} color="text.primary">Finance Doctor</Typography>
             </Box>
             <Button onClick={() => navigate("/dashboard")} startIcon={<BackIcon />}
               variant="outlined" size="small"
-              sx={{ color: ORANGE.text, borderColor: ORANGE.border, textTransform: "none", mr: 1,
-                "&:hover": { borderColor: ORANGE.main, bgcolor: ORANGE.light } }}>
+              sx={{
+                color: ORANGE.text, borderColor: ORANGE.border, textTransform: "none", mr: 1,
+                "&:hover": { borderColor: ORANGE.main, bgcolor: ORANGE.light }
+              }}>
               Dashboard
             </Button>
             <Button onClick={() => { localStorage.removeItem("user"); navigate("/login"); }}
               variant="outlined" size="small"
-              sx={{ color: ORANGE.main, borderColor: ORANGE.border, textTransform: "none",
-                "&:hover": { bgcolor: ORANGE.light } }}>
+              sx={{
+                color: ORANGE.main, borderColor: ORANGE.border, textTransform: "none",
+                "&:hover": { bgcolor: ORANGE.light }
+              }}>
               Logout
             </Button>
           </Toolbar>
@@ -207,7 +213,7 @@ export default function Interested({ inline = false }) {
       {/* ── Body ── */}
       <Box sx={{
         minHeight: inline ? "unset" : "calc(100vh - 64px)",
-        bgcolor:   inline ? "transparent" : "#FFF8F0",
+        bgcolor: inline ? "transparent" : "#FFF8F0",
         px: inline ? 0 : { xs: 2, md: 4 },
         py: inline ? 0 : 3,
       }}>
@@ -231,13 +237,17 @@ export default function Interested({ inline = false }) {
               Prospects
               {!loading && (
                 <Chip label={`${rows.length} records`} size="small"
-                  sx={{ ml: 1.5, bgcolor: ORANGE.mid, color: ORANGE.text,
-                    fontWeight: 700, fontSize: "0.7rem", height: 20 }} />
+                  sx={{
+                    ml: 1.5, bgcolor: ORANGE.mid, color: ORANGE.text,
+                    fontWeight: 700, fontSize: "0.7rem", height: 20
+                  }} />
               )}
             </Typography>
             <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
-              sx={{ bgcolor: ORANGE.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
-                borderRadius: "6px", "&:hover": { bgcolor: "#CA6F1E", boxShadow: "none" } }}>
+              sx={{
+                bgcolor: ORANGE.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
+                borderRadius: "6px", "&:hover": { bgcolor: "#CA6F1E", boxShadow: "none" }
+              }}>
               Add Row
             </Button>
           </Box>
@@ -277,20 +287,20 @@ export default function Interested({ inline = false }) {
                         <TableCell sx={{ color: "text.secondary", fontSize: "0.78rem" }}>{idx + 1}</TableCell>
                         {COLS.map((col) => (
                           <TableCell key={col.key} sx={{ fontSize: "0.88rem", color: "text.primary" }}>
-                            {col.key === "invested" ? (
+                            {col.key === "esops_rsu" ? (
                               <Chip
                                 label={row[col.key] === "yes" ? "Yes" : "No"}
                                 size="small"
                                 sx={{
                                   bgcolor: row[col.key] === "yes" ? "#E8F5E9" : "#FFEBEE",
-                                  color:   row[col.key] === "yes" ? "#2E7D32" : "#C62828",
+                                  color: row[col.key] === "yes" ? "#2E7D32" : "#C62828",
                                   fontWeight: 700, fontSize: "0.72rem", height: 20,
                                 }}
                               />
                             ) : (
                               col.type === "date"
-  ? formatDate(row[col.key])
-  : row[col.key] ?? "—"
+                                ? formatDate(row[col.key])
+                                : row[col.key] ?? "—"
                             )}
                           </TableCell>
                         ))}
@@ -346,13 +356,17 @@ export default function Interested({ inline = false }) {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={closeDialog} variant="outlined" size="small"
-            sx={{ borderColor: ORANGE.border, color: ORANGE.text, textTransform: "none", borderRadius: "6px",
-              "&:hover": { borderColor: ORANGE.main, bgcolor: ORANGE.light } }}>
+            sx={{
+              borderColor: ORANGE.border, color: ORANGE.text, textTransform: "none", borderRadius: "6px",
+              "&:hover": { borderColor: ORANGE.main, bgcolor: ORANGE.light }
+            }}>
             Cancel
           </Button>
           <Button onClick={handleSave} variant="contained" size="small"
-            sx={{ bgcolor: ORANGE.main, boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: "#CA6F1E", boxShadow: "none" } }}>
+            sx={{
+              bgcolor: ORANGE.main, boxShadow: "none", textTransform: "none", fontWeight: 700,
+              borderRadius: "6px", "&:hover": { bgcolor: "#CA6F1E", boxShadow: "none" }
+            }}>
             {editRow ? "Update" : "Save"}
           </Button>
         </DialogActions>
@@ -376,8 +390,10 @@ export default function Interested({ inline = false }) {
             Cancel
           </Button>
           <Button onClick={handleDelete} variant="contained" size="small"
-            sx={{ bgcolor: "#E53935", boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: "#C62828", boxShadow: "none" } }}>
+            sx={{
+              bgcolor: "#E53935", boxShadow: "none", textTransform: "none", fontWeight: 700,
+              borderRadius: "6px", "&:hover": { bgcolor: "#C62828", boxShadow: "none" }
+            }}>
             Delete
           </Button>
         </DialogActions>
