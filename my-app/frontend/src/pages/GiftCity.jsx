@@ -285,13 +285,15 @@ export default function GiftCity({ inline = false, onDataChange }) {
                   }} />
               )}
             </Typography>
-            <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
-              sx={{
-                bgcolor: GOLD.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
-                borderRadius: "6px", "&:hover": { bgcolor: GOLD.dark, boxShadow: "none" },
-              }}>
-              Add Row
-            </Button>
+           {activeTab === "inactive" && (
+  <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
+    sx={{
+      bgcolor: GOLD.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
+      borderRadius: "6px", "&:hover": { bgcolor: GOLD.dark, boxShadow: "none" },
+    }}>
+    Add Row
+  </Button>
+)}
           </Box>
 
           {/* Table */}

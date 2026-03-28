@@ -319,10 +319,12 @@ export default function Invested({ inline = false, onDataChange }) {
                   sx={{ ml: 1.5, bgcolor: BLUE.mid, color: BLUE.text, fontWeight: 700, fontSize: "0.7rem", height: 20 }} />
               )}
             </Typography>
-            <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
-              sx={{ bgcolor: BLUE.main, boxShadow: "none", textTransform: "none", fontWeight: 600, borderRadius: "6px", "&:hover": { bgcolor: "#42A5F5", boxShadow: "none" } }}>
-              Add Row
-            </Button>
+		{activeTab === "pending" && (
+  <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
+    sx={{ bgcolor: BLUE.main, boxShadow: "none", textTransform: "none", fontWeight: 600, borderRadius: "6px", "&:hover": { bgcolor: "#42A5F5", boxShadow: "none" } }}>
+    Add Row
+  </Button>
+)}
           </Box>
 
           {loading ? (

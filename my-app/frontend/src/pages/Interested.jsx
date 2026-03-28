@@ -41,7 +41,7 @@ const COLS = [
   { key: "client_name",   label: "Client Name",   type: "text" },
   { key: "last_meeting",  label: "Last Meeting",   type: "date" },
   { key: "next_meeting",  label: "Next Meeting",   type: "date" },
-  { key: "invested",      label: "Invested",       type: "select", options: ["yes", "no"] },
+  { key: "invested",      label: "Interested",       type: "select", options: ["yes", "no"] },
 ];
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -213,7 +213,7 @@ export default function Interested({ inline = false }) {
       }}>
         {!inline && (
           <Typography variant="h5" fontWeight={800} color={ORANGE.text} sx={{ mb: 3 }}>
-            Interested Customers
+            Prospects
           </Typography>
         )}
 
@@ -228,7 +228,7 @@ export default function Interested({ inline = false }) {
             display: "flex", justifyContent: "space-between", alignItems: "center",
           }}>
             <Typography fontWeight={700} sx={{ color: ORANGE.text, fontSize: "0.95rem" }}>
-              Interested Customers
+              Prospects
               {!loading && (
                 <Chip label={`${rows.length} records`} size="small"
                   sx={{ ml: 1.5, bgcolor: ORANGE.mid, color: ORANGE.text,

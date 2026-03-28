@@ -19,23 +19,23 @@ const giftCityRoutes = require("./routes/giftCityRoutes");
 
 console.log("Routes loaded");
 
-app.use("/empanelment", empanelmentRoutes);
-app.use("/invested",   investedRoutes);
-app.use("/interested", interestedRoutes);
+app.use("/api/empanelment", empanelmentRoutes);
+app.use("/api/invested",   investedRoutes);
+app.use("/api/interested", interestedRoutes);
 app.use("/api/count", countRoutes);
-app.use("/gift-city", giftCityRoutes);
+app.use("/api/gift-city", giftCityRoutes);
 
 // Test route
-app.get("/test", (req, res) => res.send("Test route works"));
+app.get("/api/test", (req, res) => res.send("Test route works"));
 
 console.log("Routes mounted");
 
 // ── Stats: invested ────────────────────────────────────────────────────────────
-app.get("/stats/invested", async (req, res) => {
+app.get("/api/stats/invested", async (req, res) => {
   try {
     const [totalResult]      = await db.query("SELECT COUNT(*) AS count FROM customers_completed");
     const [thisMonthResult]  = await db.query(
-      "SELECT COUNT(*) AS count FROM customers_completed WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())"
+      "SELECT COUNT(*) AS count FROM customers_completed WHERE MONTH(first_investment)=MONTH(NOW()) AND YEAR(first_investment)=YEAR(NOW())"
     );
     const [totalValueResult] = await db.query("SELECT SUM(amount) AS total FROM customers_completed");
 
@@ -50,9 +50,9 @@ app.get("/stats/invested", async (req, res) => {
 });
 
 // ── Stats: empanelment ─────────────────────────────────────────────────────────
-app.get("/stats/empanelment", async (req, res) => {
+app.get("/api/stats/empanelment", async (req, res) => {
   try {
-    const [result] = await db.query("SELECT COUNT(*) AS count FROM empanelment");
+    const [result] = await db.query("SELECT COUNT(*) AS count FROM empanelment_completed");
     res.json({ total: result[0].count });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -60,7 +60,7 @@ app.get("/stats/empanelment", async (req, res) => {
 });
 
 // ── Stats: interested ──────────────────────────────────────────────────────────
-app.get("/stats/interested", async (req, res) => {
+app.get("/api/stats/interested", async (req, res) => {
   try {
     const [result] = await db.query("SELECT COUNT(*) AS count FROM customers_interested");
     res.json({ total: result[0].count });
@@ -69,7 +69,7 @@ app.get("/stats/interested", async (req, res) => {
   }
 });
 
-app.get("/stats/giftcity", async (req, res) => {
+app.get("/api/stats/giftcity", async (req, res) => {
   try {
     const [[{ active }]]   = await db.query("SELECT COUNT(*) AS active FROM gift_city_ac_active");
     const [[{ inactive }]] = await db.query("SELECT COUNT(*) AS inactive FROM gift_city_ac_inactive");
@@ -80,7 +80,7 @@ app.get("/stats/giftcity", async (req, res) => {
 });
 
 // ── Register ───────────────────────────────────────────────────────────────────
-app.post("/register", async (req, res) => {
+app.post("/api/register", async (req, res) => {
   const { name, email, password } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -95,7 +95,7 @@ app.post("/register", async (req, res) => {
 });
 
 // ── Login ──────────────────────────────────────────────────────────────────────
-app.post("/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     const [result] = await db.query("SELECT * FROM users WHERE email = ?", [req.body.email]);
     if (result.length === 0)

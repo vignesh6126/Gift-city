@@ -312,10 +312,12 @@ export default function Empanelment({ inline = false, onDataChange }) {
                   sx={{ ml: 1.5, bgcolor: PURPLE.mid, color: PURPLE.text, fontWeight: 700, fontSize: "0.7rem", height: 20 }} />
               )}
             </Typography>
-            <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
+		{activeTab === "pending" && (
+		<Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
               sx={{ bgcolor: PURPLE.main, boxShadow: "none", textTransform: "none", fontWeight: 600, borderRadius: "6px", "&:hover": { bgcolor: "#5A52D5", boxShadow: "none" } }}>
               Add Row
             </Button>
+		)}
           </Box>
 
           {loading ? (

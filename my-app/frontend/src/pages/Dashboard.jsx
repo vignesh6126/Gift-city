@@ -185,7 +185,7 @@ const Dashboard = () => {
   useEffect(() => {
     ["invested", "empanelment", "interested"].forEach(async (id) => {
       try {
-        const res  = await fetch(`${API}/api/stats/${id}`);
+        const res  = await fetch(`${API}/stats/${id}`);
         const data = await res.json();
         setStats((prev) => ({ ...prev, [id]: data }));
       } catch {
@@ -210,7 +210,7 @@ const Dashboard = () => {
     const fetchHeaderCounts = async () => {
       setHeaderLoading(true);
       try {
-        const res  = await fetch(`${API}/api/count/all`);
+        const res  = await fetch(`${API}/count/all`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setHeaderCounts(data);
