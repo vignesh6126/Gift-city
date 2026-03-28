@@ -1,451 +1,299 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Typography, Button, AppBar, Toolbar, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, Paper, IconButton,
+  Box, Typography, Button, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Chip, CircularProgress, Snackbar, Alert, Tooltip,
+  Chip, CircularProgress, Snackbar, Alert, Tooltip, useMediaQuery,
 } from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { createTheme, ThemeProvider, useTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 
 const API = import.meta.env.VITE_API_URL;
 
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    background: { default: "#FFFBF2", paper: "#FFFFFF" },
-    text: { primary: "#1A2B3C", secondary: "#5A7A99" },
-  },
-  typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
-  shape: { borderRadius: 4 },
-  components: {
-    MuiTableCell: {
-      styleOverrides: {
-        head: { fontWeight: 700, fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.04em" },
-      },
-    },
-  },
-});
-
-const GOLD = {
-  main: "#F59E0B",
-  light: "#FFFBEB",
-  mid: "#FEF3C7",
-  border: "#FCD34D",
-  text: "#92400E",
-  dark: "#D97706",
+const C = {
+  main: "#FF6B9D", glow: "#FF6B9D44", bg: "rgba(255,107,157,0.09)",
+  border: "rgba(255,107,157,0.22)", red: "#FF5A5F", redBg: "rgba(255,90,95,0.10)",
+  glass: "rgba(255,255,255,0.04)", glassBorder: "rgba(255,255,255,0.10)",
 };
 
-const TABS = [
-  { id: "active",   label: "Active A/C" },
-  { id: "inactive", label: "Inactive A/C" },
-];
+const theme = createTheme({
+  palette: { mode: "dark", background: { default: "#080B1A", paper: "#0D1330" }, text: { primary: "#E8EEFF", secondary: "#8B9CC8" } },
+  typography: { fontFamily: "'Outfit', -apple-system, sans-serif" },
+  breakpoints: { values: { xs: 0, sm: 600, md: 900, lg: 1200, xl: 1536 } },
+});
+
+const TABS = [{ id: "active", label: "Active A/C" }, { id: "inactive", label: "Inactive A/C" }];
 
 const ACTIVE_COLS = [
   { key: "customer_name", label: "Customer Name", type: "text" },
-  { key: "bank_name",     label: "Bank Name",     type: "text" },
-  { key: "opened_date",   label: "Opened Date",   type: "date" },
+  { key: "bank_name", label: "Bank Name", type: "text" },
+  { key: "opened_date", label: "Opened Date", type: "date" },
 ];
-
 const INACTIVE_COLS = [
   { key: "customer_name", label: "Customer Name", type: "text" },
-  { key: "bank_name",     label: "Bank Name",     type: "text" },
-  { key: "delay_reason",  label: "Delay Reason",  type: "text" },
+  { key: "bank_name", label: "Bank Name", type: "text" },
+  { key: "delay_reason", label: "Delay Reason", type: "text" },
 ];
 
-const emptyActive   = () => ({ customer_name: "", bank_name: "", opened_date: "" });
+const formatDate = (d) => !d ? "—" : new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+const emptyActive = () => ({ customer_name: "", bank_name: "", opened_date: "" });
 const emptyInactive = () => ({ customer_name: "", bank_name: "", delay_reason: "" });
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return "—";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-};
+const EditIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
+const DeleteIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
+const PlusIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const BackIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
-const EditIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-const DeleteIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-const PlusIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-const BackIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+const inputSx = () => ({
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "12px", background: "rgba(255,255,255,0.04)", transition: "all 0.25s ease",
+    "& fieldset": { borderColor: "rgba(255,255,255,0.12)", borderWidth: 1, transition: "all 0.25s ease" },
+    "&:hover fieldset": { borderColor: C.main },
+    "&.Mui-focused fieldset": { borderColor: C.main, boxShadow: `0 0 0 3px ${C.main}22` },
+  },
+  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.45)", "&.Mui-focused": { color: C.main } },
+  "& .MuiInputBase-input": { color: "#E8EEFF" },
+});
 
 function FieldInput({ col, value, onChange }) {
   return (
-    <TextField
-      fullWidth size="small" label={col.label}
+    <TextField fullWidth size="small" label={col.label}
       type={col.type === "date" ? "date" : "text"}
-      value={value || ""}
-      onChange={(e) => onChange(col.key, e.target.value)}
+      value={value || ""} onChange={(e) => onChange(col.key, e.target.value)}
       InputLabelProps={col.type === "date" ? { shrink: true } : undefined}
-    />
+      sx={inputSx()} />
   );
 }
 
+function ActionBtn({ title, onClick, color, bgColor, children }) {
+  return (
+    <Tooltip title={title} arrow>
+      <IconButton size="small" onClick={onClick} sx={{
+        width: 28, height: 28, borderRadius: "8px", bgcolor: bgColor, color,
+        transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+        "&:hover": { transform: "scale(1.18)", bgcolor: color, color: "#fff", boxShadow: `0 4px 12px ${color}55` },
+      }}>{children}</IconButton>
+    </Tooltip>
+  );
+}
+
+function GlassCard({ children, sx = {} }) {
+  return (
+    <Box sx={{
+      background: "linear-gradient(135deg, rgba(13,19,48,0.92), rgba(8,11,26,0.96))",
+      border: `1px solid ${C.glassBorder}`, borderRadius: "20px",
+      backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+      overflow: "hidden", transition: "all 0.35s ease", ...sx,
+    }}>{children}</Box>
+  );
+}
+
+const dialogSx = {
+  bgcolor: "#080B1A", border: `1px solid ${C.border}`, borderRadius: "24px",
+  backdropFilter: "blur(40px)", boxShadow: `0 32px 80px rgba(0,0,0,0.6)`,
+};
+
 export default function GiftCity({ inline = false, onDataChange }) {
   const navigate = useNavigate();
+  const muiTheme = useTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
+
   const [activeTab, setActiveTab] = useState("active");
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Add / Edit dialog
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editRow, setEditRow]       = useState(null);
-  const [formData, setFormData]     = useState({});
-
-  // Delete confirm
-  const [deleteId, setDeleteId]     = useState(null);
+  const [editRow, setEditRow] = useState(null);
+  const [formData, setFormData] = useState({});
+  const [deleteId, setDeleteId] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-
   const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
 
   const cols = activeTab === "active" ? ACTIVE_COLS : INACTIVE_COLS;
+  const visibleCols = isMobile ? cols.slice(0, 2) : cols;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/gift-city/${activeTab}`);
+      const res = await fetch(`${API}/gift-city/${activeTab}`);
       const data = await res.json();
       setRows(Array.isArray(data) ? data : []);
-    } catch {
-      showSnack("Failed to load data", "error");
-    } finally {
-      setLoading(false);
-    }
+    } catch { showSnack("Failed to load", "error"); }
+    finally { setLoading(false); }
   }, [activeTab]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const showSnack = (msg, severity = "success") => setSnack({ open: true, msg, severity });
-
-  // ── Add / Edit ──
-  const openAdd = () => {
-    setEditRow(null);
-    setFormData(activeTab === "active" ? emptyActive() : emptyInactive());
-    setDialogOpen(true);
-  };
-  const openEdit  = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
-  const closeDialog = () => setDialogOpen(false);
-  const handleField = (key, val) => setFormData((prev) => ({ ...prev, [key]: val }));
+  const openAdd = () => { setEditRow(null); setFormData(activeTab === "active" ? emptyActive() : emptyInactive()); setDialogOpen(true); };
+  const openEdit = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
+  const handleField = (key, val) => setFormData(p => ({ ...p, [key]: val }));
 
   const handleSave = async () => {
-    const url    = editRow
-      ? `${API}/gift-city/${activeTab}/${editRow.id}`
-      : `${API}/gift-city/${activeTab}`;
+    const url = editRow ? `${API}/gift-city/${activeTab}/${editRow.id}` : `${API}/gift-city/${activeTab}`;
     const method = editRow ? "PUT" : "POST";
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
       if (!res.ok) throw new Error();
-      showSnack(editRow ? "Record updated!" : "Record added!");
-      closeDialog();
-      fetchData();
-      if (onDataChange) onDataChange();
-    } catch {
-      showSnack("Save failed", "error");
-    }
+      showSnack(editRow ? "Updated!" : "Added!"); setDialogOpen(false); fetchData(); onDataChange?.();
+    } catch { showSnack("Save failed", "error"); }
   };
 
-  // ── Delete ──
-  const askDelete    = (id) => { setDeleteId(id); setConfirmOpen(true); };
+  const askDelete = (id) => { setDeleteId(id); setConfirmOpen(true); };
   const handleDelete = async () => {
     try {
-      const res = await fetch(`${API}/gift-city/${activeTab}/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      showSnack("Record deleted");
-      setConfirmOpen(false);
-      fetchData();
-      if (onDataChange) onDataChange();
-    } catch {
-      showSnack("Delete failed", "error");
-    }
+      await fetch(`${API}/gift-city/${activeTab}/${deleteId}`, { method: "DELETE" });
+      showSnack("Deleted"); setConfirmOpen(false); fetchData(); onDataChange?.();
+    } catch { showSnack("Delete failed", "error"); }
   };
 
   const content = (
     <>
-      {/* ── AppBar — standalone only ── */}
       {!inline && (
-        <AppBar position="static" elevation={0}
-          sx={{ bgcolor: "#fff", borderBottom: `1px solid ${GOLD.border}` }}>
-          <Toolbar>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexGrow: 1 }}>
-              <Box sx={{
-                width: 32, height: 32, borderRadius: 1.5, bgcolor: GOLD.main,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <Typography variant="caption" fontWeight={900} color="#fff" fontSize="0.68rem">FD</Typography>
-              </Box>
-              <Typography variant="h6" fontWeight={800} color="text.primary">Finance Doctor</Typography>
+        <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 1.5, md: 2 }, display: "flex", alignItems: "center", gap: 2, background: "rgba(8,11,26,0.72)", backdropFilter: "blur(24px)", borderBottom: `1px solid ${C.glassBorder}`, position: "sticky", top: 0, zIndex: 100 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+            <Box sx={{ width: 36, height: 36, borderRadius: "12px", background: `linear-gradient(135deg, ${C.main}, #FFB3CC)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 14px ${C.glow}` }}>
+              <Typography sx={{ fontSize: "0.7rem", fontWeight: 900, color: "#fff" }}>FD</Typography>
             </Box>
-            <Button onClick={() => navigate("/dashboard")} startIcon={<BackIcon />}
-              variant="outlined" size="small"
-              sx={{
-                color: GOLD.text, borderColor: GOLD.border, textTransform: "none", mr: 1,
-                "&:hover": { borderColor: GOLD.main, bgcolor: GOLD.light },
-              }}>
-              Dashboard
-            </Button>
-            <Button onClick={() => { localStorage.removeItem("user"); navigate("/login"); }}
-              variant="outlined" size="small"
-              sx={{
-                color: GOLD.main, borderColor: GOLD.border, textTransform: "none",
-                "&:hover": { bgcolor: GOLD.light },
-              }}>
-              Logout
-            </Button>
-          </Toolbar>
-        </AppBar>
+            <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: "0.9rem", color: "#fff", lineHeight: 1.1 }}>FINANCE DOCTOR</Typography>
+              <Typography sx={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.35)" }}>Gift City A/C</Typography>
+            </Box>
+          </Box>
+          <Button onClick={() => navigate("/dashboard")} startIcon={<BackIcon />}
+            sx={{ color: C.main, border: `1px solid ${C.border}`, bgcolor: C.bg, textTransform: "none", borderRadius: "12px", fontWeight: 600, fontSize: "0.8rem", px: 2, "&:hover": { bgcolor: `${C.main}20`, transform: "translateY(-1px)" }, transition: "all 0.25s ease", display: { xs: "none", sm: "flex" } }}>
+            Dashboard
+          </Button>
+          <IconButton onClick={() => navigate("/dashboard")} sx={{ display: { xs: "flex", sm: "none" }, color: C.main, bgcolor: C.bg, borderRadius: "12px", border: `1px solid ${C.border}`, width: 36, height: 36 }}><BackIcon /></IconButton>
+        </Box>
       )}
 
-      {/* ── Body ── */}
-      <Box sx={{
-        minHeight: inline ? "unset" : "calc(100vh - 64px)",
-        bgcolor:   inline ? "transparent" : "#FFFBF2",
-        px: inline ? 0 : { xs: 2, md: 4 },
-        py: inline ? 0 : 3,
-      }}>
+      <Box sx={{ px: { xs: 1.5, sm: 2, md: 4 }, py: { xs: 2, md: 3 } }}>
         {!inline && (
-          <Typography variant="h5" fontWeight={800} color={GOLD.text} sx={{ mb: 3 }}>
-            Gift City A/C
+          <Typography sx={{ fontWeight: 900, fontSize: { xs: "1.4rem", md: "1.8rem" }, color: "#fff", mb: 3, letterSpacing: "-0.02em" }}>
+            Gift City A/C <Box component="span" sx={{ color: C.main, fontWeight: 700, fontSize: "0.7em" }}>/ Records</Box>
           </Typography>
         )}
 
-        {/* ── Sub-tabs ── */}
-        <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-          {TABS.map((tab) => {
+        {/* Tab Pills */}
+        <Box sx={{ display: "flex", gap: 1, mb: { xs: 2, md: 3 }, p: "5px", bgcolor: "rgba(255,255,255,0.04)", borderRadius: "16px", border: `1px solid ${C.glassBorder}`, width: "fit-content" }}>
+          {TABS.map(tab => {
             const isActive = activeTab === tab.id;
             return (
-              <Box key={tab.id} onClick={() => setActiveTab(tab.id)}
-                sx={{
-                  cursor: "pointer", px: 3, py: 1, borderRadius: "50px",
-                  border: `2px solid ${isActive ? GOLD.main : GOLD.border}`,
-                  bgcolor: isActive ? GOLD.main : "#fff",
-                  color:   isActive ? "#fff"    : GOLD.text,
-                  fontWeight: 700, fontSize: "0.85rem",
-                  transition: "all 0.25s ease",
-                  boxShadow: isActive ? `0 3px 10px ${GOLD.main}44` : "0 1px 3px rgba(0,0,0,0.07)",
-                  userSelect: "none",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: `0 5px 14px ${GOLD.main}33`,
-                    borderColor: GOLD.main,
-                    bgcolor: isActive ? GOLD.main : GOLD.light,
-                  },
-                }}>
-                {tab.label}
-              </Box>
+              <Box key={tab.id} onClick={() => setActiveTab(tab.id)} sx={{
+                px: { xs: 2.5, md: 3 }, py: { xs: 0.8, md: 1 }, borderRadius: "12px", cursor: "pointer",
+                background: isActive ? `linear-gradient(135deg, ${C.main}33, ${C.main}18)` : "transparent",
+                border: isActive ? `1px solid ${C.border}` : "1px solid transparent",
+                color: isActive ? C.main : "rgba(255,255,255,0.45)",
+                fontWeight: isActive ? 700 : 500, fontSize: { xs: "0.8rem", md: "0.85rem" },
+                transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+                boxShadow: isActive ? `0 4px 14px ${C.glow}` : "none",
+                transform: isActive ? "scale(1.02)" : "scale(1)", userSelect: "none",
+              }}>{tab.label}</Box>
             );
           })}
         </Box>
 
-        {/* ── Table card ── */}
-        <Paper elevation={0}
-          sx={{ border: `1.5px solid ${GOLD.border}`, borderRadius: 2, overflow: "hidden" }}>
-
-          {/* Card header */}
-          <Box sx={{
-            px: 3, py: 2, bgcolor: GOLD.light,
-            borderBottom: `1px solid ${GOLD.mid}`,
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-          }}>
-            <Typography fontWeight={700} sx={{ color: GOLD.text, fontSize: "0.95rem" }}>
-              {TABS.find((t) => t.id === activeTab)?.label}
-              {!loading && (
-                <Chip label={`${rows.length} records`} size="small"
-                  sx={{
-                    ml: 1.5, bgcolor: GOLD.mid, color: GOLD.text,
-                    fontWeight: 700, fontSize: "0.7rem", height: 20,
-                  }} />
-              )}
-            </Typography>
-           {activeTab === "inactive" && (
-  <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
-    sx={{
-      bgcolor: GOLD.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
-      borderRadius: "6px", "&:hover": { bgcolor: GOLD.dark, boxShadow: "none" },
-    }}>
-    Add Row
-  </Button>
-)}
+        <GlassCard>
+          <Box sx={{ px: { xs: 2, md: 3 }, py: { xs: 1.8, md: 2 }, borderBottom: `1px solid ${C.glassBorder}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 4, height: 22, borderRadius: "4px", background: `linear-gradient(180deg, ${C.main}, #FFB3CC)` }} />
+              <Typography sx={{ fontWeight: 700, color: C.main, fontSize: { xs: "0.78rem", md: "0.88rem" }, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                {TABS.find(t => t.id === activeTab)?.label}
+              </Typography>
+              <Chip label={rows.length} size="small" sx={{ bgcolor: C.bg, color: C.main, fontWeight: 700, fontSize: "0.68rem", border: `1px solid ${C.border}`, height: 20 }} />
+            </Box>
+            {activeTab === "inactive" && (
+              <Button onClick={openAdd} startIcon={<PlusIcon />}
+                sx={{ bgcolor: C.main, color: "#fff", textTransform: "none", fontWeight: 700, borderRadius: "12px", fontSize: "0.8rem", px: 2, py: 0.8, boxShadow: `0 4px 14px ${C.glow}`, "&:hover": { bgcolor: `${C.main}CC`, transform: "translateY(-2px)" }, transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+                Add Row
+              </Button>
+            )}
           </Box>
 
-          {/* Table */}
           {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-              <CircularProgress sx={{ color: GOLD.main }} />
-            </Box>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress sx={{ color: C.main }} /></Box>
           ) : (
-            <TableContainer>
+            <TableContainer sx={{ overflowX: "auto" }}>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ bgcolor: GOLD.light }}>
-                    <TableCell sx={{ color: GOLD.text, width: 50 }}>#</TableCell>
-                    {cols.map((col) => (
-                      <TableCell key={col.key} sx={{ color: GOLD.text }}>{col.label}</TableCell>
+                  <TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)" }}>
+                    <TableCell sx={{ color: "rgba(255,255,255,0.3)", fontSize: { xs: "0.6rem", md: "0.68rem" }, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: `1px solid ${C.glassBorder}`, py: 1.5, px: { xs: 1.5, md: 2 } }}>#</TableCell>
+                    {visibleCols.map(col => (
+                      <TableCell key={col.key} sx={{ color: "rgba(255,255,255,0.3)", fontSize: { xs: "0.6rem", md: "0.68rem" }, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: `1px solid ${C.glassBorder}`, py: 1.5, px: { xs: 1.5, md: 2 } }}>{col.label}</TableCell>
                     ))}
-                    <TableCell align="center" sx={{ color: GOLD.text, width: 90 }}>Actions</TableCell>
+                    <TableCell align="center" sx={{ color: "rgba(255,255,255,0.3)", fontSize: { xs: "0.6rem", md: "0.68rem" }, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: `1px solid ${C.glassBorder}`, py: 1.5, px: { xs: 1, md: 2 } }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={cols.length + 2} align="center"
-                        sx={{ py: 6, color: "text.secondary", fontStyle: "italic" }}>
-                        No records found. Click "Add Row" to get started.
+                    <TableRow><TableCell colSpan={visibleCols.length + 2} align="center" sx={{ py: 6, color: "rgba(255,255,255,0.2)", fontStyle: "italic", borderBottom: "none" }}>No records found</TableCell></TableRow>
+                  ) : rows.map((row, idx) => (
+                    <TableRow key={row.id} sx={{ transition: "background 0.2s ease", "&:hover": { bgcolor: `${C.main}08` }, "&:last-child td": { borderBottom: "none" } }}>
+                      <TableCell sx={{ color: "rgba(255,255,255,0.28)", fontSize: "0.75rem", borderBottom: `1px solid rgba(255,255,255,0.04)`, py: { xs: 1.2, md: 1.5 }, px: { xs: 1.5, md: 2 } }}>{idx + 1}</TableCell>
+                      {visibleCols.map(col => (
+                        <TableCell key={col.key} sx={{ color: "rgba(255,255,255,0.85)", fontSize: { xs: "0.76rem", md: "0.84rem" }, borderBottom: `1px solid rgba(255,255,255,0.04)`, py: { xs: 1.2, md: 1.5 }, px: { xs: 1.5, md: 2 }, maxWidth: { xs: 110, sm: "none" }, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {col.type === "date" ? formatDate(row[col.key]) : row[col.key] ?? "—"}
+                        </TableCell>
+                      ))}
+                      <TableCell align="center" sx={{ borderBottom: `1px solid rgba(255,255,255,0.04)`, py: { xs: 1, md: 1.5 }, px: { xs: 0.5, md: 2 } }}>
+                        <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
+                          <ActionBtn title="Edit" onClick={() => openEdit(row)} color={C.main} bgColor={C.bg}><EditIcon /></ActionBtn>
+                          <ActionBtn title="Delete" onClick={() => askDelete(row.id)} color={C.red} bgColor={C.redBg}><DeleteIcon /></ActionBtn>
+                        </Box>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    rows.map((row, idx) => (
-                      <TableRow key={row.id}
-                        sx={{
-                          "&:hover": { bgcolor: GOLD.light },
-                          "&:last-child td": { borderBottom: 0 },
-                        }}>
-                        <TableCell sx={{ color: "text.secondary", fontSize: "0.78rem" }}>{idx + 1}</TableCell>
-                        {cols.map((col) => (
-                          <TableCell key={col.key} sx={{ fontSize: "0.88rem", color: "text.primary" }}>
-                            {col.type === "date" ? formatDate(row[col.key]) : row[col.key] ?? "—"}
-                          </TableCell>
-                        ))}
-
-                        {/* ── Actions ── */}
-                        <TableCell align="center">
-                          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
-                            <Tooltip title="Edit" arrow>
-                              <IconButton size="small" onClick={() => openEdit(row)}
-                                sx={{
-                                  color: GOLD.text, bgcolor: GOLD.mid,
-                                  borderRadius: "6px", width: 28, height: 28,
-                                  "&:hover": { bgcolor: GOLD.main, color: "#fff" },
-                                }}>
-                                <EditIcon />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete" arrow>
-                              <IconButton size="small" onClick={() => askDelete(row.id)}
-                                sx={{
-                                  color: "#E53935", bgcolor: "#FFEBEE",
-                                  borderRadius: "6px", width: 28, height: 28,
-                                  "&:hover": { bgcolor: "#E53935", color: "#fff" },
-                                }}>
-                                <DeleteIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
           )}
-        </Paper>
+        </GlassCard>
       </Box>
 
-      {/* ── Add / Edit Dialog ── */}
-      <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="sm" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: `1.5px solid ${GOLD.border}`, borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: GOLD.main }} />
-          <Typography fontWeight={700}>{editRow ? "Edit Record" : "Add New Record"}</Typography>
+      {/* Add/Edit Dialog */}
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { ...dialogSx, mx: { xs: 2, sm: "auto" } } }}>
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1, pt: 3, px: 3 }}>
+          <Box sx={{ width: 4, height: 22, borderRadius: "4px", background: `linear-gradient(180deg, ${C.main}, #FFB3CC)` }} />
+          <Typography sx={{ fontWeight: 700, color: "#fff", fontSize: "1.05rem" }}>{editRow ? "Edit Record" : "Add New Record"}</Typography>
         </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            {cols.map((col) => (
-              <FieldInput key={col.key} col={col} value={formData[col.key]} onChange={handleField} />
-            ))}
+        <DialogContent sx={{ px: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+            {cols.map(col => <FieldInput key={col.key} col={col} value={formData[col.key]} onChange={handleField} />)}
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={closeDialog} variant="outlined" size="small"
-            sx={{
-              borderColor: GOLD.border, color: GOLD.text, textTransform: "none", borderRadius: "6px",
-              "&:hover": { borderColor: GOLD.main, bgcolor: GOLD.light },
-            }}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} variant="contained" size="small"
-            sx={{
-              bgcolor: GOLD.main, boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: GOLD.dark, boxShadow: "none" },
-            }}>
-            {editRow ? "Update" : "Save"}
-          </Button>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button onClick={() => setDialogOpen(false)} sx={{ color: "rgba(255,255,255,0.5)", textTransform: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", px: 2.5 }}>Cancel</Button>
+          <Button onClick={handleSave} sx={{ bgcolor: C.main, color: "#fff", textTransform: "none", fontWeight: 700, borderRadius: "12px", px: 3, boxShadow: `0 4px 14px ${C.glow}`, "&:hover": { bgcolor: `${C.main}CC`, transform: "translateY(-2px)" }, transition: "all 0.25s ease" }}>{editRow ? "Update" : "Save"}</Button>
         </DialogActions>
       </Dialog>
 
-      {/* ── Delete Confirm ── */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: "1.5px solid #FFCDD2", borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: "#E53935" }} />
-          <Typography fontWeight={700}>Confirm Delete</Typography>
+      {/* Delete Confirm */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { ...dialogSx, border: `1px solid ${C.red}44`, mx: { xs: 2, sm: "auto" } } }}>
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pt: 3, px: 3 }}>
+          <Box sx={{ width: 4, height: 22, borderRadius: "4px", bgcolor: C.red }} />
+          <Typography sx={{ fontWeight: 700, color: "#fff" }}>Confirm Delete</Typography>
         </DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary">
-            Are you sure you want to delete this record? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setConfirmOpen(false)} variant="outlined" size="small"
-            sx={{ borderColor: GOLD.border, color: GOLD.text, textTransform: "none", borderRadius: "6px" }}>
-            Cancel
-          </Button>
-          <Button onClick={handleDelete} variant="contained" size="small"
-            sx={{
-              bgcolor: "#E53935", boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: "#C62828", boxShadow: "none" },
-            }}>
-            Delete
-          </Button>
+        <DialogContent sx={{ px: 3 }}><Typography sx={{ color: "rgba(255,255,255,0.55)" }}>This action cannot be undone.</Typography></DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button onClick={() => setConfirmOpen(false)} sx={{ color: "rgba(255,255,255,0.5)", textTransform: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", px: 2.5 }}>Cancel</Button>
+          <Button onClick={handleDelete} sx={{ bgcolor: C.red, color: "#fff", textTransform: "none", fontWeight: 700, borderRadius: "12px", px: 3, "&:hover": { bgcolor: "#E04448", transform: "translateY(-2px)" }, transition: "all 0.25s ease" }}>Delete</Button>
         </DialogActions>
       </Dialog>
 
-      {/* ── Snackbar ── */}
-      <Snackbar open={snack.open} autoHideDuration={3000}
-        onClose={() => setSnack((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity={snack.severity} variant="filled" sx={{ fontWeight: 600 }}>
-          {snack.msg}
-        </Alert>
+      <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
+        <Alert severity={snack.severity} variant="filled" sx={{ fontWeight: 600, borderRadius: "12px" }}>{snack.msg}</Alert>
       </Snackbar>
     </>
   );
 
   if (inline) return <ThemeProvider theme={theme}>{content}</ThemeProvider>;
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {content}
+      <Box sx={{ minHeight: "100vh", background: "radial-gradient(ellipse at 20% 40%, #0D1B4B 0%, #080B1A 55%, #0A0512 100%)", fontFamily: "'Outfit', sans-serif" }}>
+        {content}
+      </Box>
     </ThemeProvider>
   );
 }
