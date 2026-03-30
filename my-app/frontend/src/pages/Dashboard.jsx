@@ -10,6 +10,7 @@ import Invested from "./Invested";
 import Interested from "./Interested";
 import Empanelment from "./Empanelment";
 import GiftCity from "./GiftCity";
+import Products from "./Products";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -45,6 +46,14 @@ const OPTIONS_CONFIG = [
     bgColor: "#FFFBEB",
     borderColor: "#FCD34D",
     description: "Manage active and inactive Gift City accounts.",
+  },
+  {
+    id: "products",
+    title: "PRODUCTS",
+    color: "#0EA5E9",
+    bgColor: "#F0F9FF",
+    borderColor: "#7DD3FC",
+    description: "Manage investment products, AMC details, and structures.",
   },
 ];
 
@@ -97,6 +106,9 @@ function formatStats(id, data) {
       `Active A/C: ${(data.active || 0).toLocaleString()}`,
       `Inactive A/C: ${(data.inactive || 0).toLocaleString()}`,
     ];
+  }
+  if (id === "products") {
+    return [`Total Products: ${(data.total || 0).toLocaleString()}`];
   }
   return [];
 }
@@ -203,6 +215,17 @@ const Dashboard = () => {
         setStats((prev) => ({ ...prev, giftcity: null }));
       }
     })();
+
+    // Products stats
+    (async () => {
+      try {
+        const res  = await fetch(`${API}/stats/products`);
+        const data = await res.json();
+        setStats((prev) => ({ ...prev, products: data }));
+      } catch {
+        setStats((prev) => ({ ...prev, products: null }));
+      }
+    })();
   }, []);
 
   // Fetch the 3 header counts
@@ -233,10 +256,11 @@ const Dashboard = () => {
 
   const renderContent = () => {
     if (!active) return null;
-    if (active.id === "invested")    return <Invested inline onDataChange={refreshCounts} />;
-    if (active.id === "interested")  return <Interested inline onDataChange={refreshCounts} />;
+    if (active.id === "invested")    return <Invested    inline onDataChange={refreshCounts} />;
+    if (active.id === "interested")  return <Interested  inline onDataChange={refreshCounts} />;
     if (active.id === "empanelment") return <Empanelment inline onDataChange={refreshCounts} />;
-    if (active.id === "giftcity")    return <GiftCity inline onDataChange={refreshCounts} />;
+    if (active.id === "giftcity")    return <GiftCity    inline onDataChange={refreshCounts} />;
+    if (active.id === "products")    return <Products    inline onDataChange={refreshCounts} />;
     return null;
   };
 

@@ -6,6 +6,7 @@ import Invested from "./pages/Invested";
 import Interested from "./pages/Interested";
 import Empanelment from "./pages/Empanelment";
 import GiftCityAC from "./pages/GiftCity";
+import Products from "./pages/Products";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/interested" element={<Interested />} />
         <Route path="/empanelment" element={<Empanelment />} />
         <Route path="/gift-city-ac" element={<GiftCityAC />} />
+        <Route path="/products" element={<Products />} />
         <Route path="/"           element={<Navigate to="/login" />} />
       </Routes>
     </Router>
