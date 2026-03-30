@@ -15,6 +15,9 @@ const interestedRoutes = require("./routes/interestedRoutes");
 const empanelmentRoutes = require("./routes/empanelmentRoutes");
 const countRoutes = require("./routes/count");
 const giftCityRoutes = require("./routes/giftCityRoutes");
+const customersRoutes = require("./routes/customersRoutes");
+const productsRoutes = require("./routes/productsRoutes");
+
 
 
 console.log("Routes loaded");
@@ -24,6 +27,8 @@ app.use("/api/invested",   investedRoutes);
 app.use("/api/interested", interestedRoutes);
 app.use("/api/count", countRoutes);
 app.use("/api/gift-city", giftCityRoutes);
+app.use("/api/customers", customersRoutes);
+app.use("/api/products", productsRoutes);
 
 // Test route
 app.get("/api/test", (req, res) => res.send("Test route works"));
