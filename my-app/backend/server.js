@@ -15,7 +15,9 @@ const interestedRoutes = require("./routes/interestedRoutes");
 const empanelmentRoutes = require("./routes/empanelmentRoutes");
 const countRoutes = require("./routes/count");
 const giftCityRoutes = require("./routes/giftCityRoutes");
+const customersRoutes = require("./routes/customersRoutes");
 const productsRoutes = require("./routes/productsRoutes");
+
 
 
 console.log("Routes loaded");
@@ -25,6 +27,7 @@ app.use("/api/invested",   investedRoutes);
 app.use("/api/interested", interestedRoutes);
 app.use("/api/count", countRoutes);
 app.use("/api/gift-city", giftCityRoutes);
+app.use("/api/customers", customersRoutes);
 app.use("/api/products", productsRoutes);
 
 // Test route
@@ -118,6 +121,14 @@ app.post("/api/login", async (req, res) => {
 });
 
 // ── Start ──────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+});
+
+server.on("error", (error) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(`Port ${PORT} is already in use. Stop the other process or change the PORT value.`);
+    process.exit(1);
+  }
+  throw error;
 });

@@ -1,451 +1,430 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Box, Typography, Button, AppBar, Toolbar, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, Paper, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Chip, CircularProgress, Snackbar, Alert, Tooltip,
-} from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 const API = import.meta.env.VITE_API_URL;
 
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    background: { default: "#FFFBF2", paper: "#FFFFFF" },
-    text: { primary: "#1A2B3C", secondary: "#5A7A99" },
-  },
-  typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
-  shape: { borderRadius: 4 },
-  components: {
-    MuiTableCell: {
-      styleOverrides: {
-        head: { fontWeight: 700, fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.04em" },
-      },
-    },
-  },
+const TABS = [
+  { id:"active",   label:"Active A/C"   },
+  { id:"inactive", label:"Inactive A/C" },
+];
+const ACTIVE_COLS = [
+  { key:"customer_name", label:"Customer Name", type:"text" },
+  { key:"bank_name",     label:"Bank Name",     type:"text" },
+  { key:"opened_date",   label:"Opened Date",   type:"date" },
+];
+const INACTIVE_COLS = [
+  { key:"customer_name", label:"Customer Name", type:"text" },
+  { key:"bank_name",     label:"Bank Name",     type:"text" },
+  { key:"delay_reason",  label:"Delay Reason",  type:"text" },
+];
+
+const AUTO_KEYS   = new Set(["customer_name", "bank_name"]);
+const MANUAL_KEYS = new Set(["opened_date"]);
+
+const inactiveToActive = (r) => ({
+  customer_name: r.customer_name || "",
+  bank_name:     r.bank_name     || "",
+  opened_date:   "",
 });
 
-const GOLD = {
-  main: "#F59E0B",
-  light: "#FFFBEB",
-  mid: "#FEF3C7",
-  border: "#FCD34D",
-  text: "#92400E",
-  dark: "#D97706",
-};
+const emptyA = () => ({ customer_name:"", bank_name:"", opened_date:"" });
+const emptyI = () => ({ customer_name:"", bank_name:"", delay_reason:"" });
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—";
 
-const TABS = [
-  { id: "active",   label: "Active A/C" },
-  { id: "inactive", label: "Inactive A/C" },
-];
-
-const ACTIVE_COLS = [
-  { key: "customer_name", label: "Customer Name", type: "text" },
-  { key: "bank_name",     label: "Bank Name",     type: "text" },
-  { key: "opened_date",   label: "Opened Date",   type: "date" },
-];
-
-const INACTIVE_COLS = [
-  { key: "customer_name", label: "Customer Name", type: "text" },
-  { key: "bank_name",     label: "Bank Name",     type: "text" },
-  { key: "delay_reason",  label: "Delay Reason",  type: "text" },
-];
-
-const emptyActive   = () => ({ customer_name: "", bank_name: "", opened_date: "" });
-const emptyInactive = () => ({ customer_name: "", bank_name: "", delay_reason: "" });
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return "—";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-};
-
-// ── Icons ──────────────────────────────────────────────────────────────────────
-const EditIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+const IcoEdit  = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoDel   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoPlus  = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const IcoShare = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+    <circle cx="18" cy="5"  r="3" stroke="currentColor" strokeWidth="2"/>
+    <circle cx="6"  cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+    <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2"/>
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="15.41" y1="6.51" x2="8.59"  y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
-const DeleteIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-const PlusIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-const BackIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
+const IcoClear  = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
 
-function FieldInput({ col, value, onChange }) {
+function Highlight({ text, query, theme = "dark" }) {
+  if (!query || !text) return <>{text ?? "—"}</>;
+  const str = String(text);
+  const idx = str.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{str}</>;
   return (
-    <TextField
-      fullWidth size="small" label={col.label}
-      type={col.type === "date" ? "date" : "text"}
-      value={value || ""}
-      onChange={(e) => onChange(col.key, e.target.value)}
-      InputLabelProps={col.type === "date" ? { shrink: true } : undefined}
-    />
-  );
-}
-
-export default function GiftCity({ inline = false, onDataChange }) {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("active");
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  // Add / Edit dialog
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editRow, setEditRow]       = useState(null);
-  const [formData, setFormData]     = useState({});
-
-  // Delete confirm
-  const [deleteId, setDeleteId]     = useState(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
-
-  const cols = activeTab === "active" ? ACTIVE_COLS : INACTIVE_COLS;
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res  = await fetch(`${API}/gift-city/${activeTab}`);
-      const data = await res.json();
-      setRows(Array.isArray(data) ? data : []);
-    } catch {
-      showSnack("Failed to load data", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [activeTab]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const showSnack = (msg, severity = "success") => setSnack({ open: true, msg, severity });
-
-  // ── Add / Edit ──
-  const openAdd = () => {
-    setEditRow(null);
-    setFormData(activeTab === "active" ? emptyActive() : emptyInactive());
-    setDialogOpen(true);
-  };
-  const openEdit  = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
-  const closeDialog = () => setDialogOpen(false);
-  const handleField = (key, val) => setFormData((prev) => ({ ...prev, [key]: val }));
-
-  const handleSave = async () => {
-    const url    = editRow
-      ? `${API}/gift-city/${activeTab}/${editRow.id}`
-      : `${API}/gift-city/${activeTab}`;
-    const method = editRow ? "PUT" : "POST";
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!res.ok) throw new Error();
-      showSnack(editRow ? "Record updated!" : "Record added!");
-      closeDialog();
-      fetchData();
-      if (onDataChange) onDataChange();
-    } catch {
-      showSnack("Save failed", "error");
-    }
-  };
-
-  // ── Delete ──
-  const askDelete    = (id) => { setDeleteId(id); setConfirmOpen(true); };
-  const handleDelete = async () => {
-    try {
-      const res = await fetch(`${API}/gift-city/${activeTab}/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      showSnack("Record deleted");
-      setConfirmOpen(false);
-      fetchData();
-      if (onDataChange) onDataChange();
-    } catch {
-      showSnack("Delete failed", "error");
-    }
-  };
-
-  const content = (
     <>
-      {/* ── AppBar — standalone only ── */}
-      {!inline && (
-        <AppBar position="static" elevation={0}
-          sx={{ bgcolor: "#fff", borderBottom: `1px solid ${GOLD.border}` }}>
-          <Toolbar>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexGrow: 1 }}>
-              <Box sx={{
-                width: 32, height: 32, borderRadius: 1.5, bgcolor: GOLD.main,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <Typography variant="caption" fontWeight={900} color="#fff" fontSize="0.68rem">FD</Typography>
-              </Box>
-              <Typography variant="h6" fontWeight={800} color="text.primary">Finance Doctor</Typography>
-            </Box>
-            <Button onClick={() => navigate("/dashboard")} startIcon={<BackIcon />}
-              variant="outlined" size="small"
-              sx={{
-                color: GOLD.text, borderColor: GOLD.border, textTransform: "none", mr: 1,
-                "&:hover": { borderColor: GOLD.main, bgcolor: GOLD.light },
-              }}>
-              Dashboard
-            </Button>
-            <Button onClick={() => { localStorage.removeItem("user"); navigate("/login"); }}
-              variant="outlined" size="small"
-              sx={{
-                color: GOLD.main, borderColor: GOLD.border, textTransform: "none",
-                "&:hover": { bgcolor: GOLD.light },
-              }}>
-              Logout
-            </Button>
-          </Toolbar>
-        </AppBar>
-      )}
-
-      {/* ── Body ── */}
-      <Box sx={{
-        minHeight: inline ? "unset" : "calc(100vh - 64px)",
-        bgcolor:   inline ? "transparent" : "#FFFBF2",
-        px: inline ? 0 : { xs: 2, md: 4 },
-        py: inline ? 0 : 3,
+      {str.slice(0, idx)}
+      <mark style={{
+        background: theme === "light" ? "rgba(201,124,8,0.2)" : "rgba(245,158,11,0.35)",
+        color: theme === "light" ? "#7a4a00" : "#fff",
+        borderRadius: 3, padding: "0 1px",
       }}>
-        {!inline && (
-          <Typography variant="h5" fontWeight={800} color={GOLD.text} sx={{ mb: 3 }}>
-            Gift City A/C
-          </Typography>
-        )}
-
-        {/* ── Sub-tabs ── */}
-        <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <Box key={tab.id} onClick={() => setActiveTab(tab.id)}
-                sx={{
-                  cursor: "pointer", px: 3, py: 1, borderRadius: "50px",
-                  border: `2px solid ${isActive ? GOLD.main : GOLD.border}`,
-                  bgcolor: isActive ? GOLD.main : "#fff",
-                  color:   isActive ? "#fff"    : GOLD.text,
-                  fontWeight: 700, fontSize: "0.85rem",
-                  transition: "all 0.25s ease",
-                  boxShadow: isActive ? `0 3px 10px ${GOLD.main}44` : "0 1px 3px rgba(0,0,0,0.07)",
-                  userSelect: "none",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: `0 5px 14px ${GOLD.main}33`,
-                    borderColor: GOLD.main,
-                    bgcolor: isActive ? GOLD.main : GOLD.light,
-                  },
-                }}>
-                {tab.label}
-              </Box>
-            );
-          })}
-        </Box>
-
-        {/* ── Table card ── */}
-        <Paper elevation={0}
-          sx={{ border: `1.5px solid ${GOLD.border}`, borderRadius: 2, overflow: "hidden" }}>
-
-          {/* Card header */}
-          <Box sx={{
-            px: 3, py: 2, bgcolor: GOLD.light,
-            borderBottom: `1px solid ${GOLD.mid}`,
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-          }}>
-            <Typography fontWeight={700} sx={{ color: GOLD.text, fontSize: "0.95rem" }}>
-              {TABS.find((t) => t.id === activeTab)?.label}
-              {!loading && (
-                <Chip label={`${rows.length} records`} size="small"
-                  sx={{
-                    ml: 1.5, bgcolor: GOLD.mid, color: GOLD.text,
-                    fontWeight: 700, fontSize: "0.7rem", height: 20,
-                  }} />
-              )}
-            </Typography>
-           {activeTab === "inactive" && (
-  <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
-    sx={{
-      bgcolor: GOLD.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
-      borderRadius: "6px", "&:hover": { bgcolor: GOLD.dark, boxShadow: "none" },
-    }}>
-    Add Row
-  </Button>
-)}
-          </Box>
-
-          {/* Table */}
-          {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-              <CircularProgress sx={{ color: GOLD.main }} />
-            </Box>
-          ) : (
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: GOLD.light }}>
-                    <TableCell sx={{ color: GOLD.text, width: 50 }}>#</TableCell>
-                    {cols.map((col) => (
-                      <TableCell key={col.key} sx={{ color: GOLD.text }}>{col.label}</TableCell>
-                    ))}
-                    <TableCell align="center" sx={{ color: GOLD.text, width: 90 }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={cols.length + 2} align="center"
-                        sx={{ py: 6, color: "text.secondary", fontStyle: "italic" }}>
-                        No records found. Click "Add Row" to get started.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    rows.map((row, idx) => (
-                      <TableRow key={row.id}
-                        sx={{
-                          "&:hover": { bgcolor: GOLD.light },
-                          "&:last-child td": { borderBottom: 0 },
-                        }}>
-                        <TableCell sx={{ color: "text.secondary", fontSize: "0.78rem" }}>{idx + 1}</TableCell>
-                        {cols.map((col) => (
-                          <TableCell key={col.key} sx={{ fontSize: "0.88rem", color: "text.primary" }}>
-                            {col.type === "date" ? formatDate(row[col.key]) : row[col.key] ?? "—"}
-                          </TableCell>
-                        ))}
-
-                        {/* ── Actions ── */}
-                        <TableCell align="center">
-                          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
-                            <Tooltip title="Edit" arrow>
-                              <IconButton size="small" onClick={() => openEdit(row)}
-                                sx={{
-                                  color: GOLD.text, bgcolor: GOLD.mid,
-                                  borderRadius: "6px", width: 28, height: 28,
-                                  "&:hover": { bgcolor: GOLD.main, color: "#fff" },
-                                }}>
-                                <EditIcon />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete" arrow>
-                              <IconButton size="small" onClick={() => askDelete(row.id)}
-                                sx={{
-                                  color: "#E53935", bgcolor: "#FFEBEE",
-                                  borderRadius: "6px", width: 28, height: 28,
-                                  "&:hover": { bgcolor: "#E53935", color: "#fff" },
-                                }}>
-                                <DeleteIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Paper>
-      </Box>
-
-      {/* ── Add / Edit Dialog ── */}
-      <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="sm" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: `1.5px solid ${GOLD.border}`, borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: GOLD.main }} />
-          <Typography fontWeight={700}>{editRow ? "Edit Record" : "Add New Record"}</Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            {cols.map((col) => (
-              <FieldInput key={col.key} col={col} value={formData[col.key]} onChange={handleField} />
-            ))}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={closeDialog} variant="outlined" size="small"
-            sx={{
-              borderColor: GOLD.border, color: GOLD.text, textTransform: "none", borderRadius: "6px",
-              "&:hover": { borderColor: GOLD.main, bgcolor: GOLD.light },
-            }}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} variant="contained" size="small"
-            sx={{
-              bgcolor: GOLD.main, boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: GOLD.dark, boxShadow: "none" },
-            }}>
-            {editRow ? "Update" : "Save"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ── Delete Confirm ── */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: "1.5px solid #FFCDD2", borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: "#E53935" }} />
-          <Typography fontWeight={700}>Confirm Delete</Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary">
-            Are you sure you want to delete this record? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setConfirmOpen(false)} variant="outlined" size="small"
-            sx={{ borderColor: GOLD.border, color: GOLD.text, textTransform: "none", borderRadius: "6px" }}>
-            Cancel
-          </Button>
-          <Button onClick={handleDelete} variant="contained" size="small"
-            sx={{
-              bgcolor: "#E53935", boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: "#C62828", boxShadow: "none" },
-            }}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ── Snackbar ── */}
-      <Snackbar open={snack.open} autoHideDuration={3000}
-        onClose={() => setSnack((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity={snack.severity} variant="filled" sx={{ fontWeight: 600 }}>
-          {snack.msg}
-        </Alert>
-      </Snackbar>
+        {str.slice(idx, idx + query.length)}
+      </mark>
+      {str.slice(idx + query.length)}
     </>
   );
+}
 
-  if (inline) return <ThemeProvider theme={theme}>{content}</ThemeProvider>;
+function SearchBar({ value, onChange, placeholder, resultCount, totalCount, theme = "dark" }) {
+  const inputRef = useRef(null);
+  const isActive = value.length > 0;
+
+  const accentSolid  = theme === "light" ? "#c97c08"                        : "#F59E0B";
+  const accent       = theme === "light" ? "rgba(201,124,8,0.8)"            : "rgba(245,158,11,0.7)";
+  const borderIdle   = theme === "light" ? "rgba(0,0,0,0.2)"                : "rgba(245,158,11,0.22)";
+  const borderActive = theme === "light" ? "rgba(201,124,8,0.6)"            : "rgba(245,158,11,0.55)";
+  const bgIdle       = theme === "light" ? "rgba(255,255,255,0.6)"          : "rgba(10,16,60,0.5)";
+  const bgActive     = theme === "light" ? "rgba(201,124,8,0.07)"           : "rgba(245,158,11,0.08)";
+  const shadowActive = theme === "light" ? "0 0 0 3px rgba(201,124,8,0.12)": "0 0 0 3px rgba(245,158,11,0.12)";
+  const shadowFocus  = theme === "light" ? "0 0 0 3px rgba(201,124,8,0.15)": "0 0 0 3px rgba(245,158,11,0.15)";
+  const clearBg      = theme === "light" ? "rgba(201,124,8,0.14)"           : "rgba(245,158,11,0.18)";
+  const clearBgHov   = theme === "light" ? "rgba(201,124,8,0.28)"           : "rgba(245,158,11,0.35)";
+  const clearColor   = theme === "light" ? "rgba(0,0,0,0.55)"               : "rgba(180,210,255,0.8)";
+  const pillBg       = theme === "light" ? "rgba(201,124,8,0.12)"           : "rgba(245,158,11,0.12)";
+  const pillBorder   = theme === "light" ? "rgba(201,124,8,0.28)"           : "rgba(245,158,11,0.28)";
+  const sectionBg    = theme === "light" ? "rgba(0,0,0,0.02)"               : "rgba(245,158,11,0.02)";
+  const sectionBdr   = theme === "light" ? "1px solid rgba(0,0,0,0.1)"     : "1px solid rgba(245,158,11,0.12)";
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {content}
-    </ThemeProvider>
+    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 420 }}>
+          <span style={{
+            position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)",
+            color: isActive ? accentSolid : (theme === "light" ? "rgba(0,0,0,0.3)" : "rgba(160,190,255,0.4)"),
+            display: "flex", pointerEvents: "none", transition: "color .2s",
+          }}>
+            <IcoSearch />
+          </span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder={placeholder}
+            style={{
+              width: "100%", padding: "8px 34px 8px 32px", borderRadius: 10,
+              border: `1px solid ${isActive ? borderActive : borderIdle}`,
+              background: isActive ? bgActive : bgIdle,
+              color: theme === "light" ? "#111827" : "#fff",
+              fontSize: ".82rem", fontFamily: "var(--fb,'Inter',sans-serif)",
+              outline: "none", transition: "all .22s",
+              boxShadow: isActive ? shadowActive : "none",
+            }}
+            onFocus={e => { e.target.style.borderColor = accent; e.target.style.boxShadow = shadowFocus; }}
+            onBlur={e => {
+              e.target.style.borderColor = isActive ? borderActive : borderIdle;
+              e.target.style.boxShadow   = isActive ? shadowActive : "none";
+            }}
+          />
+          {isActive && (
+            <button onClick={() => { onChange(""); inputRef.current?.focus(); }}
+              style={{
+                position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                background: clearBg, border: "none", borderRadius: "50%",
+                width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: clearColor, transition: "all .15s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = clearBgHov; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = clearBg;    e.currentTarget.style.color = clearColor; }}
+            >
+              <IcoClear />
+            </button>
+          )}
+        </div>
+        {isActive && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "4px 12px", borderRadius: 20,
+            background: resultCount > 0 ? pillBg : "rgba(248,113,113,0.12)",
+            border: `1px solid ${resultCount > 0 ? pillBorder : "rgba(248,113,113,0.28)"}`,
+            fontSize: ".7rem", fontWeight: 700,
+            color: resultCount > 0 ? accentSolid : (theme === "light" ? "#b02020" : "#F87171"),
+            animation: "srIn .18s ease", whiteSpace: "nowrap",
+          }}>
+            {resultCount > 0
+              ? <><span style={{ opacity: .7 }}>↳</span> {resultCount} <span style={{ opacity: .55, fontWeight: 500 }}>of {totalCount}</span></>
+              : <>No results</>}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
+
+function Field({ col, value, onChange, readOnly }) {
+  const style = readOnly ? { opacity: 0.6, cursor: "not-allowed", background: "rgba(255,255,255,0.05)" } : {};
+  return (
+    <div className="fld">
+      <label className="fld-lbl">{col.label}</label>
+      <input
+        className="fld-inp"
+        type={col.type === "date" ? "date" : "text"}
+        value={value || ""}
+        onChange={e => !readOnly && onChange(col.key, e.target.value)}
+        readOnly={readOnly}
+        style={style}
+      />
+    </div>
+  );
+}
+
+function Snack({ msg, severity, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, []);
+  return <div className={`snack snack-${severity}`}>{msg}</div>;
+}
+
+export default function GiftCity({ inline = false, onDataChange, initialTab, theme = "dark" }) {
+  const [tab,          setTab]          = useState(initialTab || "active");
+  const [rows,         setRows]         = useState([]);
+  const [search,       setSearch]       = useState("");
+  const [loading,      setLoading]      = useState(false);
+  const [dlg,          setDlg]          = useState(false);
+  const [editRow,      setEditRow]      = useState(null);
+  const [form,         setForm]         = useState({});
+  const [delId,        setDelId]        = useState(null);
+  const [confirm,      setConfirm]      = useState(false);
+  const [promo,        setPromo]        = useState(false);
+  const [promoId,      setPromoId]      = useState(null);
+  const [promoForm,    setPromoForm]    = useState({});
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [snack,        setSnack]        = useState(null);
+
+  useEffect(() => { if (initialTab) setTab(initialTab); }, [initialTab]);
+  useEffect(() => { setSearch(""); }, [tab]);
+
+  const cols = tab === "active" ? ACTIVE_COLS : INACTIVE_COLS;
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { const r = await fetch(`${API}/gift-city/${tab}`); setRows(await r.json() ?? []); }
+    catch { showSnack("Failed to load", "error"); } finally { setLoading(false); }
+  }, [tab]);
+  useEffect(() => { load(); }, [load]);
+
+  const filteredRows = search.trim()
+    ? rows.filter(r => {
+        const q = search.trim().toLowerCase();
+        return (
+          (r.customer_name || "").toLowerCase().includes(q) ||
+          (r.bank_name     || "").toLowerCase().includes(q)
+        );
+      })
+    : rows;
+
+  const showSnack  = (msg, severity = "success") => setSnack({ msg, severity });
+  const openAdd    = () => { setEditRow(null); setForm(tab === "active" ? emptyA() : emptyI()); setDlg(true); };
+  const openEdit   = (row) => { setEditRow(row); setForm({ ...row }); setDlg(true); };
+  const setField   = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const save = async () => {
+    const url = editRow ? `${API}/gift-city/${tab}/${editRow.id}` : `${API}/gift-city/${tab}`;
+    try {
+      const r = await fetch(url, { method: editRow ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (!r.ok) throw 0;
+      showSnack(editRow ? "Updated!" : "Added!"); setDlg(false); load(); onDataChange?.();
+    } catch { showSnack("Save failed", "error"); }
+  };
+
+  const del = async () => {
+    try {
+      const r = await fetch(`${API}/gift-city/${tab}/${delId}`, { method: "DELETE" });
+      if (!r.ok) throw 0;
+      showSnack("Deleted"); setConfirm(false); load(); onDataChange?.();
+    } catch { showSnack("Delete failed", "error"); }
+  };
+
+  const openPromo   = (row) => { setPromoId(row.id); setPromoForm(inactiveToActive(row)); setPromo(true); };
+  const setPromoFld = (k, v) => setPromoForm(p => ({ ...p, [k]: v }));
+
+  const savePromo = async () => {
+    if (!promoForm.opened_date) { showSnack("Please fill in the Opened Date", "error"); return; }
+    setPromoLoading(true);
+    try {
+      const a = await fetch(`${API}/gift-city/active`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(promoForm) });
+      if (!a.ok) throw new Error("Failed to add to Active");
+      const d = await fetch(`${API}/gift-city/inactive/${promoId}`, { method: "DELETE" });
+      if (!d.ok) throw new Error("Failed to remove from Inactive");
+      showSnack("✓ Moved to Active A/C!"); setPromo(false); load(); onDataChange?.();
+    } catch (e) { showSnack(e.message || "Failed", "error"); }
+    finally { setPromoLoading(false); }
+  };
+
+  const GOLD  = "#F59E0B";
+  const GREEN = "#10B981";
+
+  return (
+    <div className={`mod-wrap${theme === "light" ? " theme-light" : ""}`}>
+      <style>{GIFT_CSS}</style>
+
+      <div className="mod-hdr">
+        <div className="tabs-row">
+          {TABS.map(t => (
+            <button key={t.id} className={`tab-pill ${tab === t.id ? "tab-active" : ""}`}
+              style={tab === t.id ? { background: GOLD, boxShadow: `0 4px 14px rgba(245,158,11,.35)` } : {}}
+              onClick={() => setTab(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {tab === "inactive" && (
+          <button className="add-btn"
+            style={{ background: `linear-gradient(135deg,${GOLD},#d97706)`, boxShadow: "0 4px 14px rgba(245,158,11,.3)" }}
+            onClick={openAdd}>
+            <IcoPlus /> Add Row
+          </button>
+        )}
+      </div>
+
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder={`Search customer or bank name in ${tab === "active" ? "Active" : "Inactive"} A/C…`}
+        resultCount={filteredRows.length}
+        totalCount={rows.length}
+        theme={theme}
+      />
+
+      <div className="tbl-hdr">
+        <span className="tbl-title">{TABS.find(t => t.id === tab)?.label}</span>
+        {!loading && (
+          <span className="tbl-badge" style={{ color: GOLD, background: "rgba(245,158,11,.1)", borderColor: "rgba(245,158,11,.22)" }}>
+            {search.trim()
+              ? <>{filteredRows.length} <span style={{ opacity: .55 }}>/ {rows.length}</span></>
+              : <>{rows.length} records</>}
+          </span>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="fd-spin"><div className="spinner" style={{ borderTopColor: GOLD }} /></div>
+      ) : (
+        <div className="tbl-wrap">
+          <table className="fd-tbl">
+            <thead><tr>
+              <th style={{ width: 42 }}>#</th>
+              {cols.map(c => <th key={c.key}>{c.label}</th>)}
+              <th style={{ textAlign: "center", width: tab === "inactive" ? 108 : 82 }}>Actions</th>
+            </tr></thead>
+            <tbody>
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td className="fd-empty" colSpan={cols.length + 2}>
+                    {search.trim()
+                      ? <>No customers or banks match "<strong style={{ color: GOLD }}>{search}</strong>"</>
+                      : tab === "inactive"
+                        ? 'No records found. Click "Add Row" to get started.'
+                        : "No records found."}
+                  </td>
+                </tr>
+              ) : filteredRows.map((row, i) => (
+                <tr key={row.id}>
+                  <td className="fd-num">{i + 1}</td>
+                  {cols.map(c => (
+                    <td key={c.key}>
+                      {c.type === "date"
+                        ? fmtDate(row[c.key])
+                        : (c.key === "customer_name" || c.key === "bank_name")
+                          ? <Highlight text={row[c.key]} query={search} theme={theme} />
+                          : row[c.key] ?? "—"}
+                    </td>
+                  ))}
+                  <td>
+                    <div className="act-cell">
+                      <button className="ab ab-edit" title="Edit" onClick={() => openEdit(row)}><IcoEdit /></button>
+                      {tab === "inactive" && (
+                        <button className="ab ab-promo" title="Move to Active A/C" onClick={() => openPromo(row)}
+                          style={{ color: GREEN, background: "rgba(16,185,129,0.12)" }}>
+                          <IcoShare />
+                        </button>
+                      )}
+                      <button className="ab ab-del" title="Delete" onClick={() => { setDelId(row.id); setConfirm(true); }}><IcoDel /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {dlg && (
+        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setDlg(false)}>
+          <div className="dlg-box">
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background: GOLD }} />
+              <div className="dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
+            </div>
+            <div className="dlg-body">
+              {cols.map(c => <Field key={c.key} col={c} value={form[c.key]} onChange={setField} />)}
+            </div>
+            <div className="dlg-foot">
+              <button className="btn-cancel" onClick={() => setDlg(false)}>Cancel</button>
+              <button className="btn-ok" style={{ background: `linear-gradient(135deg,${GOLD},#d97706)`, boxShadow: "0 4px 14px rgba(245,158,11,.3)" }} onClick={save}>
+                {editRow ? "Update" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {promo && (
+        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setPromo(false)}>
+          <div className="dlg-box">
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background: GREEN }} />
+              <div>
+                <div className="dlg-ttl">Move to Active A/C</div>
+                <div className="dlg-sub">Green fields are auto-filled · fill in the Opened Date</div>
+              </div>
+            </div>
+            <div className="dlg-body">
+              {ACTIVE_COLS.map(c => (
+                <div key={c.key}>
+                  <Field col={c} value={promoForm[c.key]} onChange={setPromoFld} readOnly={AUTO_KEYS.has(c.key)} />
+                  {AUTO_KEYS.has(c.key)   && <div className="fld-note" style={{ color: GREEN }}>✓ Auto-filled</div>}
+                  {MANUAL_KEYS.has(c.key) && <div className="fld-note" style={{ color: GOLD  }}>⚠ Fill manually</div>}
+                </div>
+              ))}
+            </div>
+            <div className="dlg-foot">
+              <button className="btn-cancel" onClick={() => setPromo(false)} disabled={promoLoading}>Cancel</button>
+              <button className="btn-ok btn-success" onClick={savePromo} disabled={promoLoading}>
+                {promoLoading ? "Saving…" : "Save & Move"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirm && (
+        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setConfirm(false)}>
+          <div className="dlg-box" style={{ maxWidth: 370 }}>
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background: "#EF4444" }} />
+              <div className="dlg-ttl">Confirm Delete</div>
+            </div>
+            <div className="dlg-body">
+              <p style={{ color: "rgba(155,180,255,.7)", fontSize: ".84rem", lineHeight: 1.6 }}>Are you sure? This cannot be undone.</p>
+            </div>
+            <div className="dlg-foot">
+              <button className="btn-cancel" onClick={() => setConfirm(false)}>Cancel</button>
+              <button className="btn-ok btn-danger" onClick={del}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {snack && <Snack {...snack} onClose={() => setSnack(null)} />}
+    </div>
+  );
+}
+
+const GIFT_CSS = `
+  @keyframes srIn {
+    from { opacity:0; transform:translateX(-6px); }
+    to   { opacity:1; transform:none; }
+  }
+  .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
+  .mod-wrap.theme-light input::placeholder { color: rgba(0,0,0,0.3); }
+`;

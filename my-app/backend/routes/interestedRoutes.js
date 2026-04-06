@@ -16,13 +16,13 @@ router.get("/", async (req, res) => {
 
 // ── POST add ──────────────────────────────────────────────────────────────────
 router.post("/", async (req, res) => {
-  const { client_name, last_meeting, next_meeting, invested } = req.body;
+  const { client_name, esops_rsu, discussion_date, next_action } = req.body;
   try {
     const [result] = await db.query(
-      "INSERT INTO customers_interested (client_name, last_meeting, next_meeting, invested) VALUES (?, ?, ?, ?)",
-      [client_name, last_meeting || null, next_meeting || null, invested || "no"]
+      "INSERT INTO customers_interested (client_name, esops_rsu, discussion_date, next_action) VALUES (?, ?, ?, ?)",
+      [client_name, esops_rsu || "no", discussion_date || null, next_action || null]
     );
-    res.json({ id: result.insertId, client_name, last_meeting, next_meeting, invested });
+    res.json({ id: result.insertId, client_name, esops_rsu, discussion_date, next_action });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -30,11 +30,11 @@ router.post("/", async (req, res) => {
 
 // ── PUT update ────────────────────────────────────────────────────────────────
 router.put("/:id", async (req, res) => {
-  const { client_name, last_meeting, next_meeting, invested } = req.body;
+  const { client_name, esops_rsu, discussion_date, next_action } = req.body;
   try {
     await db.query(
-      "UPDATE customers_interested SET client_name=?, last_meeting=?, next_meeting=?, invested=? WHERE id=?",
-      [client_name, last_meeting || null, next_meeting || null, invested || "no", req.params.id]
+      "UPDATE customers_interested SET client_name=?, esops_rsu=?, discussion_date=?, next_action=? WHERE id=?",
+      [client_name, esops_rsu || "no", discussion_date || null, next_action || null, req.params.id]
     );
     res.json({ success: true });
   } catch (err) {

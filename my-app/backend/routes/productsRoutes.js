@@ -2,7 +2,11 @@ const express = require("express");
 const router  = express.Router();
 const db      = require("../db");
 
-// ── GET all ───────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// PRODUCTS
+// ─────────────────────────────────────────────
+
+// GET all products
 router.get("/", async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -14,21 +18,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ── GET single ────────────────────────────────────────────────────────────────
-router.get("/:id", async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      "SELECT * FROM products WHERE id = ?",
-      [req.params.id]
-    );
-    if (rows.length === 0) return res.status(404).json({ error: "Product not found" });
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ── POST add ──────────────────────────────────────────────────────────────────
+// POST — create new product
 router.post("/", async (req, res) => {
   const {
     product_name,
@@ -38,36 +28,31 @@ router.post("/", async (req, res) => {
     lock_in,
     amc_name,
   } = req.body;
-
   try {
     const [result] = await db.query(
       `INSERT INTO products
-         (product_name, min_investment, onboarding_process, structure, lock_in, amc_name)
+        (product_name, min_investment, onboarding_process, structure, lock_in, amc_name)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
-        product_name      || null,
-        min_investment    != null && min_investment !== "" ? Number(min_investment) : null,
-        onboarding_process || null,
-        structure          || null,
-        lock_in            || null,
-        amc_name           || null,
+        product_name        || null,
+        min_investment      || null,
+        onboarding_process  || "offline",
+        structure           || "outbound/cat-III",
+        lock_in             || null,
+        amc_name            || null,
       ]
     );
-    res.json({
-      id: result.insertId,
-      product_name,
-      min_investment,
-      onboarding_process,
-      structure,
-      lock_in,
-      amc_name,
-    });
+    const [rows] = await db.query(
+      "SELECT * FROM products WHERE id = ?",
+      [result.insertId]
+    );
+    res.status(201).json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── PUT update ────────────────────────────────────────────────────────────────
+// PUT — update existing product
 router.put("/:id", async (req, res) => {
   const {
     product_name,
@@ -77,42 +62,38 @@ router.put("/:id", async (req, res) => {
     lock_in,
     amc_name,
   } = req.body;
-
   try {
-    const [result] = await db.query(
+    await db.query(
       `UPDATE products
-       SET product_name      = ?,
-           min_investment    = ?,
-           onboarding_process = ?,
-           structure          = ?,
-           lock_in            = ?,
-           amc_name           = ?
-       WHERE id = ?`,
+       SET product_name=?, min_investment=?, onboarding_process=?, structure=?, lock_in=?, amc_name=?
+       WHERE id=?`,
       [
-        product_name      || null,
-        min_investment    != null && min_investment !== "" ? Number(min_investment) : null,
-        onboarding_process || null,
-        structure          || null,
-        lock_in            || null,
-        amc_name           || null,
+        product_name        || null,
+        min_investment      || null,
+        onboarding_process  || "offline",
+        structure           || "outbound/cat-III",
+        lock_in             || null,
+        amc_name            || null,
         req.params.id,
       ]
     );
-    if (result.affectedRows === 0) return res.status(404).json({ error: "Product not found" });
-    res.json({ success: true });
+    const [rows] = await db.query(
+      "SELECT * FROM products WHERE id = ?",
+      [req.params.id]
+    );
+    res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── DELETE ────────────────────────────────────────────────────────────────────
+// DELETE — remove a product
 router.delete("/:id", async (req, res) => {
   try {
-    const [result] = await db.query(
+    await db.query(
       "DELETE FROM products WHERE id = ?",
       [req.params.id]
     );
-    if (result.affectedRows === 0) return res.status(404).json({ error: "Product not found" });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

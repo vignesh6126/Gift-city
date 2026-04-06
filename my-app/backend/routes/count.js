@@ -11,6 +11,7 @@ router.get("/all", async (req, res) => {
       db.query("SELECT COUNT(*) AS cnt FROM customers_pending"),
       db.query("SELECT COUNT(*) AS cnt FROM gift_city_ac_active"),
       db.query("SELECT COUNT(*) AS cnt FROM gift_city_ac_inactive"),
+      db.query("SELECT COUNT(*) AS cnt FROM customers_interested"),  // ← correct table name
     ]);
 
     const getCount = (result) => {
@@ -27,6 +28,7 @@ router.get("/all", async (req, res) => {
     const custPending   = getCount(results[3]);
     const giftActive    = getCount(results[4]);
     const giftInactive  = getCount(results[5]);
+    const prospects     = getCount(results[6]);
 
     res.json({
       empanelment_done: {
@@ -41,6 +43,7 @@ router.get("/all", async (req, res) => {
         completed: giftActive,
         total:     giftActive + giftInactive,
       },
+      prospects_count: prospects,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

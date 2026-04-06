@@ -1,480 +1,470 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Box, Typography, Button, AppBar, Toolbar, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, Paper, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  MenuItem, Select, FormControl, InputLabel, Chip, CircularProgress,
-  Snackbar, Alert, Tooltip,
-} from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 const API = import.meta.env.VITE_API_URL;
 
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    background: { default: "#F3F0FF", paper: "#FFFFFF" },
-    text: { primary: "#1A2B3C", secondary: "#5A7A99" },
-  },
-  typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
-  shape: { borderRadius: 4 },
-  components: {
-    MuiTableCell: {
-      styleOverrides: {
-        head: { fontWeight: 700, fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.04em" },
-      },
-    },
-  },
-});
-
-const PURPLE = {
-  main: "#6C63FF",
-  light: "#F0EFFE",
-  mid: "#E0DCFF",
-  border: "#C4BFFF",
-  text: "#3D35A0",
-};
-
-const GREEN = {
-  main: "#43A047",
-  light: "#E8F5E9",
-  hover: "#2E7D32",
-};
-
 const TABS = [
   { id: "completed", label: "Empanelment Completed" },
-  { id: "pending",   label: "Empanelment Pending" },
+  { id: "pending",   label: "Empanelment Pending"   },
 ];
-
 const COMPLETED_COLS = [
-  { key: "AMC_name",         label: "AMC Name",         type: "text"   },
-  { key: "products",         label: "Products",          type: "number" },
-  { key: "Empanelment_date", label: "Empanelment Date",  type: "date"   },
-  { key: "boardings",        label: "Boardings",         type: "number" },
+  { key: "AMC_name",         label: "AMC Name",        type: "text"   },
+  { key: "products",         label: "Products",         type: "number" },
+  { key: "Empanelment_date", label: "Empanelment Date", type: "date"   },
+  { key: "boardings",        label: "Boardings",        type: "number" },
 ];
-
 const PENDING_COLS = [
-  { key: "AMC_name",        label: "AMC Name",        type: "text"   },
-  { key: "products",        label: "Products",         type: "number" },
-  { key: "submission_date", label: "Submission Date",  type: "date"   },
-  { key: "status",          label: "Status",           type: "text"   },
+  { key: "AMC_name",        label: "AMC Name",       type: "text"   },
+  { key: "products",        label: "Products",        type: "number" },
+  { key: "submission_date", label: "Submission Date", type: "date"   },
+  { key: "status",          label: "Status",          type: "text"   },
 ];
+const AUTO_KEYS   = new Set(["AMC_name", "products"]);
+const MANUAL_KEYS = new Set(["Empanelment_date", "boardings"]);
 
-const AUTO_FILLED_KEYS = new Set(["AMC_name", "products"]);
-const MANUAL_KEYS      = new Set(["Empanelment_date", "boardings"]);
+const pendingToCompleted = (r) => ({ AMC_name: r.AMC_name||"", products: r.products||"", Empanelment_date:"", boardings:"" });
+const emptyC = () => ({ AMC_name:"", products:"", Empanelment_date:"", boardings:"" });
+const emptyP = () => ({ AMC_name:"", products:"", submission_date:"", status:"" });
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—";
 
-const pendingToCompletedForm = (pendingRow) => ({
-  AMC_name:         pendingRow.AMC_name || "",
-  products:         pendingRow.products || "",
-  Empanelment_date: "",
-  boardings:        "",
-});
+/* ─── Icons ─── */
+const IcoEdit = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoDel  = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoMove = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="2"/><circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="2"/><circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
+const IcoPlus = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
+const IcoClear = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
-const EditIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-const DeleteIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-const PlusIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    <line x1="5"  y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-const ShareIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <circle cx="18" cy="5"  r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="6"  cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <line x1="8.59"  y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <line x1="15.41" y1="6.51"  x2="8.59"  y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-const BackIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-};
-
-const emptyCompleted = () => ({ AMC_name: "", products: "", Empanelment_date: "", boardings: "" });
-const emptyPending   = () => ({ AMC_name: "", products: "", submission_date: "", status: "" });
-
-function FieldInput({ col, value, onChange, highlight = false }) {
-  const highlightSx = highlight
-    ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#FFA726", borderWidth: 2 } } }
-    : {};
-
-  if (col.type === "select") {
-    return (
-      <FormControl fullWidth size="small"
-        sx={highlight ? { "& .MuiOutlinedInput-notchedOutline": { borderColor: "#FFA726", borderWidth: 2 } } : {}}>
-        <InputLabel>{col.label}</InputLabel>
-        <Select value={value || ""} label={col.label} onChange={(e) => onChange(col.key, e.target.value)}>
-          {col.options.map((o) => (
-            <MenuItem key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  }
+/* ─── Highlight matching text ─── */
+function Highlight({ text, query, theme = "dark" }) {
+  if (!query || !text) return <>{text ?? "—"}</>;
+  const str = String(text);
+  const idx = str.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{str}</>;
   return (
-    <TextField
-      fullWidth size="small" label={col.label}
-      type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
-      value={value || ""}
-      onChange={(e) => onChange(col.key, e.target.value)}
-      InputLabelProps={col.type === "date" ? { shrink: true } : undefined}
-      sx={highlightSx}
-    />
+    <>
+      {str.slice(0, idx)}
+      <mark style={{
+        background: theme === "light" ? "rgba(42,109,217,0.2)" : "rgba(79,142,247,0.35)",
+        color: theme === "light" ? "#1a50b5" : "#fff",
+        borderRadius: 3,
+        padding: "0 1px",
+      }}>
+        {str.slice(idx, idx + query.length)}
+      </mark>
+      {str.slice(idx + query.length)}
+    </>
   );
 }
 
-// ── onDataChange prop added ────────────────────────────────────────────────────
-export default function Empanelment({ inline = false, onDataChange }) {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("completed");
-  const [rows, setRows]           = useState([]);
-  const [loading, setLoading]     = useState(false);
+function Field({ col, value, onChange, highlight }) {
+  const cls = `fld-inp${highlight ? " fld-hi" : ""}`;
+  if (col.type === "select") return (
+    <div className="fld">
+      <label className="fld-lbl">{col.label}</label>
+      <select className={cls} value={value||""} onChange={e=>onChange(col.key,e.target.value)}>
+        <option value="">Select…</option>
+        {col.options.map(o=><option key={o} value={o}>{o[0].toUpperCase()+o.slice(1)}</option>)}
+      </select>
+    </div>
+  );
+  return (
+    <div className="fld">
+      <label className="fld-lbl">{col.label}</label>
+      <input className={cls} type={col.type==="number"?"number":col.type==="date"?"date":"text"} value={value||""} onChange={e=>onChange(col.key,e.target.value)} />
+    </div>
+  );
+}
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editRow, setEditRow]       = useState(null);
-  const [formData, setFormData]     = useState({});
+function Snack({ msg, severity, onClose }) {
+  useEffect(()=>{ const t=setTimeout(onClose,3000); return ()=>clearTimeout(t); },[]);
+  return <div className={`snack snack-${severity}`}>{msg}</div>;
+}
 
-  const [deleteId, setDeleteId]       = useState(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+/* ─── Search Bar ─── */
+function SearchBar({ value, onChange, placeholder, resultCount, totalCount, theme = "dark" }) {
+  const inputRef = useRef(null);
+  const isActive = value.length > 0;
 
-  const [promoteOpen, setPromoteOpen]         = useState(false);
-  const [promoteSourceId, setPromoteSourceId] = useState(null);
-  const [promoteForm, setPromoteForm]         = useState({});
-  const [promoteLoading, setPromoteLoading]   = useState(false);
+  return (
+    <div style={{
+      padding: "10px 20px 12px",
+      borderBottom: theme === "light" ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(79,142,247,0.12)",
+      background: theme === "light" ? "rgba(0,0,0,0.02)" : "rgba(79,142,247,0.02)",
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        flexWrap: "wrap",
+      }}>
+        {/* Input wrapper */}
+        <div style={{
+          position: "relative",
+          flex: 1,
+          minWidth: 200,
+          maxWidth: 420,
+        }}>
+          {/* Search icon */}
+          <span style={{
+            position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)",
+            color: isActive ? (theme === "light" ? "#2a6dd9" : "#4F8EF7") : (theme === "light" ? "rgba(0,0,0,0.3)" : "rgba(160,190,255,0.4)"),
+            display: "flex", pointerEvents: "none",
+            transition: "color .2s",
+          }}>
+            <IcoSearch />
+          </span>
 
-  const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
+          <input
+            ref={inputRef}
+            type="text"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder={placeholder}
+            style={{
+              width: "100%",
+              padding: "8px 34px 8px 32px",
+              borderRadius: 10,
+              border: isActive
+                ? (theme === "light" ? "1px solid rgba(42,109,217,0.6)" : "1px solid rgba(79,142,247,0.55)")
+                : (theme === "light" ? "1px solid rgba(0,0,0,0.2)" : "1px solid rgba(79,142,247,0.22)"),
+              background: isActive
+                ? (theme === "light" ? "rgba(42,109,217,0.07)" : "rgba(79,142,247,0.08)")
+                : (theme === "light" ? "rgba(255,255,255,0.6)" : "rgba(10,16,60,0.5)"),
+              color: theme === "light" ? "#111827" : "#fff",
+              fontSize: ".82rem",
+              fontFamily: "var(--fb,'Exo 2',sans-serif)",
+              outline: "none",
+              transition: "all .22s",
+              boxShadow: isActive ? (theme === "light" ? "0 0 0 3px rgba(42,109,217,0.12)" : "0 0 0 3px rgba(79,142,247,0.12)") : "none",
+            }}
+            onFocus={e => {
+              e.target.style.borderColor = theme === "light" ? "rgba(42,109,217,0.8)" : "rgba(79,142,247,0.7)";
+              e.target.style.boxShadow = theme === "light" ? "0 0 0 3px rgba(42,109,217,0.15)" : "0 0 0 3px rgba(79,142,247,0.15)";
+            }}
+            onBlur={e => {
+              e.target.style.borderColor = isActive
+                ? (theme === "light" ? "rgba(42,109,217,0.6)" : "rgba(79,142,247,0.55)")
+                : (theme === "light" ? "rgba(0,0,0,0.2)" : "rgba(79,142,247,0.22)");
+              e.target.style.boxShadow = isActive
+                ? (theme === "light" ? "0 0 0 3px rgba(42,109,217,0.12)" : "0 0 0 3px rgba(79,142,247,0.12)")
+                : "none";
+            }}
+          />
 
-  const cols = activeTab === "completed" ? COMPLETED_COLS : PENDING_COLS;
+          {/* Clear button */}
+          {isActive && (
+            <button
+              onClick={() => { onChange(""); inputRef.current?.focus(); }}
+              style={{
+                position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                background: theme === "light" ? "rgba(42,109,217,0.14)" : "rgba(79,142,247,0.18)", border: "none", borderRadius: "50%",
+                width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: theme === "light" ? "rgba(0,0,0,0.55)" : "rgba(180,210,255,0.8)",
+                transition: "all .15s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = theme === "light" ? "rgba(42,109,217,0.28)" : "rgba(79,142,247,0.35)"; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = theme === "light" ? "rgba(42,109,217,0.14)" : "rgba(79,142,247,0.18)"; e.currentTarget.style.color = theme === "light" ? "rgba(0,0,0,0.55)" : "rgba(180,210,255,0.8)"; }}
+            >
+              <IcoClear />
+            </button>
+          )}
+        </div>
 
-  const fetchData = useCallback(async () => {
+        {/* Result pill */}
+        {isActive && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "4px 12px", borderRadius: 20,
+            background: resultCount > 0 ? "rgba(79,142,247,0.12)" : "rgba(248,113,113,0.12)",
+            border: `1px solid ${resultCount > 0 ? "rgba(79,142,247,0.28)" : "rgba(248,113,113,0.28)"}`,
+            fontSize: ".7rem", fontWeight: 700,
+            color: resultCount > 0 ? (theme === "light" ? "#2a6dd9" : "#4F8EF7") : (theme === "light" ? "#b02020" : "#F87171"),
+            fontFamily: "var(--fh,'Orbitron',sans-serif)",
+            animation: "srIn .18s ease",
+            whiteSpace: "nowrap",
+          }}>
+            {resultCount > 0
+              ? <><span style={{ opacity: .7 }}>↳</span> {resultCount} <span style={{ opacity: .55, fontWeight: 500 }}>of {totalCount}</span></>
+              : <>No results</>
+            }
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function Empanelment({ inline=false, onDataChange, initialTab, theme="dark" }) {
+  const [tab,     setTab]     = useState(initialTab || "completed");
+  const [rows,    setRows]    = useState([]);
+  const [search,  setSearch]  = useState("");
+  const [loading, setLoading] = useState(false);
+  const [dlg,     setDlg]     = useState(false);
+  const [editRow, setEditRow] = useState(null);
+  const [form,    setForm]    = useState({});
+  const [delId,   setDelId]   = useState(null);
+  const [confirm, setConfirm] = useState(false);
+  const [promo,   setPromo]   = useState(false);
+  const [promoId, setPromoId] = useState(null);
+  const [promoForm, setPromoForm] = useState({});
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [snack,   setSnack]   = useState(null);
+
+  useEffect(() => {
+    if (initialTab) setTab(initialTab);
+  }, [initialTab]);
+
+  // Clear search whenever tab changes
+  useEffect(() => { setSearch(""); }, [tab]);
+
+  const cols = tab === "completed" ? COMPLETED_COLS : PENDING_COLS;
+
+  const showSnack = (msg, severity = "success") => setSnack({ msg, severity });
+
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/empanelment/${activeTab}`);
-      const data = await res.json();
+      const r = await fetch(`${API}/empanelment/${tab}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
       setRows(Array.isArray(data) ? data : []);
-    } catch {
-      showSnack("Failed to load data", "error");
+    } catch (e) {
+      console.error("Empanelment load error:", e);
+      setSnack({ msg: `Failed to load: ${e.message}`, severity: "error" });
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [tab]);
+  useEffect(() => { load(); }, [load]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  // ── Dynamic filter: match AMC_name (case-insensitive, partial)
+  const filteredRows = search.trim()
+    ? rows.filter(r =>
+        (r.AMC_name || "").toLowerCase().includes(search.trim().toLowerCase())
+      )
+    : rows;
 
-  const showSnack = (msg, severity = "success") => setSnack({ open: true, msg, severity });
+  const openAdd  = () => { setEditRow(null); setForm(tab==="completed"?emptyC():emptyP()); setDlg(true); };
+  const openEdit = (row) => { setEditRow(row); setForm({...row}); setDlg(true); };
+  const setField = (k,v) => setForm(p=>({...p,[k]:v}));
 
-  // ── Add / Edit ──
-  const openAdd     = () => { setEditRow(null); setFormData(activeTab === "completed" ? emptyCompleted() : emptyPending()); setDialogOpen(true); };
-  const openEdit    = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
-  const closeDialog = () => setDialogOpen(false);
-  const handleField = (key, val) => setFormData((prev) => ({ ...prev, [key]: val }));
-
-  const handleSave = async () => {
-    const url    = editRow ? `${API}/empanelment/${activeTab}/${editRow.id}` : `${API}/empanelment/${activeTab}`;
-    const method = editRow ? "PUT" : "POST";
+  const save = async () => {
+    const url = editRow ? `${API}/empanelment/${tab}/${editRow.id}` : `${API}/empanelment/${tab}`;
     try {
-      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
-      if (!res.ok) throw new Error();
-      showSnack(editRow ? "Record updated!" : "Record added!");
-      closeDialog();
-      fetchData();
-      if (onDataChange) onDataChange(); // ← notify Dashboard
-    } catch {
-      showSnack("Save failed", "error");
-    }
+      const r = await fetch(url,{method:editRow?"PUT":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});
+      if(!r.ok) throw 0;
+      showSnack(editRow?"Updated!":"Added!"); setDlg(false); load(); onDataChange?.();
+    } catch { showSnack("Save failed","error"); }
   };
 
-  // ── Delete ──
-  const askDelete    = (id) => { setDeleteId(id); setConfirmOpen(true); };
-  const handleDelete = async () => {
+  const del = async () => {
     try {
-      const res = await fetch(`${API}/empanelment/${activeTab}/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      showSnack("Record deleted");
-      setConfirmOpen(false);
-      fetchData();
-      if (onDataChange) onDataChange(); // ← notify Dashboard
-    } catch {
-      showSnack("Delete failed", "error");
-    }
+      const r = await fetch(`${API}/empanelment/${tab}/${delId}`,{method:"DELETE"});
+      if(!r.ok) throw 0;
+      showSnack("Deleted"); setConfirm(false); load(); onDataChange?.();
+    } catch { showSnack("Delete failed","error"); }
   };
 
-  // ── Promote pending → completed ──
-  const openPromote       = (row) => { setPromoteSourceId(row.id); setPromoteForm(pendingToCompletedForm(row)); setPromoteOpen(true); };
-  const closePromote      = () => { setPromoteOpen(false); setPromoteSourceId(null); setPromoteForm({}); };
-  const handlePromoteField = (key, val) => setPromoteForm((prev) => ({ ...prev, [key]: val }));
-
-  const handlePromoteSave = async () => {
-    setPromoteLoading(true);
+  const openPromo   = (row) => { setPromoId(row.id); setPromoForm(pendingToCompleted(row)); setPromo(true); };
+  const setPromoFld = (k,v) => setPromoForm(p=>({...p,[k]:v}));
+  const savePromo = async () => {
+    setPromoLoading(true);
     try {
-      const addRes = await fetch(`${API}/empanelment/completed`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(promoteForm),
-      });
-      if (!addRes.ok) throw new Error("Failed to add to completed");
-
-      const delRes = await fetch(`${API}/empanelment/pending/${promoteSourceId}`, { method: "DELETE" });
-      if (!delRes.ok) throw new Error("Failed to remove from pending");
-
-      showSnack("✓ Moved to Empanelment Completed!", "success");
-      closePromote();
-      fetchData();
-      if (onDataChange) onDataChange(); // ← notify Dashboard
-    } catch (e) {
-      showSnack(e.message || "Operation failed", "error");
-    } finally {
-      setPromoteLoading(false);
-    }
+      const a = await fetch(`${API}/empanelment/completed`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(promoForm)});
+      if(!a.ok) throw new Error("Add failed");
+      const d = await fetch(`${API}/empanelment/pending/${promoId}`,{method:"DELETE"});
+      if(!d.ok) throw new Error("Delete failed");
+      showSnack("✓ Moved to Completed!"); setPromo(false); load(); onDataChange?.();
+    } catch(e){ showSnack(e.message||"Failed","error"); } finally { setPromoLoading(false); }
   };
 
-  const content = (
-    <>
-      {!inline && (
-        <AppBar position="static" elevation={0}
-          sx={{ bgcolor: "#fff", borderBottom: `1px solid ${PURPLE.border}` }}>
-          <Toolbar>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexGrow: 1 }}>
-              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: PURPLE.main, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography variant="caption" fontWeight={900} color="#fff" fontSize="0.68rem">FD</Typography>
-              </Box>
-              <Typography variant="h6" fontWeight={800} color="text.primary">Finance Doctor</Typography>
-            </Box>
-            <Button onClick={() => navigate("/dashboard")} startIcon={<BackIcon />} variant="outlined" size="small"
-              sx={{ color: PURPLE.text, borderColor: PURPLE.border, textTransform: "none", mr: 1, "&:hover": { borderColor: PURPLE.main, bgcolor: PURPLE.light } }}>
-              Dashboard
-            </Button>
-            <Button onClick={() => { localStorage.removeItem("user"); navigate("/login"); }} variant="outlined" size="small"
-              sx={{ color: PURPLE.main, borderColor: PURPLE.border, textTransform: "none", "&:hover": { bgcolor: PURPLE.light } }}>
-              Logout
-            </Button>
-          </Toolbar>
-        </AppBar>
+  return (
+    <div className={`mod-wrap${theme === "light" ? " theme-light" : ""}`}>
+      <style>{EMP_CSS}</style>
+
+      {/* ── Top bar: tabs + add button ── */}
+      <div className="mod-hdr">
+        <div className="tabs-row">
+          {TABS.map(t=>(
+            <button key={t.id} className={`tab-pill ${tab===t.id?"tab-active":""}`} onClick={()=>setTab(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {tab==="pending" && (
+          <button className="add-btn" style={{background:"linear-gradient(135deg,#4F8EF7,#7B5FFF)",boxShadow:"0 4px 14px rgba(79,142,247,.32)"}} onClick={openAdd}>
+            <IcoPlus /> Add Row
+          </button>
+        )}
+      </div>
+
+      {/* ── Search bar (below tabs) ── */}
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder={`Search AMC name in ${tab === "completed" ? "Completed" : "Pending"}…`}
+        resultCount={filteredRows.length}
+        totalCount={rows.length}
+        theme={theme}
+      />
+
+      {/* ── Table header ── */}
+      <div className="tbl-hdr">
+        <span className="tbl-title">{TABS.find(t=>t.id===tab)?.label}</span>
+        {!loading && (
+          <span className="tbl-badge">
+            {search.trim()
+              ? <>{filteredRows.length} <span style={{ opacity: .55 }}>/ {rows.length}</span></>
+              : <>{rows.length} records</>
+            }
+          </span>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="fd-spin"><div className="spinner"/></div>
+      ) : (
+        <div className="tbl-wrap">
+          <table className="fd-tbl">
+            <thead><tr>
+              <th style={{width:42}}>#</th>
+              {cols.map(c=><th key={c.key}>{c.label}</th>)}
+              <th style={{textAlign:"center",width:tab==="pending"?108:82}}>Actions</th>
+            </tr></thead>
+            <tbody>
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td className="fd-empty" colSpan={cols.length+2}>
+                    {search.trim()
+                      ? <>No AMCs match "<strong style={{color:"#4F8EF7"}}>{search}</strong>"</>
+                      : tab==="pending"
+                        ? 'No records found. Click "Add Row" to get started.'
+                        : "No records found."
+                    }
+                  </td>
+                </tr>
+              ) : filteredRows.map((row,i)=>(
+                <tr key={row.id}>
+                  <td className="fd-num">{i+1}</td>
+                  {cols.map(c=>(
+                    <td key={c.key}>
+                      {c.type === "date"
+                        ? fmtDate(row[c.key])
+                        : c.key === "AMC_name"
+                          ? <Highlight text={row[c.key]} query={search} theme={theme} />
+                          : row[c.key] ?? "—"
+                      }
+                    </td>
+                  ))}
+                  <td><div className="act-cell">
+                    <button className="ab ab-edit" title="Edit" onClick={()=>openEdit(row)}><IcoEdit/></button>
+                    {tab==="pending"&&<button className="ab ab-promo" title="Move to Completed" onClick={()=>openPromo(row)}><IcoMove/></button>}
+                    <button className="ab ab-del" title="Delete" onClick={()=>{setDelId(row.id);setConfirm(true);}}><IcoDel/></button>
+                  </div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      <Box sx={{ minHeight: inline ? "unset" : "calc(100vh - 64px)", bgcolor: inline ? "transparent" : "#F3F0FF", px: inline ? 0 : { xs: 2, md: 4 }, py: inline ? 0 : 3 }}>
-        {!inline && (
-          <Typography variant="h5" fontWeight={800} color={PURPLE.text} sx={{ mb: 3 }}>Empanelment</Typography>
-        )}
+      {/* ── Dialogs (unchanged) ── */}
+      {dlg&&<div className="dlg-ov" onClick={e=>e.target===e.currentTarget&&setDlg(false)}>
+        <div className="dlg-box">
+          <div className="dlg-hdr"><div className="dlg-bar" style={{background:"#4F8EF7"}}/><div className="dlg-ttl">{editRow?"Edit Record":"Add Record"}</div></div>
+          <div className="dlg-body">{cols.map(c=><Field key={c.key} col={c} value={form[c.key]} onChange={setField}/>)}</div>
+          <div className="dlg-foot">
+            <button className="btn-cancel" onClick={()=>setDlg(false)}>Cancel</button>
+            <button className="btn-ok btn-primary" onClick={save}>{editRow?"Update":"Save"}</button>
+          </div>
+        </div>
+      </div>}
 
-        <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <Box key={tab.id} onClick={() => setActiveTab(tab.id)}
-                sx={{
-                  cursor: "pointer", px: 3, py: 1, borderRadius: "50px",
-                  border: `2px solid ${isActive ? PURPLE.main : PURPLE.border}`,
-                  bgcolor: isActive ? PURPLE.main : "#fff",
-                  color: isActive ? "#fff" : PURPLE.text,
-                  fontWeight: 700, fontSize: "0.85rem", transition: "all 0.25s ease",
-                  boxShadow: isActive ? `0 3px 10px ${PURPLE.main}44` : "0 1px 3px rgba(0,0,0,0.07)",
-                  userSelect: "none",
-                  "&:hover": { transform: "translateY(-2px)", boxShadow: `0 5px 14px ${PURPLE.main}33`, borderColor: PURPLE.main, bgcolor: isActive ? PURPLE.main : PURPLE.light },
-                }}>
-                {tab.label}
-              </Box>
-            );
-          })}
-        </Box>
-
-        <Paper elevation={0} sx={{ border: `1.5px solid ${PURPLE.border}`, borderRadius: 2, overflow: "hidden" }}>
-          <Box sx={{ px: 3, py: 2, bgcolor: PURPLE.light, borderBottom: `1px solid ${PURPLE.mid}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Typography fontWeight={700} sx={{ color: PURPLE.text, fontSize: "0.95rem" }}>
-              {TABS.find((t) => t.id === activeTab)?.label}
-              {!loading && (
-                <Chip label={`${rows.length} records`} size="small"
-                  sx={{ ml: 1.5, bgcolor: PURPLE.mid, color: PURPLE.text, fontWeight: 700, fontSize: "0.7rem", height: 20 }} />
-              )}
-            </Typography>
-		{activeTab === "pending" && (
-		<Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
-              sx={{ bgcolor: PURPLE.main, boxShadow: "none", textTransform: "none", fontWeight: 600, borderRadius: "6px", "&:hover": { bgcolor: "#5A52D5", boxShadow: "none" } }}>
-              Add Row
-            </Button>
-		)}
-          </Box>
-
-          {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-              <CircularProgress sx={{ color: PURPLE.main }} />
-            </Box>
-          ) : (
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: PURPLE.light }}>
-                    <TableCell sx={{ color: PURPLE.text, width: 50 }}>#</TableCell>
-                    {cols.map((col) => <TableCell key={col.key} sx={{ color: PURPLE.text }}>{col.label}</TableCell>)}
-                    <TableCell align="center" sx={{ color: PURPLE.text, width: activeTab === "pending" ? 120 : 90 }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={cols.length + 2} align="center" sx={{ py: 6, color: "text.secondary", fontStyle: "italic" }}>
-                        No records found. Click "Add Row" to get started.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    rows.map((row, idx) => (
-                      <TableRow key={row.id} sx={{ "&:hover": { bgcolor: PURPLE.light }, "&:last-child td": { borderBottom: 0 } }}>
-                        <TableCell sx={{ color: "text.secondary", fontSize: "0.78rem" }}>{idx + 1}</TableCell>
-                        {cols.map((col) => (
-                          <TableCell key={col.key} sx={{ fontSize: "0.88rem", color: "text.primary" }}>
-                            {col.type === "date" ? formatDate(row[col.key]) : row[col.key] ?? "—"}
-                          </TableCell>
-                        ))}
-                        <TableCell align="center">
-                          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
-                            <Tooltip title="Edit" arrow>
-                              <IconButton size="small" onClick={() => openEdit(row)}
-                                sx={{ color: PURPLE.text, bgcolor: PURPLE.mid, borderRadius: "6px", width: 28, height: 28, "&:hover": { bgcolor: PURPLE.main, color: "#fff" } }}>
-                                <EditIcon />
-                              </IconButton>
-                            </Tooltip>
-                            {activeTab === "pending" && (
-                              <Tooltip title="Move to Completed" arrow>
-                                <IconButton size="small" onClick={() => openPromote(row)}
-                                  sx={{ color: GREEN.main, bgcolor: GREEN.light, borderRadius: "6px", width: 28, height: 28, "&:hover": { bgcolor: GREEN.main, color: "#fff" } }}>
-                                  <ShareIcon />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-                            <Tooltip title="Delete" arrow>
-                              <IconButton size="small" onClick={() => askDelete(row.id)}
-                                sx={{ color: "#E53935", bgcolor: "#FFEBEE", borderRadius: "6px", width: 28, height: 28, "&:hover": { bgcolor: "#E53935", color: "#fff" } }}>
-                                <DeleteIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Paper>
-      </Box>
-
-      {/* ── Add / Edit Dialog ── */}
-      <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="sm" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: `1.5px solid ${PURPLE.border}`, borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: PURPLE.main }} />
-          <Typography fontWeight={700}>{editRow ? "Edit Record" : "Add New Record"}</Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            {cols.map((col) => <FieldInput key={col.key} col={col} value={formData[col.key]} onChange={handleField} />)}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={closeDialog} variant="outlined" size="small"
-            sx={{ borderColor: PURPLE.border, color: PURPLE.text, textTransform: "none", borderRadius: "6px", "&:hover": { borderColor: PURPLE.main, bgcolor: PURPLE.light } }}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} variant="contained" size="small"
-            sx={{ bgcolor: PURPLE.main, boxShadow: "none", textTransform: "none", fontWeight: 700, borderRadius: "6px", "&:hover": { bgcolor: "#5A52D5", boxShadow: "none" } }}>
-            {editRow ? "Update" : "Save"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ── Promote Dialog ── */}
-      <Dialog open={promoteOpen} onClose={closePromote} maxWidth="sm" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: `1.5px solid ${GREEN.main}55`, borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: GREEN.main }} />
-          <Box>
-            <Typography fontWeight={700}>Move to Empanelment Completed</Typography>
-            <Typography variant="caption" color="text.secondary">Fields highlighted in orange require manual entry</Typography>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            {COMPLETED_COLS.map((col) => (
-              <Box key={col.key}>
-                <FieldInput col={col} value={promoteForm[col.key]} onChange={handlePromoteField} highlight={MANUAL_KEYS.has(col.key)} />
-                {MANUAL_KEYS.has(col.key) && (
-                  <Typography variant="caption" sx={{ color: "#FFA726", ml: 0.5 }}>⚠ No matching field in pending — please fill manually</Typography>
-                )}
-                {AUTO_FILLED_KEYS.has(col.key) && (
-                  <Typography variant="caption" sx={{ color: GREEN.main, ml: 0.5 }}>✓ Auto-filled from pending record</Typography>
-                )}
-              </Box>
+      {promo&&<div className="dlg-ov" onClick={e=>e.target===e.currentTarget&&setPromo(false)}>
+        <div className="dlg-box">
+          <div className="dlg-hdr">
+            <div className="dlg-bar" style={{background:"#34D399"}}/>
+            <div><div className="dlg-ttl">Move to Empanelment Completed</div><div className="dlg-sub">Orange fields require manual entry</div></div>
+          </div>
+          <div className="dlg-body">
+            {COMPLETED_COLS.map(c=>(
+              <div key={c.key}>
+                <Field col={c} value={promoForm[c.key]} onChange={setPromoFld} highlight={MANUAL_KEYS.has(c.key)}/>
+                {MANUAL_KEYS.has(c.key)&&<div className="fld-note" style={{color:"#f59e0b"}}>⚠ Fill manually</div>}
+                {AUTO_KEYS.has(c.key)&&<div className="fld-note" style={{color:"#34D399"}}>✓ Auto-filled</div>}
+              </div>
             ))}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={closePromote} variant="outlined" size="small" disabled={promoteLoading}
-            sx={{ borderColor: PURPLE.border, color: PURPLE.text, textTransform: "none", borderRadius: "6px", "&:hover": { borderColor: PURPLE.main, bgcolor: PURPLE.light } }}>
-            Cancel
-          </Button>
-          <Button onClick={handlePromoteSave} variant="contained" size="small" disabled={promoteLoading}
-            sx={{ bgcolor: GREEN.main, boxShadow: "none", textTransform: "none", fontWeight: 700, borderRadius: "6px", "&:hover": { bgcolor: GREEN.hover, boxShadow: "none" } }}>
-            {promoteLoading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Save & Move to Completed"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </div>
+          <div className="dlg-foot">
+            <button className="btn-cancel" onClick={()=>setPromo(false)} disabled={promoLoading}>Cancel</button>
+            <button className="btn-ok btn-success" onClick={savePromo} disabled={promoLoading}>{promoLoading?"Saving…":"Save & Move"}</button>
+          </div>
+        </div>
+      </div>}
 
-      {/* ── Delete Confirm ── */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: "1.5px solid #FFCDD2", borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: "#E53935" }} />
-          <Typography fontWeight={700}>Confirm Delete</Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary">Are you sure you want to delete this record? This action cannot be undone.</Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setConfirmOpen(false)} variant="outlined" size="small"
-            sx={{ borderColor: PURPLE.border, color: PURPLE.text, textTransform: "none", borderRadius: "6px" }}>
-            Cancel
-          </Button>
-          <Button onClick={handleDelete} variant="contained" size="small"
-            sx={{ bgcolor: "#E53935", boxShadow: "none", textTransform: "none", fontWeight: 700, borderRadius: "6px", "&:hover": { bgcolor: "#C62828", boxShadow: "none" } }}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {confirm&&<div className="dlg-ov" onClick={e=>e.target===e.currentTarget&&setConfirm(false)}>
+        <div className="dlg-box" style={{maxWidth:370}}>
+          <div className="dlg-hdr"><div className="dlg-bar" style={{background:"#EF4444"}}/><div className="dlg-ttl">Confirm Delete</div></div>
+          <div className="dlg-body"><p style={{color:"rgba(155,180,255,.7)",fontSize:".84rem",lineHeight:1.6}}>Are you sure you want to delete this record? This action cannot be undone.</p></div>
+          <div className="dlg-foot">
+            <button className="btn-cancel" onClick={()=>setConfirm(false)}>Cancel</button>
+            <button className="btn-ok btn-danger" onClick={del}>Delete</button>
+          </div>
+        </div>
+      </div>}
 
-      <Snackbar open={snack.open} autoHideDuration={3000}
-        onClose={() => setSnack((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity={snack.severity} variant="filled" sx={{ fontWeight: 600 }}>{snack.msg}</Alert>
-      </Snackbar>
-    </>
+      {snack&&<Snack {...snack} onClose={()=>setSnack(null)}/>}
+    </div>
   );
-
-  if (inline) return <ThemeProvider theme={theme}>{content}</ThemeProvider>;
-  return <ThemeProvider theme={theme}><CssBaseline />{content}</ThemeProvider>;
 }
+
+const EMP_CSS = `
+  @keyframes srIn {
+    from { opacity:0; transform:translateX(-6px); }
+    to   { opacity:1; transform:none; }
+  }
+  .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
+  .mod-wrap.theme-light input::placeholder { color: rgba(0,0,0,0.3); }
+
+  .theme-light .dlg-box {
+    background: rgba(255,255,255,0.82) !important;
+    backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid rgba(10,30,100,0.2) !important;
+    box-shadow: 0 8px 40px rgba(10,30,100,0.15) !important;
+  }
+  .theme-light .dlg-hdr {
+    border-bottom: 1px solid rgba(10,30,100,0.12) !important;
+    background: rgba(135,206,250,0.15) !important;
+  }
+  .theme-light .dlg-ttl { color: #111827 !important; }
+  .theme-light .dlg-sub { color: rgba(0,0,0,0.5) !important; }
+  .theme-light .dlg-body {
+    background: transparent !important;
+    max-height: 45vh !important;
+  }
+  .theme-light .dlg-foot {
+    border-top: 1px solid rgba(10,30,100,0.12) !important;
+    background: transparent !important;
+  }
+  .theme-light .fld-lbl { color: rgba(0,0,0,0.65) !important; }
+  .theme-light .fld-inp {
+    background: rgba(255,255,255,0.7) !important;
+    border: 1px solid rgba(10,30,100,0.2) !important;
+    color: #111827 !important;
+  }
+  .theme-light .fld-inp:focus {
+    border-color: #2a6dd9 !important;
+    box-shadow: 0 0 0 3px rgba(42,109,217,0.12) !important;
+  }
+  .theme-light .fld-inp option {
+    background: #fff !important;
+    color: #111827 !important;
+  }
+  .theme-light .btn-cancel {
+    border: 1px solid rgba(10,30,100,0.2) !important;
+    color: rgba(0,0,0,0.65) !important;
+  }
+  .theme-light .btn-cancel:hover {
+    border-color: rgba(10,30,100,0.4) !important;
+    color: #000 !important;
+  }
+  .theme-light .dlg-body p { color: rgba(0,0,0,0.6) !important; }
+`;

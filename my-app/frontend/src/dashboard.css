@@ -1,0 +1,16 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  background: #060a1e url('/bg.png') center/cover no-repeat fixed;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  background: transparent;
+}

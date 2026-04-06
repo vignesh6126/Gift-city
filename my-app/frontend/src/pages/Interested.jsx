@@ -1,405 +1,523 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Box, Typography, Button, AppBar, Toolbar, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, Paper, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  MenuItem, Select, FormControl, InputLabel, Chip, CircularProgress,
-  Snackbar, Alert, Tooltip,
-} from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 const API = import.meta.env.VITE_API_URL;
 
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    background: { default: "#FFF8F0", paper: "#FFFFFF" },
-    text: { primary: "#1A2B3C", secondary: "#5A7A99" },
-  },
-  typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
-  shape: { borderRadius: 4 },
-  components: {
-    MuiTableCell: {
-      styleOverrides: {
-        head: { fontWeight: 700, fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.04em" },
-      },
-    },
-  },
-});
-
-const ORANGE = {
-  main:   "#E67E22",
-  light:  "#FEF5E8",
-  mid:    "#FDEBD0",
-  border: "#F5CBA7",
-  text:   "#A04000",
-};
-
 const COLS = [
-  { key: "client_name",   label: "Client Name",   type: "text" },
-  { key: "last_meeting",  label: "Last Meeting",   type: "date" },
-  { key: "next_meeting",  label: "Next Meeting",   type: "date" },
-  { key: "invested",      label: "Interested",       type: "select", options: ["yes", "no"] },
+  { key: "client_name",     label: "Client Name",    type: "text"   },
+  { key: "esops_rsu",       label: "ESOPS/RSU",       type: "select", options: ["yes", "no"] },
+  { key: "discussion_date", label: "Discussion Date", type: "date"   },
+  { key: "next_action",     label: "Next Action",     type: "text"   },
 ];
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
-const EditIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-const DeleteIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-const formatDate = (dateStr) => {
-  if (!dateStr) return "—";
-  const date = new Date(dateStr);
+const PENDING_COLS = [
+  { key: "client_name",          label: "Client Name",           type: "text"   },
+  { key: "amount_tobe_invested", label: "Amount to be Invested", type: "number" },
+  { key: "amc_name",             label: "AMC Name",              type: "text"   },
+  { key: "scheme",               label: "Scheme",                type: "text"   },
+  { key: "bank",                 label: "Bank",                  type: "select", options: ["gift", "savings", "both"] },
+  { key: "submission_date",      label: "Submission Date",       type: "date"   },
+  { key: "status",               label: "Status",                type: "text"   },
+];
 
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+const SHARE_AUTO_KEYS   = new Set(["client_name"]);
+const SHARE_MANUAL_KEYS = new Set(["amount_tobe_invested", "amc_name", "scheme", "bank", "submission_date", "status"]);
+
+const toISODate = (val) => {
+  if (!val) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  const m = val.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  const d = new Date(val);
+  if (!isNaN(d)) return d.toISOString().slice(0, 10);
+  return val;
 };
-const PlusIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
-const BackIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-    <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
 
-const emptyRow = () => ({ client_name: "", last_meeting: "", next_meeting: "", invested: "no" });
+const emptyRow = () => ({ client_name: "", esops_rsu: "no", discussion_date: "", next_action: "" });
+const fmtDate  = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
-function FieldInput({ col, value, onChange }) {
-  if (col.type === "select") {
-    return (
-      <FormControl fullWidth size="small">
-        <InputLabel>{col.label}</InputLabel>
-        <Select value={value || ""} label={col.label} onChange={(e) => onChange(col.key, e.target.value)}>
-          {col.options.map((o) => (
-            <MenuItem key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  }
+const interestedToPending = (row) => ({
+  client_name:          row.client_name || "",
+  amount_tobe_invested: "",
+  amc_name:             "",
+  scheme:               "",
+  bank:                 "savings",
+  submission_date:      "",
+  status:               "",
+});
+
+/* ─── Icons ─── */
+const IcoEdit   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoDel    = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoPlus   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
+const IcoClear  = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const IcoShare  = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="16 6 12 2 8 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="2" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
+
+const ORANGE = "#E67E22";
+
+/* ─── Highlight matching text ─── */
+function Highlight({ text, query, theme = "dark" }) {
+  if (!query || !text) return <>{text ?? "—"}</>;
+  const str = String(text);
+  const idx = str.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{str}</>;
   return (
-    <TextField
-      fullWidth size="small" label={col.label}
-      type={col.type === "date" ? "date" : "text"}
-      value={value || ""}
-      onChange={(e) => onChange(col.key, e.target.value)}
-      InputLabelProps={col.type === "date" ? { shrink: true } : undefined}
-    />
+    <>
+      {str.slice(0, idx)}
+      <mark style={{
+        background: theme === "light" ? "rgba(42,109,217,0.2)" : "rgba(230,126,34,0.35)",
+        color: theme === "light" ? "#1a50b5" : "#fff",
+        borderRadius: 3,
+        padding: "0 1px",
+      }}>
+        {str.slice(idx, idx + query.length)}
+      </mark>
+      {str.slice(idx + query.length)}
+    </>
   );
 }
 
-export default function Interested({ inline = false }) {
-  const navigate = useNavigate();
-  const [rows, setRows]               = useState([]);
-  const [loading, setLoading]         = useState(false);
-  const [dialogOpen, setDialogOpen]   = useState(false);
-  const [editRow, setEditRow]         = useState(null);
-  const [formData, setFormData]       = useState({});
-  const [deleteId, setDeleteId]       = useState(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [snack, setSnack]             = useState({ open: false, msg: "", severity: "success" });
+/* ─── Search Bar ─── */
+function SearchBar({ value, onChange, resultCount, totalCount, theme = "dark" }) {
+  const inputRef = useRef(null);
+  const isActive = value.length > 0;
 
-  const fetchData = useCallback(async () => {
+  const accent       = theme === "light" ? "rgba(42,109,217,0.8)"            : "rgba(79,142,247,0.7)";
+  const accentSolid  = theme === "light" ? "#2a6dd9"                         : "#4F8EF7";
+  const borderIdle   = theme === "light" ? "rgba(0,0,0,0.2)"                 : "rgba(79,142,247,0.22)";
+  const borderActive = theme === "light" ? "rgba(42,109,217,0.6)"            : "rgba(79,142,247,0.55)";
+  const bgIdle       = theme === "light" ? "rgba(255,255,255,0.6)"           : "rgba(10,16,60,0.5)";
+  const bgActive     = theme === "light" ? "rgba(42,109,217,0.07)"           : "rgba(79,142,247,0.08)";
+  const shadowActive = theme === "light" ? "0 0 0 3px rgba(42,109,217,0.12)": "0 0 0 3px rgba(79,142,247,0.12)";
+  const shadowFocus  = theme === "light" ? "0 0 0 3px rgba(42,109,217,0.15)": "0 0 0 3px rgba(79,142,247,0.15)";
+  const clearBg      = theme === "light" ? "rgba(42,109,217,0.14)"           : "rgba(79,142,247,0.18)";
+  const clearBgHov   = theme === "light" ? "rgba(42,109,217,0.28)"           : "rgba(79,142,247,0.35)";
+  const clearColor   = theme === "light" ? "rgba(0,0,0,0.55)"               : "rgba(180,210,255,0.8)";
+  const pillBg       = theme === "light" ? "rgba(42,109,217,0.12)"           : "rgba(79,142,247,0.12)";
+  const pillBorder   = theme === "light" ? "rgba(42,109,217,0.28)"           : "rgba(79,142,247,0.28)";
+  const pillColor    = accentSolid;
+  const sectionBg    = theme === "light" ? "rgba(0,0,0,0.02)"               : "rgba(79,142,247,0.02)";
+  const sectionBdr   = theme === "light" ? "1px solid rgba(0,0,0,0.1)"      : "1px solid rgba(79,142,247,0.12)";
+
+  return (
+    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 420 }}>
+          <span style={{
+            position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)",
+            color: isActive ? accentSolid : (theme === "light" ? "rgba(0,0,0,0.3)" : "rgba(160,190,255,0.4)"),
+            display: "flex", pointerEvents: "none", transition: "color .2s",
+          }}>
+            <IcoSearch />
+          </span>
+
+          <input
+            ref={inputRef}
+            type="text"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder="Search client name or next action…"
+            style={{
+              width: "100%",
+              padding: "8px 34px 8px 32px",
+              borderRadius: 10,
+              border: `1px solid ${isActive ? borderActive : borderIdle}`,
+              background: isActive ? bgActive : bgIdle,
+              color: theme === "light" ? "#111827" : "#fff",
+              fontSize: ".82rem",
+              fontFamily: "var(--fb,'Inter',sans-serif)",
+              outline: "none",
+              transition: "all .22s",
+              boxShadow: isActive ? shadowActive : "none",
+            }}
+            onFocus={e => {
+              e.target.style.borderColor = accent;
+              e.target.style.boxShadow   = shadowFocus;
+            }}
+            onBlur={e => {
+              e.target.style.borderColor = isActive ? borderActive : borderIdle;
+              e.target.style.boxShadow   = isActive ? shadowActive : "none";
+            }}
+          />
+
+          {isActive && (
+            <button
+              onClick={() => { onChange(""); inputRef.current?.focus(); }}
+              style={{
+                position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                background: clearBg, border: "none", borderRadius: "50%",
+                width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: clearColor, transition: "all .15s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = clearBgHov; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = clearBg;    e.currentTarget.style.color = clearColor; }}
+            >
+              <IcoClear />
+            </button>
+          )}
+        </div>
+
+        {isActive && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "4px 12px", borderRadius: 20,
+            background: resultCount > 0 ? pillBg : "rgba(248,113,113,0.12)",
+            border: `1px solid ${resultCount > 0 ? pillBorder : "rgba(248,113,113,0.28)"}`,
+            fontSize: ".7rem", fontWeight: 700,
+            color: resultCount > 0 ? pillColor : (theme === "light" ? "#b02020" : "#F87171"),
+            fontFamily: "var(--fh,'Inter',sans-serif)",
+            animation: "srIn .18s ease",
+            whiteSpace: "nowrap",
+          }}>
+            {resultCount > 0
+              ? <><span style={{ opacity: .7 }}>↳</span> {resultCount} <span style={{ opacity: .55, fontWeight: 500 }}>of {totalCount}</span></>
+              : <>No results</>
+            }
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Field({ col, value, onChange }) {
+  if (col.type === "select") return (
+    <div className="fld">
+      <label className="fld-lbl">{col.label}</label>
+      <select className="fld-inp" value={value || ""} onChange={e => onChange(col.key, e.target.value)}>
+        <option value="">Select…</option>
+        {col.options.map(o => <option key={o} value={o}>{o[0].toUpperCase() + o.slice(1)}</option>)}
+      </select>
+    </div>
+  );
+  return (
+    <div className="fld">
+      <label className="fld-lbl">{col.label}</label>
+      <input
+        className="fld-inp"
+        type={col.type === "date" ? "date" : col.type === "number" ? "number" : "text"}
+        value={col.type === "date" ? toISODate(value) : (value || "")}
+        onChange={e => onChange(col.key, e.target.value)}
+      />
+    </div>
+  );
+}
+
+function Snack({ msg, severity, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t); }, []);
+  return <div className={`snack snack-${severity}`}>{msg}</div>;
+}
+
+export default function Interested({ inline = false, onDataChange, theme = "dark" }) {
+  const [rows,          setRows]          = useState([]);
+  const [search,        setSearch]        = useState("");
+  const [loading,       setLoading]       = useState(false);
+  const [saving,        setSaving]        = useState(false);
+  const [dlg,           setDlg]           = useState(false);
+  const [editRow,       setEditRow]       = useState(null);
+  const [form,          setForm]          = useState({});
+  const [delId,         setDelId]         = useState(null);
+  const [confirm,       setConfirm]       = useState(false);
+  const [snack,         setSnack]         = useState(null);
+  const [shareOpen,     setShareOpen]     = useState(false);
+  const [shareForm,     setShareForm]     = useState({});
+  const [shareSaving,   setShareSaving]   = useState(false);
+  const [shareSourceId, setShareSourceId] = useState(null); // tracks which interested row to delete
+
+  const showSnack = (msg, severity = "success") => setSnack({ msg, severity });
+
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/interested`);
-      const data = await res.json();
-      setRows(Array.isArray(data) ? data : []);
-    } catch {
-      showSnack("Failed to load data", "error");
+      const r = await fetch(`${API}/interested`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      setRows((await r.json()) ?? []);
+    } catch (e) {
+      showSnack(`Failed to load: ${e.message}`, "error");
     } finally {
       setLoading(false);
     }
   }, []);
+  useEffect(() => { load(); }, [load]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const q = search.trim().toLowerCase();
+  const filteredRows = q
+    ? rows.filter(r =>
+        (r.client_name || "").toLowerCase().includes(q) ||
+        (r.next_action || "").toLowerCase().includes(q)
+      )
+    : rows;
 
-  const showSnack   = (msg, severity = "success") => setSnack({ open: true, msg, severity });
-  const openAdd     = () => { setEditRow(null); setFormData(emptyRow()); setDialogOpen(true); };
-  const openEdit    = (row) => { setEditRow(row); setFormData({ ...row }); setDialogOpen(true); };
-  const closeDialog = () => setDialogOpen(false);
-  const handleField = (key, val) => setFormData((prev) => ({ ...prev, [key]: val }));
+  /* ─── Add / Edit ─── */
+  const openAdd  = () => { setEditRow(null); setForm(emptyRow()); setDlg(true); };
+  const openEdit = (row) => { setEditRow(row); setForm({ ...row }); setDlg(true); };
+  const setField = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
-  const handleSave = async () => {
+  const save = async () => {
+    if (!form.client_name?.trim()) {
+      showSnack("Client name is required", "error");
+      return;
+    }
+    const payload = {
+      ...form,
+      client_name:     form.client_name?.trim() || "",
+      esops_rsu:       form.esops_rsu || "no",
+      discussion_date: toISODate(form.discussion_date) || null,
+      next_action:     form.next_action?.trim() || "",
+    };
     const url    = editRow ? `${API}/interested/${editRow.id}` : `${API}/interested`;
     const method = editRow ? "PUT" : "POST";
+    setSaving(true);
     try {
-      const res = await fetch(url, {
+      const r = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error();
-      showSnack(editRow ? "Record updated!" : "Record added!");
-      closeDialog();
-      fetchData();
-    } catch {
-      showSnack("Save failed", "error");
+      if (!r.ok) {
+        let errMsg = `HTTP ${r.status}`;
+        try { const b = await r.json(); errMsg = b.message || b.error || errMsg; } catch {}
+        throw new Error(errMsg);
+      }
+      showSnack(editRow ? "Updated!" : "Added!");
+      setDlg(false); load(); onDataChange?.();
+    } catch (e) {
+      showSnack(`Save failed: ${e.message}`, "error");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const askDelete    = (id) => { setDeleteId(id); setConfirmOpen(true); };
-  const handleDelete = async () => {
+  /* ─── Delete ─── */
+  const del = async () => {
     try {
-      const res = await fetch(`${API}/interested/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      showSnack("Record deleted");
-      setConfirmOpen(false);
-      fetchData();
-    } catch {
-      showSnack("Delete failed", "error");
+      const r = await fetch(`${API}/interested/${delId}`, { method: "DELETE" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      showSnack("Deleted");
+      setConfirm(false); load(); onDataChange?.();
+    } catch (e) {
+      showSnack(`Delete failed: ${e.message}`, "error");
     }
   };
 
-  const content = (
-    <>
-      {/* ── AppBar — standalone only ── */}
-      {!inline && (
-        <AppBar position="static" elevation={0}
-          sx={{ bgcolor: "#fff", borderBottom: `1px solid ${ORANGE.border}` }}>
-          <Toolbar>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexGrow: 1 }}>
-              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: ORANGE.main,
-                  display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography variant="caption" fontWeight={900} color="#fff" fontSize="0.68rem">FD</Typography>
-              </Box>
-              <Typography variant="h6" fontWeight={800} color="text.primary">Finance Doctor</Typography>
-            </Box>
-            <Button onClick={() => navigate("/dashboard")} startIcon={<BackIcon />}
-              variant="outlined" size="small"
-              sx={{ color: ORANGE.text, borderColor: ORANGE.border, textTransform: "none", mr: 1,
-                "&:hover": { borderColor: ORANGE.main, bgcolor: ORANGE.light } }}>
-              Dashboard
-            </Button>
-            <Button onClick={() => { localStorage.removeItem("user"); navigate("/login"); }}
-              variant="outlined" size="small"
-              sx={{ color: ORANGE.main, borderColor: ORANGE.border, textTransform: "none",
-                "&:hover": { bgcolor: ORANGE.light } }}>
-              Logout
-            </Button>
-          </Toolbar>
-        </AppBar>
-      )}
+  /* ─── Share → Customers Pending ─── */
+  const openShare = (row) => {
+    setShareSourceId(row.id);                // store the id separately — not in the form payload
+    setShareForm(interestedToPending(row));
+    setShareOpen(true);
+  };
+  const setShareFld = (k, v) => setShareForm(p => ({ ...p, [k]: v }));
 
-      {/* ── Body ── */}
-      <Box sx={{
-        minHeight: inline ? "unset" : "calc(100vh - 64px)",
-        bgcolor:   inline ? "transparent" : "#FFF8F0",
-        px: inline ? 0 : { xs: 2, md: 4 },
-        py: inline ? 0 : 3,
-      }}>
-        {!inline && (
-          <Typography variant="h5" fontWeight={800} color={ORANGE.text} sx={{ mb: 3 }}>
-            Prospects
-          </Typography>
-        )}
+  const saveShare = async () => {
+    setShareSaving(true);
+    try {
+      // 1. Add to Customers Pending
+      const postRes = await fetch(`${API}/invested/pending`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(shareForm),
+      });
+      if (!postRes.ok) throw new Error(`Failed to add to Pending (HTTP ${postRes.status})`);
 
-        {/* ── Table card ── */}
-        <Paper elevation={0}
-          sx={{ border: `1.5px solid ${ORANGE.border}`, borderRadius: 2, overflow: "hidden" }}>
+      // 2. Delete the source Interested record
+      const delRes = await fetch(`${API}/interested/${shareSourceId}`, { method: "DELETE" });
+      if (!delRes.ok) throw new Error(`Failed to remove from Interested (HTTP ${delRes.status})`);
 
-          {/* Card header */}
-          <Box sx={{
-            px: 3, py: 2, bgcolor: ORANGE.light,
-            borderBottom: `1px solid ${ORANGE.mid}`,
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-          }}>
-            <Typography fontWeight={700} sx={{ color: ORANGE.text, fontSize: "0.95rem" }}>
-              Prospects
-              {!loading && (
-                <Chip label={`${rows.length} records`} size="small"
-                  sx={{ ml: 1.5, bgcolor: ORANGE.mid, color: ORANGE.text,
-                    fontWeight: 700, fontSize: "0.7rem", height: 20 }} />
-              )}
-            </Typography>
-            <Button onClick={openAdd} startIcon={<PlusIcon />} variant="contained" size="small"
-              sx={{ bgcolor: ORANGE.main, boxShadow: "none", textTransform: "none", fontWeight: 600,
-                borderRadius: "6px", "&:hover": { bgcolor: "#CA6F1E", boxShadow: "none" } }}>
-              Add Row
-            </Button>
-          </Box>
-
-          {/* Table */}
-          {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-              <CircularProgress sx={{ color: ORANGE.main }} />
-            </Box>
-          ) : (
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: ORANGE.light }}>
-                    <TableCell sx={{ color: ORANGE.text, width: 50 }}>#</TableCell>
-                    {COLS.map((col) => (
-                      <TableCell key={col.key} sx={{ color: ORANGE.text }}>{col.label}</TableCell>
-                    ))}
-                    <TableCell align="center" sx={{ color: ORANGE.text, width: 90 }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={COLS.length + 2} align="center"
-                        sx={{ py: 6, color: "text.secondary", fontStyle: "italic" }}>
-                        No records found. Click "Add Row" to get started.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    rows.map((row, idx) => (
-                      <TableRow key={row.id}
-                        sx={{
-                          "&:hover": { bgcolor: ORANGE.light },
-                          "&:last-child td": { borderBottom: 0 },
-                        }}>
-                        <TableCell sx={{ color: "text.secondary", fontSize: "0.78rem" }}>{idx + 1}</TableCell>
-                        {COLS.map((col) => (
-                          <TableCell key={col.key} sx={{ fontSize: "0.88rem", color: "text.primary" }}>
-                            {col.key === "invested" ? (
-                              <Chip
-                                label={row[col.key] === "yes" ? "Yes" : "No"}
-                                size="small"
-                                sx={{
-                                  bgcolor: row[col.key] === "yes" ? "#E8F5E9" : "#FFEBEE",
-                                  color:   row[col.key] === "yes" ? "#2E7D32" : "#C62828",
-                                  fontWeight: 700, fontSize: "0.72rem", height: 20,
-                                }}
-                              />
-                            ) : (
-                              col.type === "date"
-  ? formatDate(row[col.key])
-  : row[col.key] ?? "—"
-                            )}
-                          </TableCell>
-                        ))}
-
-                        {/* ── Edit + Delete ── */}
-                        <TableCell align="center">
-                          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
-                            <Tooltip title="Edit" arrow>
-                              <IconButton size="small" onClick={() => openEdit(row)}
-                                sx={{
-                                  color: ORANGE.text, bgcolor: ORANGE.mid,
-                                  borderRadius: "6px", width: 28, height: 28,
-                                  "&:hover": { bgcolor: ORANGE.main, color: "#fff" },
-                                }}>
-                                <EditIcon />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete" arrow>
-                              <IconButton size="small" onClick={() => askDelete(row.id)}
-                                sx={{
-                                  color: "#E53935", bgcolor: "#FFEBEE",
-                                  borderRadius: "6px", width: 28, height: 28,
-                                  "&:hover": { bgcolor: "#E53935", color: "#fff" },
-                                }}>
-                                <DeleteIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Paper>
-      </Box>
-
-      {/* ── Add / Edit Dialog ── */}
-      <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="sm" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: `1.5px solid ${ORANGE.border}`, borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: ORANGE.main }} />
-          <Typography fontWeight={700}>{editRow ? "Edit Record" : "Add New Record"}</Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            {COLS.map((col) => (
-              <FieldInput key={col.key} col={col} value={formData[col.key]} onChange={handleField} />
-            ))}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={closeDialog} variant="outlined" size="small"
-            sx={{ borderColor: ORANGE.border, color: ORANGE.text, textTransform: "none", borderRadius: "6px",
-              "&:hover": { borderColor: ORANGE.main, bgcolor: ORANGE.light } }}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} variant="contained" size="small"
-            sx={{ bgcolor: ORANGE.main, boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: "#CA6F1E", boxShadow: "none" } }}>
-            {editRow ? "Update" : "Save"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ── Delete Confirm ── */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth
-        PaperProps={{ elevation: 0, sx: { border: "1.5px solid #FFCDD2", borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ width: 4, height: 22, borderRadius: 1, bgcolor: "#E53935" }} />
-          <Typography fontWeight={700}>Confirm Delete</Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary">
-            Are you sure you want to delete this record? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setConfirmOpen(false)} variant="outlined" size="small"
-            sx={{ borderColor: ORANGE.border, color: ORANGE.text, textTransform: "none", borderRadius: "6px" }}>
-            Cancel
-          </Button>
-          <Button onClick={handleDelete} variant="contained" size="small"
-            sx={{ bgcolor: "#E53935", boxShadow: "none", textTransform: "none", fontWeight: 700,
-              borderRadius: "6px", "&:hover": { bgcolor: "#C62828", boxShadow: "none" } }}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ── Snackbar ── */}
-      <Snackbar open={snack.open} autoHideDuration={3000}
-        onClose={() => setSnack((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity={snack.severity} variant="filled" sx={{ fontWeight: 600 }}>
-          {snack.msg}
-        </Alert>
-      </Snackbar>
-    </>
-  );
-
-  if (inline) return <ThemeProvider theme={theme}>{content}</ThemeProvider>;
+      showSnack("✓ Sent to Customers Pending!");
+      setShareOpen(false);
+      load();
+      onDataChange?.();
+    } catch (e) {
+      showSnack(e.message || "Failed", "error");
+    } finally {
+      setShareSaving(false);
+    }
+  };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {content}
-    </ThemeProvider>
+    <div className={`mod-wrap${theme === "light" ? " theme-light" : ""}`}>
+      <style>{`
+        @keyframes srIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:none} }
+        .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
+        .mod-wrap.theme-light input::placeholder { color: rgba(0,0,0,0.3); }
+      `}</style>
+
+      {/* ── Top bar ── */}
+      <div className="mod-hdr">
+        <span className="tbl-title" style={{ fontSize: ".9rem" }}>
+          Prospects
+          {!loading && (
+            <span className="tbl-badge" style={{ marginLeft: 8, color: ORANGE, background: "rgba(230,126,34,.1)", borderColor: "rgba(230,126,34,.22)" }}>
+              {search.trim()
+                ? <>{filteredRows.length} <span style={{ opacity: .55 }}>/ {rows.length}</span></>
+                : <>{rows.length} records</>
+              }
+            </span>
+          )}
+        </span>
+        <button
+          className="add-btn"
+          style={{ background: `linear-gradient(135deg,${ORANGE},#ca6f1e)`, boxShadow: "0 4px 14px rgba(230,126,34,.3)" }}
+          onClick={openAdd}
+        >
+          <IcoPlus /> Add Row
+        </button>
+      </div>
+
+      {/* ── Search bar ── */}
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        resultCount={filteredRows.length}
+        totalCount={rows.length}
+        theme={theme}
+      />
+
+      {/* ── Table header ── */}
+      <div className="tbl-hdr">
+        <span className="tbl-title">All Prospects</span>
+      </div>
+
+      {loading ? (
+        <div className="fd-spin"><div className="spinner" style={{ borderTopColor: ORANGE }} /></div>
+      ) : (
+        <div className="tbl-wrap">
+          <table className="fd-tbl">
+            <thead>
+              <tr>
+                <th style={{ width: 42 }}>#</th>
+                {COLS.map(c => <th key={c.key}>{c.label}</th>)}
+                <th style={{ textAlign: "center", width: 110 }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td className="fd-empty" colSpan={COLS.length + 2}>
+                    {search.trim()
+                      ? <>No results for "<strong style={{ color: ORANGE }}>{search}</strong>"</>
+                      : 'No records found. Click "Add Row" to get started.'
+                    }
+                  </td>
+                </tr>
+              ) : filteredRows.map((row, i) => (
+                <tr key={row.id}>
+                  <td className="fd-num">{i + 1}</td>
+                  {COLS.map(c => (
+                    <td key={c.key}>
+                      {c.key === "esops_rsu"
+                        ? <span className={`chip chip-${row[c.key] === "yes" ? "yes" : "no"}`}>{row[c.key] === "yes" ? "Yes" : "No"}</span>
+                        : c.type === "date"
+                          ? fmtDate(row[c.key])
+                          : (c.key === "client_name" || c.key === "next_action")
+                            ? <Highlight text={row[c.key]} query={search} theme={theme} />
+                            : row[c.key] ?? "—"
+                      }
+                    </td>
+                  ))}
+                  <td>
+                    <div className="act-cell">
+                      <button className="ab ab-edit" title="Edit" onClick={() => openEdit(row)}><IcoEdit /></button>
+                      <button
+                        className="ab"
+                        title="Send to Customers Pending"
+                        style={{ color: "#34D399" }}
+                        onClick={() => openShare(row)}
+                      >
+                        <IcoShare />
+                      </button>
+                      <button className="ab ab-del" title="Delete" onClick={() => { setDelId(row.id); setConfirm(true); }}><IcoDel /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── Add / Edit Dialog ── */}
+      {dlg && (
+        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setDlg(false)}>
+          <div className="dlg-box">
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background: ORANGE }} />
+              <div className="dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
+            </div>
+            <div className="dlg-body">
+              {COLS.map(c => <Field key={c.key} col={c} value={form[c.key]} onChange={setField} />)}
+            </div>
+            <div className="dlg-foot">
+              <button className="btn-cancel" onClick={() => setDlg(false)} disabled={saving}>Cancel</button>
+              <button
+                className="btn-ok"
+                style={{ background: `linear-gradient(135deg,${ORANGE},#ca6f1e)`, boxShadow: "0 4px 14px rgba(230,126,34,.3)", opacity: saving ? 0.7 : 1 }}
+                onClick={save}
+                disabled={saving}
+              >
+                {saving ? "Saving…" : editRow ? "Update" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirm ── */}
+      {confirm && (
+        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setConfirm(false)}>
+          <div className="dlg-box" style={{ maxWidth: 370 }}>
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background: "#EF4444" }} />
+              <div className="dlg-ttl">Confirm Delete</div>
+            </div>
+            <div className="dlg-body">
+              <p style={{ color: "rgba(155,180,255,.7)", fontSize: ".84rem", lineHeight: 1.6 }}>Are you sure? This cannot be undone.</p>
+            </div>
+            <div className="dlg-foot">
+              <button className="btn-cancel" onClick={() => setConfirm(false)}>Cancel</button>
+              <button className="btn-ok btn-danger" onClick={del}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Share → Customers Pending Dialog ── */}
+      {shareOpen && (
+        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setShareOpen(false)}>
+          <div className="dlg-box">
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background: "#34D399" }} />
+              <div>
+                <div className="dlg-ttl">Send to Customers Pending</div>
+                <div className="dlg-sub">Green fields are auto-filled · Orange fields need manual entry</div>
+              </div>
+            </div>
+            <div className="dlg-body">
+              {PENDING_COLS.map(c => (
+                <div key={c.key}>
+                  <Field col={c} value={shareForm[c.key]} onChange={setShareFld} />
+                  {SHARE_AUTO_KEYS.has(c.key) && (
+                    <div className="fld-note" style={{ color: "#34D399" }}>✓ Auto-filled from prospect</div>
+                  )}
+                  {SHARE_MANUAL_KEYS.has(c.key) && (
+                    <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Fill manually</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="dlg-foot">
+              <button className="btn-cancel" onClick={() => setShareOpen(false)} disabled={shareSaving}>
+                Cancel
+              </button>
+              <button className="btn-ok btn-success" onClick={saveShare} disabled={shareSaving}>
+                {shareSaving ? "Saving…" : "Save & Send to Pending"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {snack && <Snack {...snack} onClose={() => setSnack(null)} />}
+    </div>
   );
 }
