@@ -565,7 +565,7 @@ const INV_CSS = `
     letter-spacing: .06em;
     font-family: var(--fh,'Orbitron',sans-serif);
   }
-  .theme-light .tbl-title { color: rgba(0,0,0,0.45); }
+  .theme-light .tbl-title { color: #000; }
   .tbl-badge {
     font-size: .7rem;
     font-weight: 700;
@@ -1054,8 +1054,8 @@ const PORTAL_CSS = `
   .inv-dlg-body .fld-inp.fld-hi:focus { box-shadow: 0 0 0 3px rgba(245,158,11,0.12) !important; }
 
   /* ── Confirm text ── */
-  .inv-dlg-p { color: rgba(155,180,255,0.7); font-size: .84rem; line-height: 1.6; margin: 0; }
-  .theme-light .inv-dlg-p { color: rgba(0,0,0,0.6) !important; }
+  .inv-dlg-p { color: white; font-size: .84rem; line-height: 1.6; margin: 0; }
+  .theme-light .inv-dlg-p { color: #000 !important; }
 
   /* ── Footer — DARK ── */
   .inv-dlg-foot {

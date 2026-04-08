@@ -207,6 +207,110 @@ const structureChip = (val) => {
   );
 };
 
+/* ── Custom Select Dropdown (replaces native <select> for full dark-mode control) ── */
+function CustomSelect({ options, value, onChange, isDark }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const accentC  = isDark ? "#34D399"                          : "#0f9e6e";
+  const border   = isDark ? "rgba(52,211,153,0.28)"            : "rgba(10,30,100,0.18)";
+  const bg       = isDark ? "rgba(255,255,255,0.04)"           : "rgba(255,255,255,0.7)";
+  const color    = isDark ? "#fff"                             : "#111827";
+  const dropBg   = isDark ? "#0b1120"                          : "#fff";
+  const hoverBg  = isDark ? "rgba(52,211,153,0.10)"           : "rgba(15,158,110,0.07)";
+  const activeBg = isDark ? "rgba(52,211,153,0.18)"           : "rgba(15,158,110,0.14)";
+  const dropBdr  = isDark ? "rgba(52,211,153,0.35)"           : "rgba(10,30,100,0.18)";
+  const shadow   = isDark ? "0 16px 40px rgba(0,0,0,0.7)"     : "0 8px 24px rgba(0,0,0,0.12)";
+  const focusShadow = isDark
+    ? "0 0 0 3px rgba(52,211,153,0.15)"
+    : "0 0 0 3px rgba(15,158,110,0.1)";
+
+  return (
+    <div ref={ref} style={{ position: "relative", userSelect: "none" }}>
+      {/* Trigger */}
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "9px 12px",
+          borderRadius: open ? "10px 10px 0 0" : 10,
+          border: `1px solid ${open ? accentC : border}`,
+          background: bg,
+          color,
+          fontSize: ".84rem", fontFamily: "Inter,sans-serif",
+          cursor: "pointer",
+          boxShadow: open ? focusShadow : "none",
+          transition: "all .2s",
+        }}
+      >
+        <span>{value || "Select…"}</span>
+        <svg
+          width="11" height="11" viewBox="0 0 24 24" fill="none"
+          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .22s", opacity: .55, flexShrink: 0 }}
+        >
+          <polyline points="6 9 12 15 18 9" stroke="currentColor" strokeWidth="2.5"
+            strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div style={{
+          position: "absolute", top: "100%", left: 0, right: 0, zIndex: 99999,
+          background: dropBg,
+          border: `1px solid ${dropBdr}`,
+          borderTop: "none",
+          borderRadius: "0 0 10px 10px",
+          overflow: "hidden",
+          boxShadow: shadow,
+        }}>
+          {options.map((o) => {
+            const isSelected = o === value;
+            return (
+              <div
+                key={o}
+                onClick={() => { onChange(o); setOpen(false); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "9px 13px",
+                  fontSize: ".84rem", fontFamily: "Inter,sans-serif",
+                  color: isSelected ? accentC : color,
+                  background: isSelected ? activeBg : "transparent",
+                  fontWeight: isSelected ? 700 : 400,
+                  cursor: "pointer",
+                  transition: "background .15s",
+                  borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)"}`,
+                }}
+                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = hoverBg; }}
+                onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+              >
+                {/* Checkmark for selected */}
+                <span style={{ width: 14, flexShrink: 0, display: "flex", alignItems: "center" }}>
+                  {isSelected && (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <polyline points="20 6 9 17 4 12" stroke={accentC} strokeWidth="2.5"
+                        strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </span>
+                {o.charAt(0).toUpperCase() + o.slice(1)}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ════════════════════════════════════════
    Main Component
 ════════════════════════════════════════ */
@@ -276,7 +380,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
   );
 
   /* ════════════════════════════════════════
-     Dialog styles — identical to Customers
+     Dialog styles
   ════════════════════════════════════════ */
   const dlgOverlay = {
     position: "fixed", inset: 0, zIndex: 99999,
@@ -309,6 +413,8 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
     padding: "16px 20px",
     display: "flex", flexDirection: "column", gap: 12,
     maxHeight: "55vh", overflowY: "auto",
+    /* Allow custom dropdown to overflow the scrollable body */
+    overflowX: "visible",
   };
   const dlgFooter = {
     display: "flex", justifyContent: "flex-end", gap: 8,
@@ -367,14 +473,12 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         <label style={labelSt}>{col.label}</label>
         {col.type === "select" ? (
-          <select style={inputSt} value={value || ""}
-            onChange={e => onChange(col.key, e.target.value)}
-            onFocus={onFocus} onBlur={onBlur}>
-            <option value="">Select…</option>
-            {col.options.map(o => (
-              <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>
-            ))}
-          </select>
+          <CustomSelect
+            options={col.options}
+            value={value || ""}
+            onChange={(v) => onChange(col.key, v)}
+            isDark={isDark}
+          />
         ) : (
           <input style={inputSt} type="text" value={value || ""}
             onChange={e => onChange(col.key, e.target.value)}
@@ -610,7 +714,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         /* body */
         <p style={{
           margin: 0, lineHeight: 1.6, fontSize: ".84rem",
-          color: isDark ? "rgba(155,180,255,0.7)" : "rgba(0,0,0,0.55)",
+          color: isDark ? "white" : "#000",
         }}>
           Are you sure you want to delete this product record?
         </p>,

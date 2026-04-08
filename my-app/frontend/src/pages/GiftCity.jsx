@@ -66,6 +66,8 @@ function Highlight({ text, query, theme = "dark" }) {
 }
 
 function SearchBar({ value, onChange, placeholder, resultCount, totalCount, theme = "dark" }) {
+
+  
   const inputRef = useRef(null);
   const isActive = value.length > 0;
 
@@ -175,7 +177,7 @@ function Snack({ msg, severity, onClose }) {
 }
 
 export default function GiftCity({ inline = false, onDataChange, initialTab, theme = "dark" }) {
-  const [tab,          setTab]          = useState(initialTab || "active");
+    const [tab,          setTab]          = useState(initialTab || "active");
   const [rows,         setRows]         = useState([]);
   const [search,       setSearch]       = useState("");
   const [loading,      setLoading]      = useState(false);
@@ -405,8 +407,13 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
               <div className="dlg-ttl">Confirm Delete</div>
             </div>
             <div className="dlg-body">
-              <p style={{ color: "rgba(155,180,255,.7)", fontSize: ".84rem", lineHeight: 1.6 }}>Are you sure? This cannot be undone.</p>
-            </div>
+             <p style={{
+          margin: 0, lineHeight: 1.6, fontSize: ".84rem",
+          color: theme === "dark" ? "white" : "#000",
+        }}>
+          Are you sure you want to delete this gift city record?
+        </p>
+        </div>
             <div className="dlg-foot">
               <button className="btn-cancel" onClick={() => setConfirm(false)}>Cancel</button>
               <button className="btn-ok btn-danger" onClick={del}>Delete</button>

@@ -403,7 +403,7 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
       {confirm&&<div className="dlg-ov" onClick={e=>e.target===e.currentTarget&&setConfirm(false)}>
         <div className="dlg-box" style={{maxWidth:370}}>
           <div className="dlg-hdr"><div className="dlg-bar" style={{background:"#EF4444"}}/><div className="dlg-ttl">Confirm Delete</div></div>
-          <div className="dlg-body"><p style={{color:"rgba(155,180,255,.7)",fontSize:".84rem",lineHeight:1.6}}>Are you sure you want to delete this record? This action cannot be undone.</p></div>
+          <div className="dlg-body"><p style={{color:"white",fontSize:".84rem",lineHeight:1.6}}>Are you sure you want to delete this record? This action cannot be undone.</p></div>
           <div className="dlg-foot">
             <button className="btn-cancel" onClick={()=>setConfirm(false)}>Cancel</button>
             <button className="btn-ok btn-danger" onClick={del}>Delete</button>
@@ -466,5 +466,5 @@ const EMP_CSS = `
     border-color: rgba(10,30,100,0.4) !important;
     color: #000 !important;
   }
-  .theme-light .dlg-body p { color: rgba(0,0,0,0.6) !important; }
+  .theme-light .dlg-body p { color: #000 !important; }
 `;
