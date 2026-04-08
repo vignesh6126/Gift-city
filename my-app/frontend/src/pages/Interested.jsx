@@ -471,7 +471,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
               <div className="dlg-ttl">Confirm Delete</div>
             </div>
             <div className="dlg-body">
-              <p style={{ color: "rgba(155,180,255,.7)", fontSize: ".84rem", lineHeight: 1.6 }}>Are you sure? This cannot be undone.</p>
+              <p style={{ color: "#000", fontSize: ".84rem", lineHeight: 1.6 }}>Are you sure? This cannot be undone.</p>
             </div>
             <div className="dlg-foot">
               <button className="btn-cancel" onClick={() => setConfirm(false)}>Cancel</button>
