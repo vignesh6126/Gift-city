@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-
+import { createPortal } from "react-dom";
 const API = import.meta.env.VITE_API_URL;
 
 const COLS = [
@@ -17,10 +17,11 @@ const PENDING_COLS = [
   { key: "scheme",               label: "Scheme",                type: "text"   },
   { key: "bank",                 label: "Bank",                  type: "select", options: ["gift", "savings", "both"] },
   { key: "submission_date",      label: "Submission Date",       type: "date"   },
+  { key: "next_action_date",     label: "Next Action Date",      type: "date"   },  // ← ADD
   { key: "status",               label: "Status",                type: "text"   },
 ];
 
-const SHARE_AUTO_KEYS   = new Set(["client_name"]);
+const SHARE_AUTO_KEYS   = new Set(["client_name", "next_action_date"]);          // ← add next_action_date
 const SHARE_MANUAL_KEYS = new Set(["amount_tobe_invested", "amc_name", "scheme", "bank", "submission_date", "status"]);
 
 const toISODate = (val) => {
@@ -43,6 +44,7 @@ const interestedToPending = (row) => ({
   scheme:               "",
   bank:                 "savings",
   submission_date:      "",
+  next_action_date:     toISODate(row.next_action_date) || "",   // ← wrap with toISODate
   status:               "",
 });
 
@@ -315,11 +317,14 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   const saveShare = async () => {
     setShareSaving(true);
     try {
-      // 1. Add to Customers Pending
+      const payload = {
+        ...shareForm,
+        next_action_date: toISODate(shareForm.next_action_date) || null,  // ← normalize before send
+      };
       const postRes = await fetch(`${API}/invested/pending`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(shareForm),
+        body: JSON.stringify(payload),   // ← use payload, not shareForm
       });
       if (!postRes.ok) throw new Error(`Failed to add to Pending (HTTP ${postRes.status})`);
 
@@ -341,10 +346,148 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   return (
     <div className={`mod-wrap${theme === "light" ? " theme-light" : ""}`}>
       <style>{`
-        @keyframes srIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:none} }
-        .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
-        .mod-wrap.theme-light input::placeholder { color: rgba(0,0,0,0.3); }
-      `}</style>
+  @keyframes srIn  { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:none} }
+  @keyframes dlgIn { from{opacity:0;transform:translateY(18px) scale(.97)} to{opacity:1;transform:none} }
+  @keyframes spin  { to{transform:rotate(360deg)} }
+
+  .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
+  .mod-wrap.theme-light input::placeholder { color: rgba(0,0,0,0.3); }
+
+  /* ── Overlay ── */
+  .dlg-ov {
+    position:fixed; inset:0;
+    background:rgba(0,0,10,0.65);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    display:flex; align-items:center; justify-content:center;
+    z-index:99999; padding:16px; box-sizing:border-box;
+    overflow-y:auto; animation:dlgIn .2s ease;
+  }
+  .theme-light .dlg-ov { background:rgba(10,20,80,0.28); }
+
+  /* ── Dialog box ── */
+  .dlg-box {
+    background:rgba(7,9,30,0.96);
+    backdrop-filter:blur(44px) saturate(160%);
+    border:1px solid rgba(79,142,247,0.4);
+    border-radius:18px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+    width:100%; max-width:min(460px,calc(100vw - 32px));
+    max-height:calc(100vh - 40px); overflow-y:auto;
+    animation:dlgIn .3s cubic-bezier(0.34,1.56,0.64,1);
+    box-sizing:border-box;
+  }
+  .dlg-box::-webkit-scrollbar { width:4px; }
+  .dlg-box::-webkit-scrollbar-thumb { background:rgba(79,142,247,0.25); border-radius:4px; }
+  .theme-light .dlg-box {
+    background:rgba(255,255,255,0.97);
+    border:1px solid rgba(42,109,217,0.22);
+    box-shadow:0 8px 40px rgba(10,30,100,0.15);
+  }
+
+  /* ── Dialog header ── */
+  .dlg-hdr {
+    display:flex; align-items:center; gap:12px;
+    padding:16px 20px 12px;
+    border-bottom:1px solid rgba(79,142,247,0.18);
+    background:rgba(79,142,247,0.04);
+    border-radius:18px 18px 0 0;
+  }
+  .theme-light .dlg-hdr {
+    border-bottom-color:rgba(42,109,217,0.15);
+    background:rgba(42,109,217,0.06);
+  }
+  .dlg-bar { width:4px; height:22px; border-radius:2px; flex-shrink:0; }
+  .dlg-ttl { font-weight:800; font-size:.95rem; color:#fff; letter-spacing:.01em; font-family:'Inter',sans-serif; }
+  .theme-light .dlg-ttl { color:#111827; }
+  .dlg-sub { font-size:.72rem; color:rgba(180,210,255,0.55); margin-top:3px; font-family:'Inter',sans-serif; }
+  .theme-light .dlg-sub { color:rgba(0,0,0,0.5); }
+
+  /* ── Dialog body ── */
+  .dlg-body {
+    padding:16px 20px; display:flex; flex-direction:column; gap:12px;
+    max-height:58vh; overflow-y:auto;
+  }
+  .dlg-body::-webkit-scrollbar { width:4px; }
+  .dlg-body::-webkit-scrollbar-thumb { background:rgba(79,142,247,0.2); border-radius:4px; }
+
+  /* ── Form fields inside dialog ── */
+  .dlg-body .fld { display:flex; flex-direction:column; gap:5px; }
+  .dlg-body .fld-lbl {
+    font-size:.67rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+    color:rgba(180,210,255,0.75); font-family:'Inter',sans-serif;
+  }
+  .theme-light .dlg-body .fld-lbl { color:rgba(0,0,0,0.65); }
+  .dlg-body .fld-inp {
+    width:100%; padding:9px 12px; border-radius:10px;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(79,142,247,0.3);
+    color:#fff; font-size:.84rem; font-family:'Inter',sans-serif;
+    outline:none; transition:border-color .2s,box-shadow .2s; box-sizing:border-box;
+  }
+  .dlg-body .fld-inp:focus { border-color:#4F8EF7; box-shadow:0 0 0 3px rgba(79,142,247,0.16); }
+  .dlg-body .fld-inp option { background:#0c1638; color:#fff; }
+  .theme-light .dlg-body .fld-inp {
+    background:rgba(255,255,255,0.85); border:1px solid rgba(42,109,217,0.22); color:#111827;
+  }
+  .theme-light .dlg-body .fld-inp:focus { border-color:#2a6dd9; box-shadow:0 0 0 3px rgba(42,109,217,0.12); }
+  .theme-light .dlg-body .fld-inp option { background:#fff; color:#111827; }
+  .dlg-body .fld-note { font-size:.68rem; font-weight:600; margin-top:2px; padding-left:2px; }
+
+  /* ── Dialog footer ── */
+  .dlg-foot {
+    display:flex; justify-content:flex-end; gap:8px;
+    padding:12px 20px;
+    border-top:1px solid rgba(79,142,247,0.15);
+    background:rgba(79,142,247,0.02);
+    border-radius:0 0 18px 18px;
+  }
+  .theme-light .dlg-foot {
+    border-top-color:rgba(42,109,217,0.14);
+    background:rgba(42,109,217,0.03);
+  }
+
+  /* ── Buttons ── */
+  .btn-cancel {
+    padding:8px 14px; border-radius:10px;
+    border:1px solid rgba(79,142,247,0.28); background:none;
+    color:rgba(180,210,255,0.75); font-size:.8rem;
+    font-family:'Inter',sans-serif; font-weight:600; cursor:pointer; transition:all .2s;
+  }
+  .btn-cancel:hover { border-color:rgba(255,255,255,0.3); color:#fff; background:rgba(255,255,255,0.04); }
+  .btn-cancel:disabled { opacity:.4; cursor:not-allowed; }
+  .theme-light .btn-cancel { border-color:rgba(42,109,217,0.28); color:rgba(0,0,0,0.6); }
+  .theme-light .btn-cancel:hover { border-color:rgba(42,109,217,0.5); color:#111827; background:rgba(42,109,217,0.06); }
+
+  .btn-ok {
+    padding:8px 16px; border-radius:10px; border:none; color:#fff;
+    font-size:.8rem; font-family:'Inter',sans-serif; font-weight:700;
+    cursor:pointer; transition:all .25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .btn-ok:hover { transform:translateY(-1px); filter:brightness(1.1); }
+  .btn-ok:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+  .btn-danger  { background:linear-gradient(135deg,#EF4444,#DC2626); box-shadow:0 4px 16px rgba(239,68,68,0.3); }
+  .btn-success { background:linear-gradient(135deg,#34D399,#059669); box-shadow:0 4px 16px rgba(52,211,153,0.3); }
+  .theme-light .btn-danger  { background:linear-gradient(135deg,#d14040,#a82424) !important; }
+  .theme-light .btn-success { background:linear-gradient(135deg,#0f9e6e,#057a52) !important; }
+
+  /* ── Snackbar ── */
+  .snack {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    padding:10px 22px; border-radius:10px; font-size:.82rem; font-weight:600;
+    font-family:'Inter',sans-serif; z-index:99999;
+    box-shadow:0 4px 20px rgba(0,0,0,.4); animation:dlgIn .2s ease; white-space:nowrap;
+  }
+  .snack-success { background:#065f46; color:#6ee7b7; border:1px solid #34D399; }
+  .snack-error   { background:#7f1d1d; color:#fca5a5; border:1px solid #EF4444; }
+
+  /* ── Responsive ── */
+  @media (max-width:520px) {
+    .dlg-box { border-radius:18px 18px 0 0 !important; }
+    .dlg-ov  { align-items:flex-end !important; padding:0 !important; }
+    .dlg-hdr { padding:14px 16px 12px; }
+    .dlg-body { padding:14px 16px; gap:10px; }
+    .dlg-foot { padding:12px 16px; }
+  }
+`}</style>
 
       {/* ── Top bar ── */}
       <div className="mod-hdr">
@@ -441,91 +584,95 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
       )}
 
       {/* ── Add / Edit Dialog ── */}
-      {dlg && (
-        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setDlg(false)}>
-          <div className="dlg-box">
-            <div className="dlg-hdr">
-              <div className="dlg-bar" style={{ background: ORANGE }} />
-              <div className="dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
-            </div>
-            <div className="dlg-body">
-              {COLS.map(c => <Field key={c.key} col={c} value={form[c.key]} onChange={setField} />)}
-            </div>
-            <div className="dlg-foot">
-              <button className="btn-cancel" onClick={() => setDlg(false)} disabled={saving}>Cancel</button>
-              <button
-                className="btn-ok"
-                style={{ background: `linear-gradient(135deg,${ORANGE},#ca6f1e)`, boxShadow: "0 4px 14px rgba(230,126,34,.3)", opacity: saving ? 0.7 : 1 }}
-                onClick={save}
-                disabled={saving}
-              >
-                {saving ? "Saving…" : editRow ? "Update" : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Add / Edit Dialog ── */}
+{dlg && createPortal(
+  <div className={`dlg-ov${theme === "light" ? " theme-light" : ""}`} onClick={e => e.target === e.currentTarget && setDlg(false)}>
+    <div className="dlg-box">
+      <div className="dlg-hdr">
+        <div className="dlg-bar" style={{ background: ORANGE }} />
+        <div className="dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
+      </div>
+      <div className="dlg-body">
+        {COLS.map(c => <Field key={c.key} col={c} value={form[c.key]} onChange={setField} />)}
+      </div>
+      <div className="dlg-foot">
+        <button className="btn-cancel" onClick={() => setDlg(false)} disabled={saving}>Cancel</button>
+        <button
+          className="btn-ok"
+          style={{ background: `linear-gradient(135deg,${ORANGE},#ca6f1e)`, boxShadow: "0 4px 14px rgba(230,126,34,.3)", opacity: saving ? 0.7 : 1 }}
+          onClick={save}
+          disabled={saving}
+        >
+          {saving ? "Saving…" : editRow ? "Update" : "Save"}
+        </button>
+      </div>
+    </div>
+  </div>,
+  document.body
+)}
 
       {/* ── Delete Confirm ── */}
-      {confirm && (
-        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setConfirm(false)}>
-          <div className="dlg-box" style={{ maxWidth: 370 }}>
-            <div className="dlg-hdr">
-              <div className="dlg-bar" style={{ background: "#EF4444" }} />
-              <div className="dlg-ttl">Confirm Delete</div>
-            </div>
-            <div className="dlg-body">
-             <p style={{
-          margin: 0, lineHeight: 1.6, fontSize: ".84rem",
-          color: isDark ? "white" : "#000",
-        }}>
+      {/* ── Delete Confirm ── */}
+{confirm && createPortal(
+  <div className={`dlg-ov${theme === "light" ? " theme-light" : ""}`} onClick={e => e.target === e.currentTarget && setConfirm(false)}>
+    <div className="dlg-box" style={{ maxWidth: 370 }}>
+      <div className="dlg-hdr">
+        <div className="dlg-bar" style={{ background: "#EF4444" }} />
+        <div className="dlg-ttl">Confirm Delete</div>
+      </div>
+      <div className="dlg-body">
+        <p style={{ margin: 0, lineHeight: 1.6, fontSize: ".84rem", color: isDark ? "white" : "#000" }}>
           Are you sure you want to delete this prospects record?
-        </p></div>
-            <div className="dlg-foot">
-              <button className="btn-cancel" onClick={() => setConfirm(false)}>Cancel</button>
-              <button className="btn-ok btn-danger" onClick={del}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+        </p>
+      </div>
+      <div className="dlg-foot">
+        <button className="btn-cancel" onClick={() => setConfirm(false)}>Cancel</button>
+        <button className="btn-ok btn-danger" onClick={del}>Delete</button>
+      </div>
+    </div>
+  </div>,
+  document.body
+)}
 
       {/* ── Share → Customers Pending Dialog ── */}
-      {shareOpen && (
-        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setShareOpen(false)}>
-          <div className="dlg-box">
-            <div className="dlg-hdr">
-              <div className="dlg-bar" style={{ background: "#34D399" }} />
-              <div>
-                <div className="dlg-ttl">Send to Customers Pending</div>
-                <div className="dlg-sub">Green fields are auto-filled · Orange fields need manual entry</div>
-              </div>
-            </div>
-            <div className="dlg-body">
-              {PENDING_COLS.map(c => (
-                <div key={c.key}>
-                  <Field col={c} value={shareForm[c.key]} onChange={setShareFld} />
-                  {SHARE_AUTO_KEYS.has(c.key) && (
-                    <div className="fld-note" style={{ color: "#34D399" }}>✓ Auto-filled from prospect</div>
-                  )}
-                  {SHARE_MANUAL_KEYS.has(c.key) && (
-                    <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Fill manually</div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="dlg-foot">
-              <button className="btn-cancel" onClick={() => setShareOpen(false)} disabled={shareSaving}>
-                Cancel
-              </button>
-              <button className="btn-ok btn-success" onClick={saveShare} disabled={shareSaving}>
-                {shareSaving ? "Saving…" : "Save & Send to Pending"}
-              </button>
-            </div>
-          </div>
+      {/* ── Share → Customers Pending Dialog ── */}
+{shareOpen && createPortal(
+  <div className={`dlg-ov${theme === "light" ? " theme-light" : ""}`} onClick={e => e.target === e.currentTarget && setShareOpen(false)}>
+    <div className="dlg-box">
+      <div className="dlg-hdr">
+        <div className="dlg-bar" style={{ background: "#34D399" }} />
+        <div>
+          <div className="dlg-ttl">Send to Customers Pending</div>
+          <div className="dlg-sub">Green fields are auto-filled · Orange fields need manual entry</div>
         </div>
-      )}
+      </div>
+      <div className="dlg-body">
+        {PENDING_COLS.map(c => (
+          <div key={c.key}>
+            <Field col={c} value={shareForm[c.key]} onChange={setShareFld} />
+            {SHARE_AUTO_KEYS.has(c.key) && (
+              <div className="fld-note" style={{ color: "#34D399" }}>✓ Auto-filled from prospect</div>
+            )}
+            {SHARE_MANUAL_KEYS.has(c.key) && (
+              <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Fill manually</div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="dlg-foot">
+        <button className="btn-cancel" onClick={() => setShareOpen(false)} disabled={shareSaving}>
+          Cancel
+        </button>
+        <button className="btn-ok btn-success" onClick={saveShare} disabled={shareSaving}>
+          {shareSaving ? "Saving…" : "Save & Send to Pending"}
+        </button>
+      </div>
+    </div>
+  </div>,
+  document.body
+)}
 
-      {snack && <Snack {...snack} onClose={() => setSnack(null)} />}
+      {snack && createPortal(<Snack {...snack} onClose={() => setSnack(null)} />, document.body)}
     </div>
   );
 }

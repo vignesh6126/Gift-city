@@ -1,11 +1,5 @@
-/**
- * DashboardLight.jsx — SKY BLUE (LIGHT) THEME
- * Self-contained: all CSS is inlined via the CSS constant.
- * Cards are fully transparent glass — background image shows through.
- * Theme toggle navigates back to /dashboard (navy blue).
- */
-
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import Invested from "./Invested";
 import Interested from "./Interested";
@@ -18,356 +12,651 @@ import AMCTable from "./AMCTable";
 const API = import.meta.env.VITE_API_URL;
 
 function IcoDashboard({ size = 18 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8"/></svg>;
 }
 function IcoEmpanel({ size = 18 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M12 3L4 7v5c0 5.25 3.5 10.15 8 11 4.5-.85 8-5.75 8-11V7l-8-4z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><polyline points="9 12 11 14 15 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M12 3L4 7v5c0 5.25 3.5 10.15 8 11 4.5-.85 8-5.75 8-11V7l-8-4z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><polyline points="9 12 11 14 15 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 }
 function IcoClients({ size = 18 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.8" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.8"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 }
 function IcoProspects({ size = 18 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8" /><circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.8" /><circle cx="12" cy="12" r="2" fill="currentColor" /></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8"/><circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.8"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>;
 }
 function IcoGift({ size = 18 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><polyline points="20 12 20 22 4 22 4 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><rect x="2" y="7" width="20" height="5" rx="1" stroke="currentColor" strokeWidth="1.8" /><line x1="12" y1="22" x2="12" y2="7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><polyline points="20 12 20 22 4 22 4 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><rect x="2" y="7" width="20" height="5" rx="1" stroke="currentColor" strokeWidth="1.8"/><line x1="12" y1="22" x2="12" y2="7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 }
 function IcoLogout({ size = 17 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 }
 function IcoMenu({ size = 20 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
 }
 function IcoAlert({ size = 22 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
 }
 function IcoCalendar({ size = 22 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.8" /><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="1.8" /><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.8"/><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="1.8"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>;
 }
 
 const NAV = [
-    { id: null, label: "Dashboard", Icon: IcoDashboard },
-    { id: "empanelment", label: "Empanelment", Icon: IcoEmpanel },
-    { id: "invested", label: "Clients", Icon: IcoClients },
-    { id: "interested", label: "Prospects", Icon: IcoProspects },
-    { id: "giftcity", label: "Gift City A/C", Icon: IcoGift },
-    { id: "customers", label: "Customers", Icon: IcoClients },
-    { id: "products", label: "Products", Icon: IcoProspects },
+  { id: null,          label: "Dashboard",     Icon: IcoDashboard },
+  { id: "empanelment", label: "Empanelment",   Icon: IcoEmpanel   },
+  { id: "invested",    label: "Clients",       Icon: IcoClients   },
+  { id: "interested",  label: "Prospects",     Icon: IcoProspects },
+  { id: "giftcity",    label: "Gift City A/C", Icon: IcoGift      },
+  { id: "customers",   label: "Customers",     Icon: IcoClients   },
+  { id: "products",    label: "Products",      Icon: IcoProspects },
 ];
 
 const STATS = [
-    { key: "empanelment_done", label: "Empanelment Done", sub: "this month", Icon: IcoEmpanel, iconBg: "rgba(42,109,217,0.15)", accent: "#2a6dd9", type: "ratio" },
-    { key: "customers_onboarding", label: "Customers Onboarding", sub: "this week", Icon: IcoClients, iconBg: "rgba(15,158,110,0.15)", accent: "#0f9e6e", type: "ratio" },
-    { key: "gift_city_ac_active", label: "Gift City A/C", sub: "prospects", Icon: IcoGift, iconBg: "rgba(201,124,8,0.15)", accent: "#c97c08", type: "ratio" },
-    { key: "prospects_count", label: "Prospects", sub: "Prospects", Icon: IcoProspects, iconBg: "rgba(107,78,198,0.15)", accent: "#6b4ec6", type: "single" },
+  { key: "empanelment_done",     label: "Empanelment Done",     sub: "this month", Icon: IcoEmpanel,   iconBg: "rgba(42,109,217,0.15)",  accent: "#2a6dd9", type: "ratio"  },
+  { key: "customers_onboarding", label: "Customers Onboarding", sub: "this week",  Icon: IcoClients,   iconBg: "rgba(15,158,110,0.15)",  accent: "#0f9e6e", type: "ratio"  },
+  { key: "gift_city_ac_active",  label: "Gift City A/C",        sub: "prospects",  Icon: IcoGift,      iconBg: "rgba(201,124,8,0.15)",   accent: "#c97c08", type: "ratio"  },
+  { key: "prospects_count",      label: "Prospects",            sub: "Prospects",  Icon: IcoProspects, iconBg: "rgba(107,78,198,0.15)",  accent: "#6b4ec6", type: "single" },
 ];
 
 function StatCard({ cfg, data, loading }) {
-    const { Icon } = cfg;
-    const completed = data?.completed ?? 0;
-    const total = data?.total ?? 0;
-    const single = typeof data === "number" ? data : (data?.total ?? data?.count ?? data?.completed ?? 0);
-    const isRatio = cfg.type === "ratio";
-    return (
-        <div className="sc" style={{ "--accent": cfg.accent }}>
-            <div className="sc-body">
-                <div className="sc-icon" style={{ background: cfg.iconBg }}>
-                    <Icon size={22} />
-                </div>
-                <div className="sc-text">
-                    <div className="sc-label">{cfg.label}</div>
-                    {loading ? <div className="sc-skel" /> : isRatio ? (
-                        <div className="sc-ratio">
-                            <span className="sc-big">{completed}</span>
-                            <span className="sc-slash"> / </span>
-                            <span className="sc-tot">{total}</span>
-                        </div>
-                    ) : (
-                        <div className="sc-single">{single}</div>
-                    )}
-                    {!loading && <div className="sc-sub">+ {isRatio ? completed : single} {cfg.sub}</div>}
-                </div>
+  const { Icon } = cfg;
+  const completed = data?.completed ?? 0;
+  const total     = data?.total ?? 0;
+  const single    = typeof data === "number" ? data : (data?.total ?? data?.count ?? data?.completed ?? 0);
+  const isRatio   = cfg.type === "ratio";
+  return (
+    <div className="sc" style={{ "--accent": cfg.accent }}>
+      <div className="sc-body">
+        <div className="sc-icon" style={{ background: cfg.iconBg }}><Icon size={22} /></div>
+        <div className="sc-text">
+          <div className="sc-label">{cfg.label}</div>
+          {loading ? <div className="sc-skel" /> : isRatio ? (
+            <div className="sc-ratio">
+              <span className="sc-big">{completed}</span>
+              <span className="sc-slash"> / </span>
+              <span className="sc-tot">{total}</span>
             </div>
+          ) : <div className="sc-single">{single}</div>}
+          {!loading && <div className="sc-sub">+ {isRatio ? completed : single} {cfg.sub}</div>}
         </div>
-    );
+      </div>
+    </div>
+  );
 }
 
 function PendingActionsCard({ refreshTick, onNavigate }) {
-    const [count, setCount] = useState(null);
-    const [breakdown, setBreakdown] = useState({ empanelment: 0, customers: 0, giftCity: 0 });
-    const [loading, setLoading] = useState(true);
+  const [count,     setCount]     = useState(null);
+  const [breakdown, setBreakdown] = useState({ empanelment: 0, customers: 0, giftCity: 0 });
+  const [loading,   setLoading]   = useState(true);
 
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            setLoading(true);
-            try {
-                const [empPend, custPend, giftPend] = await Promise.all([
-                    fetch(`${API}/empanelment/pending`).then(r => r.json()),
-                    fetch(`${API}/invested/pending`).then(r => r.json()),
-                    fetch(`${API}/gift-city/inactive`).then(r => r.json()),
-                ]);
-                if (cancelled) return;
-                const e = Array.isArray(empPend) ? empPend.length : 0;
-                const c = Array.isArray(custPend) ? custPend.length : 0;
-                const g = Array.isArray(giftPend) ? giftPend.length : 0;
-                setBreakdown({ empanelment: e, customers: c, giftCity: g });
-                setCount(e + c + g);
-            } catch { if (!cancelled) setCount(0); }
-            finally { if (!cancelled) setLoading(false); }
-        })();
-        return () => { cancelled = true; };
-    }, [refreshTick]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const [empPend, custPend, giftPend] = await Promise.all([
+          fetch(`${API}/empanelment/pending`).then(r => r.json()),
+          fetch(`${API}/invested/pending`).then(r => r.json()),
+          fetch(`${API}/gift-city/inactive`).then(r => r.json()),
+        ]);
+        if (cancelled) return;
+        const e = Array.isArray(empPend)  ? empPend.length  : 0;
+        const c = Array.isArray(custPend) ? custPend.length : 0;
+        const g = Array.isArray(giftPend) ? giftPend.length : 0;
+        setBreakdown({ empanelment: e, customers: c, giftCity: g });
+        setCount(e + c + g);
+      } catch { if (!cancelled) setCount(0); }
+      finally  { if (!cancelled) setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [refreshTick]);
 
-    return (
-        <div className="side-card side-card-red">
-            <div className="side-card-header">
-                <div className="side-card-icon-wrap side-card-icon-red"><IcoAlert size={16} /></div>
-                <span className="side-card-label">Pending Actions</span>
-                {loading ? <div className="sc-skel" style={{ width: 36, height: 28, marginLeft: "auto", borderRadius: 6 }} />
-                    : <span className="side-card-count" style={{ color: "#b02020" }}>{count}</span>}
-            </div>
-            <div className="side-card-divider" />
-            <div className="side-card-rows">
-                {[
-                    { lbl: "Empanelment", val: breakdown.empanelment, color: "#2a6dd9", page: "empanelment", tab: "pending" },
-                    { lbl: "Clients", val: breakdown.customers, color: "#0f9e6e", page: "invested", tab: "pending" },
-                    { lbl: "Gift A/C", val: breakdown.giftCity, color: "#c97c08", page: "giftcity", tab: "inactive" },
-                ].map(({ lbl, val, color, page, tab }) => (
-                    <div className="side-card-row pending-nav-row" key={lbl} onClick={() => onNavigate?.(page, tab)} style={{ cursor: "pointer" }}>
-                        <span className="side-card-row-dot" style={{ background: color }} />
-                        <span className="side-card-row-lbl">{lbl}</span>
-                        <span className="side-card-row-val" style={{ color }}>{loading ? "…" : val}</span>
-                        <span style={{ color: "rgba(10,45,120,0.25)", fontSize: ".7rem", marginLeft: 2 }}>›</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+  return (
+    <div className="side-card side-card-red">
+      <div className="side-card-header">
+        <div className="side-card-icon-wrap side-card-icon-red"><IcoAlert size={16} /></div>
+        <span className="side-card-label">Pending Actions</span>
+        {loading
+          ? <div className="sc-skel" style={{ width: 36, height: 28, marginLeft: "auto", borderRadius: 6 }} />
+          : <span className="side-card-count" style={{ color: "#b02020" }}>{count}</span>}
+      </div>
+      <div className="side-card-divider" />
+      <div className="side-card-rows">
+        {[
+          { lbl: "Empanelment", val: breakdown.empanelment, color: "#2a6dd9", page: "empanelment", tab: "pending"  },
+          { lbl: "Clients",     val: breakdown.customers,   color: "#0f9e6e", page: "invested",    tab: "pending"  },
+          { lbl: "Gift A/C",    val: breakdown.giftCity,    color: "#c97c08", page: "giftcity",    tab: "inactive" },
+        ].map(({ lbl, val, color, page, tab }) => (
+          <div className="side-card-row pending-nav-row" key={lbl}
+            onClick={() => onNavigate?.(page, tab)} style={{ cursor: "pointer" }}>
+            <span className="side-card-row-dot" style={{ background: color }} />
+            <span className="side-card-row-lbl">{lbl}</span>
+            <span className="side-card-row-val" style={{ color }}>{loading ? "…" : val}</span>
+            <span style={{ color: "rgba(10,45,120,0.25)", fontSize: ".7rem", marginLeft: 2 }}>›</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function UpcomingMeetingsCard({ refreshTick, onNavigate }) {
-    const [allMeetings, setAllMeetings] = useState([]);
-    const [total, setTotal] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [expanded, setExpanded] = useState(false);
-    const PREVIEW = 3;
+/* ══════════════════════════════════════════════════
+   MeetingsModal — theme-aware portal popup
+══════════════════════════════════════════════════ */
+function MeetingsModal({ meetings, onClose, theme }) {
+  const isDark = theme !== "light";
 
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            setLoading(true); setExpanded(false);
-            try {
-                const data = await fetch(`${API}/interested`).then(r => r.json());
-                if (cancelled) return;
-                const rows = Array.isArray(data) ? data : [];
-                const now = new Date(); now.setHours(0, 0, 0, 0);
-                const upcoming = rows
-                    .filter(r => r.next_action_date && new Date(r.next_action_date) >= now)
-                    .sort((a, b) => new Date(a.next_action_date) - new Date(b.next_action_date));
-                setTotal(upcoming.length); setAllMeetings(upcoming);
-            } catch { if (!cancelled) { setTotal(0); setAllMeetings([]); } }
-            finally { if (!cancelled) setLoading(false); }
-        })();
-        return () => { cancelled = true; };
-    }, [refreshTick]);
+  const fmtDate = d => {
+    if (!d) return "—";
+    const dt = new Date(d), today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diff = Math.round((dt - today) / 86400000);
+    if (diff === 0) return "Today";
+    if (diff === 1) return "Tomorrow";
+    return dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  };
+  const daysDiff = d => {
+    if (!d) return null;
+    const dt = new Date(d), today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.round((dt - today) / 86400000);
+  };
+  const chipStyle = diff => {
+    if (isDark) {
+      if (diff === 0) return { bg: "rgba(52,211,153,0.18)",  color: "#34D399", border: "rgba(52,211,153,0.3)"  };
+      if (diff <= 3)  return { bg: "rgba(245,158,11,0.18)",  color: "#F59E0B", border: "rgba(245,158,11,0.3)"  };
+      return              { bg: "rgba(79,142,247,0.14)",  color: "#4F8EF7", border: "rgba(79,142,247,0.28)" };
+    } else {
+      if (diff === 0) return { bg: "rgba(15,158,110,0.14)", color: "#0a7a56", border: "rgba(15,158,110,0.28)" };
+      if (diff <= 3)  return { bg: "rgba(201,124,8,0.14)",  color: "#845004", border: "rgba(201,124,8,0.28)"  };
+      return              { bg: "rgba(42,109,217,0.12)",  color: "#1a50b5", border: "rgba(42,109,217,0.26)" };
+    }
+  };
+  const sourceBadge = src => {
+    if (isDark) {
+      return src === "prospect"
+        ? { bg: "rgba(230,126,34,0.15)", color: "#E67E22", border: "rgba(230,126,34,0.3)"   }
+        : { bg: "rgba(100,181,246,0.12)", color: "#64B5F6", border: "rgba(100,181,246,0.28)" };
+    } else {
+      return src === "prospect"
+        ? { bg: "rgba(201,124,8,0.12)",  color: "#845004", border: "rgba(201,124,8,0.28)"  }
+        : { bg: "rgba(42,109,217,0.1)",  color: "#1a50b5", border: "rgba(42,109,217,0.25)" };
+    }
+  };
 
-    const fmtShort = d => {
-        if (!d) return "—";
-        const dt = new Date(d), today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const diff = Math.round((dt - today) / 86400000);
-        if (diff === 0) return "Today";
-        if (diff === 1) return "Tomorrow";
-        return dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
-    };
-    const daysDiff = d => {
-        if (!d) return null;
-        const dt = new Date(d), today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return Math.round((dt - today) / 86400000);
-    };
-    const chipColor = diff => {
-        if (diff === 0) return { bg: "rgba(15,158,110,0.14)", color: "#0a7a56", border: "rgba(15,158,110,0.28)" };
-        if (diff <= 3) return { bg: "rgba(201,124,8,0.14)", color: "#845004", border: "rgba(201,124,8,0.28)" };
-        return { bg: "rgba(42,109,217,0.12)", color: "#1a50b5", border: "rgba(42,109,217,0.26)" };
-    };
+  /* ── design tokens ── */
+  const overlayBg      = isDark ? "rgba(0,0,10,0.72)"          : "rgba(10,20,80,0.35)";
+  const boxBg          = isDark ? "rgba(7,9,30,0.97)"           : "rgba(255,255,255,0.97)";
+  const boxBorder      = isDark ? "rgba(79,142,247,0.48)"       : "rgba(42,109,217,0.22)";
+  const boxShadow      = isDark
+    ? "0 8px 48px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.07)"
+    : "0 8px 40px rgba(10,30,100,0.18)";
+  const hdrBg          = isDark ? "rgba(79,142,247,0.05)"       : "rgba(42,109,217,0.06)";
+  const hdrBdr         = isDark ? "rgba(79,142,247,0.18)"       : "rgba(42,109,217,0.15)";
+  const accentBar      = isDark ? "linear-gradient(180deg,#4F8EF7,#A78BFA)" : "#2a6dd9";
+  const titleClr       = isDark ? "#fff"                        : "#111827";
+  const subClr         = isDark ? "rgba(180,210,255,0.5)"       : "rgba(0,0,0,0.5)";
+  const badgeBg        = isDark ? "rgba(167,139,250,0.15)"      : "rgba(100,72,195,0.1)";
+  const badgeClr       = isDark ? "#A78BFA"                     : "#4e30a0";
+  const badgeBdr       = isDark ? "rgba(167,139,250,0.3)"       : "rgba(100,72,195,0.25)";
+  const closeBg        = isDark ? "rgba(79,142,247,0.12)"       : "rgba(42,109,217,0.1)";
+  const closeBdr       = isDark ? "rgba(79,142,247,0.28)"       : "rgba(42,109,217,0.2)";
+  const closeClr       = isDark ? "rgba(180,210,255,0.8)"       : "rgba(0,0,0,0.6)";
+  const legendBg       = isDark ? "rgba(0,0,0,0.18)"            : "rgba(0,0,0,0.02)";
+  const rowBdr         = isDark ? "rgba(79,142,247,0.09)"       : "rgba(10,30,100,0.1)";
+  const rowHoverBg     = isDark ? "rgba(79,142,247,0.07)"       : "rgba(42,109,217,0.05)";
+  const numClr         = isDark ? "rgba(130,160,255,0.35)"      : "rgba(0,0,0,0.3)";
+  const nameClr        = isDark ? "rgba(220,235,255,0.9)"       : "#111827";
+  const emptyClr       = isDark ? "rgba(160,190,255,0.4)"       : "rgba(0,0,0,0.4)";
+  const scrollThumb    = isDark ? "rgba(79,142,247,0.28)"       : "rgba(42,109,217,0.2)";
+  const footBtnHoverBd = isDark ? "#4F8EF7"                     : "#2a6dd9";
+  const footBtnHoverCl = isDark ? "#4F8EF7"                     : "#2a6dd9";
 
-    const visible = expanded ? allMeetings : allMeetings.slice(0, PREVIEW);
-    const remaining = (total ?? 0) - PREVIEW;
+  const srcDot = src => src === "prospect"
+    ? (isDark ? "#E67E22" : "#c97c08")
+    : (isDark ? "#64B5F6" : "#2a6dd9");
 
-    return (
-        <div className="side-card side-card-purple">
-            <div className="side-card-header">
-                <div className="side-card-icon-wrap side-card-icon-purple"><IcoCalendar size={16} /></div>
-                <span className="side-card-label" onClick={() => onNavigate?.()} style={{ cursor: "pointer", textDecoration: "underline dotted", textUnderlineOffset: 3 }}>
-                    Upcoming Meetings
+  return createPortal(
+    <div
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={{
+        position: "fixed", inset: 0, zIndex: 99999,
+        background: overlayBg,
+        backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 16, boxSizing: "border-box", overflowY: "auto",
+        animation: "umFadeIn .2s ease",
+      }}
+    >
+      <style>{`
+        @keyframes umFadeIn  { from{opacity:0} to{opacity:1} }
+        @keyframes umSlideIn { from{opacity:0;transform:translateY(20px) scale(.96)} to{opacity:1;transform:none} }
+        .um-row:hover  { background: ${rowHoverBg} !important; }
+        .um-close:hover { background: ${isDark ? "rgba(79,142,247,0.25)" : "rgba(42,109,217,0.18)"} !important; color:${isDark ? "#fff" : "#000"} !important; }
+        .um-scroll::-webkit-scrollbar { width:4px; }
+        .um-scroll::-webkit-scrollbar-thumb { background:${scrollThumb}; border-radius:4px; }
+        .um-foot-btn:hover { border-color:${footBtnHoverBd} !important; color:${footBtnHoverCl} !important; }
+      `}</style>
+
+      <div className="um-scroll" style={{
+        background: boxBg,
+        backdropFilter: "blur(48px) saturate(180%)",
+        WebkitBackdropFilter: "blur(48px) saturate(180%)",
+        border: `1px solid ${boxBorder}`,
+        borderRadius: 22,
+        boxShadow: boxShadow,
+        width: "100%", maxWidth: "min(540px, calc(100vw - 32px))",
+        maxHeight: "calc(100vh - 48px)",
+        display: "flex", flexDirection: "column",
+        animation: "umSlideIn .32s cubic-bezier(0.34,1.56,0.64,1)",
+        boxSizing: "border-box", overflow: "hidden",
+      }}>
+
+        {/* ── Header ── */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "18px 22px 15px",
+          borderBottom: `1px solid ${hdrBdr}`,
+          background: hdrBg, flexShrink: 0,
+        }}>
+          <div style={{ width: 4, height: 26, borderRadius: 2, background: accentBar, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: "1rem", color: titleClr, letterSpacing: ".02em", fontFamily: "'Inter',sans-serif" }}>
+              Upcoming Meetings
+            </div>
+            <div style={{ fontSize: ".7rem", color: subClr, marginTop: 3, fontFamily: "'Inter',sans-serif" }}>
+              Prospects &amp; Pending Clients · sorted by nearest date
+            </div>
+          </div>
+          <div style={{
+            padding: "3px 12px", borderRadius: 20,
+            background: badgeBg, border: `1px solid ${badgeBdr}`,
+            color: badgeClr, fontSize: ".72rem", fontWeight: 700,
+            fontFamily: "'Inter',sans-serif", flexShrink: 0,
+          }}>
+            {meetings.length} total
+          </div>
+          <button className="um-close" onClick={onClose} style={{
+            background: closeBg, border: `1px solid ${closeBdr}`,
+            borderRadius: 9, width: 32, height: 32,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: closeClr, fontSize: "1.15rem",
+            fontWeight: 700, transition: "all .18s", flexShrink: 0, lineHeight: 1,
+          }}>×</button>
+        </div>
+
+        {/* ── Legend ── */}
+        <div style={{
+          display: "flex", gap: 10, padding: "10px 22px",
+          borderBottom: `1px solid ${hdrBdr}`,
+          background: legendBg, flexShrink: 0, flexWrap: "wrap", alignItems: "center",
+        }}>
+          {[{ src: "prospect", label: "Prospect" }, { src: "pending", label: "Pending Client" }].map(({ src, label }) => {
+            const b = sourceBadge(src);
+            return (
+              <span key={src} style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "3px 11px", borderRadius: 20,
+                background: b.bg, border: `1px solid ${b.border}`,
+                color: b.color, fontSize: ".65rem", fontWeight: 700,
+                fontFamily: "'Inter',sans-serif",
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: b.color, display: "inline-block", flexShrink: 0 }} />
+                {label}
+              </span>
+            );
+          })}
+          <span style={{ fontSize: ".63rem", color: isDark ? "rgba(120,150,220,0.4)" : "rgba(0,0,0,0.3)", fontFamily: "'Inter',sans-serif" }}>
+            · chip colour = urgency
+          </span>
+        </div>
+
+        {/* ── Body ── */}
+        <div className="um-scroll" style={{ overflowY: "auto", flex: 1 }}>
+          {meetings.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "52px 20px", color: emptyClr, fontSize: ".84rem", fontStyle: "italic" }}>
+              No upcoming meetings found
+            </div>
+          ) : meetings.map((m, i) => {
+            const diff  = daysDiff(m.next_action_date);
+            const chip  = chipStyle(diff);
+            const badge = sourceBadge(m._source);
+            return (
+              <div key={`${m._source}-${m.id}-${i}`} className="um-row" style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "12px 22px",
+                borderBottom: `1px solid ${rowBdr}`,
+                transition: "background .15s", cursor: "default",
+              }}>
+                <span style={{ fontSize: ".7rem", fontWeight: 700, color: numClr, width: 24, textAlign: "right", flexShrink: 0 }}>
+                  {i + 1}
                 </span>
-                {loading ? <div className="sc-skel" style={{ width: 36, height: 28, marginLeft: "auto", borderRadius: 6 }} />
-                    : <span className="side-card-count" style={{ color: "#4e30a0" }}>{total}</span>}
-            </div>
-            <div className="side-card-divider" />
-            <div className="side-card-rows">
-                {loading ? [1, 2, 3].map(i => <div key={i} className="sc-skel" style={{ width: "100%", height: 22, borderRadius: 6, marginBottom: 4 }} />) :
-                    allMeetings.length === 0 ? (
-                        <div style={{ color: "rgba(10,45,120,0.4)", fontSize: ".71rem", textAlign: "center", padding: "8px 0", fontStyle: "italic" }}>No upcoming meetings</div>
-                    ) : (
-                        <>
-                            {visible.map((m, i) => {
-                                const diff = daysDiff(m.next_action_date);
-                                const chip = chipColor(diff);
-                                return (
-                                    <div key={m.id ?? i} className="side-card-row" style={{ alignItems: "center" }}>
-                                        <span className="side-card-row-lbl" style={{ overflow: "hidden", textOverflow: "ellipsis", maxWidth: 95, whiteSpace: "nowrap" }} title={m.client_name}>
-                                            {m.client_name || "—"}
-                                        </span>
-                                        <span style={{ fontSize: ".63rem", fontWeight: 700, padding: "2px 6px", borderRadius: 20, background: chip.bg, color: chip.color, border: `1px solid ${chip.border}`, whiteSpace: "nowrap", marginLeft: "auto", flexShrink: 0 }}>
-                                            {fmtShort(m.next_action_date)}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                            {remaining > 0 && !expanded && (
-                                <button onClick={() => setExpanded(true)} style={{ marginTop: 6, width: "100%", background: "rgba(100,72,195,0.08)", border: "1px dashed rgba(100,72,195,0.3)", borderRadius: 8, color: "#4e30a0", fontSize: ".69rem", fontWeight: 700, padding: "5px 0", cursor: "pointer", fontFamily: "inherit", letterSpacing: ".03em" }}>
-                                    +{remaining} more
-                                </button>
-                            )}
-                            {expanded && (
-                                <button onClick={() => setExpanded(false)} style={{ marginTop: 6, width: "100%", background: "rgba(100,72,195,0.04)", border: "1px dashed rgba(100,72,195,0.2)", borderRadius: 8, color: "rgba(100,72,195,0.55)", fontSize: ".67rem", fontWeight: 600, padding: "4px 0", cursor: "pointer", fontFamily: "inherit" }}>
-                                    Show less ↑
-                                </button>
-                            )}
-                        </>
-                    )}
-            </div>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: srcDot(m._source), flexShrink: 0, display: "inline-block" }} />
+                <span style={{
+                  flex: 1, minWidth: 0, fontSize: ".84rem", fontWeight: 600,
+                  color: nameClr, overflow: "hidden", textOverflow: "ellipsis",
+                  whiteSpace: "nowrap", fontFamily: "'Inter',sans-serif",
+                }} title={m.client_name}>
+                  {m.client_name || "—"}
+                </span>
+                <span style={{
+                  padding: "2px 9px", borderRadius: 20,
+                  background: badge.bg, border: `1px solid ${badge.border}`,
+                  color: badge.color, fontSize: ".62rem", fontWeight: 700,
+                  fontFamily: "'Inter',sans-serif", whiteSpace: "nowrap", flexShrink: 0,
+                }}>
+                  {m._source === "prospect" ? "Prospect" : "Pending"}
+                </span>
+                <span style={{
+                  padding: "3px 10px", borderRadius: 20,
+                  background: chip.bg, border: `1px solid ${chip.border}`,
+                  color: chip.color, fontSize: ".68rem", fontWeight: 700,
+                  fontFamily: "'Inter',sans-serif", whiteSpace: "nowrap", flexShrink: 0,
+                }}>
+                  {fmtDate(m.next_action_date)}
+                </span>
+              </div>
+            );
+          })}
         </div>
-    );
+
+        {/* ── Footer ── */}
+        <div style={{
+          padding: "12px 22px", borderTop: `1px solid ${hdrBdr}`,
+          background: hdrBg, display: "flex", justifyContent: "flex-end", flexShrink: 0,
+        }}>
+          <button className="um-foot-btn" onClick={onClose} style={{
+            padding: "8px 20px", borderRadius: 10,
+            border: `1px solid ${closeBdr}`, background: "none",
+            color: closeClr, cursor: "pointer",
+            fontSize: ".8rem", fontWeight: 600, fontFamily: "'Inter',sans-serif",
+            transition: "all .18s",
+          }}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
 }
 
+/* ══════════════════════════════════════════════════
+   UpcomingMeetingsCard — fetches from BOTH tables
+══════════════════════════════════════════════════ */
+function UpcomingMeetingsCard({ refreshTick, theme = "dark" }) {
+  const [allMeetings, setAllMeetings] = useState([]);
+  const [total,       setTotal]       = useState(null);
+  const [loading,     setLoading]     = useState(true);
+  const [modalOpen,   setModalOpen]   = useState(false);
+  const PREVIEW = 3;
+  const isDark  = theme !== "light";
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const [intData, pendData] = await Promise.all([
+          fetch(`${API}/interested`).then(r => r.json()),
+          fetch(`${API}/invested/pending`).then(r => r.json()),
+        ]);
+        if (cancelled) return;
+        const now = new Date(); now.setHours(0, 0, 0, 0);
+
+        const fromInterested = (Array.isArray(intData)  ? intData  : [])
+          .filter(r => r.next_action_date && new Date(r.next_action_date) >= now)
+          .map(r => ({ ...r, _source: "prospect" }));
+
+        const fromPending = (Array.isArray(pendData) ? pendData : [])
+          .filter(r => r.next_action_date && new Date(r.next_action_date) >= now)
+          .map(r => ({ ...r, _source: "pending" }));
+
+        const combined = [...fromInterested, ...fromPending]
+          .sort((a, b) => new Date(a.next_action_date) - new Date(b.next_action_date));
+
+        setAllMeetings(combined);
+        setTotal(combined.length);
+      } catch {
+        if (!cancelled) { setTotal(0); setAllMeetings([]); }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [refreshTick]);
+
+  const fmtShort = d => {
+    if (!d) return "—";
+    const dt = new Date(d), today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diff = Math.round((dt - today) / 86400000);
+    if (diff === 0) return "Today";
+    if (diff === 1) return "Tomorrow";
+    return dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+  };
+  const daysDiff = d => {
+    if (!d) return null;
+    const dt = new Date(d), today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.round((dt - today) / 86400000);
+  };
+  const chipColor = diff => {
+    if (isDark) {
+      if (diff === 0) return { bg: "rgba(52,211,153,0.18)",  color: "#34D399", border: "rgba(52,211,153,0.3)"  };
+      if (diff <= 3)  return { bg: "rgba(245,158,11,0.18)",  color: "#F59E0B", border: "rgba(245,158,11,0.3)"  };
+      return              { bg: "rgba(79,142,247,0.14)",  color: "#4F8EF7", border: "rgba(79,142,247,0.28)" };
+    } else {
+      if (diff === 0) return { bg: "rgba(15,158,110,0.14)", color: "#0a7a56", border: "rgba(15,158,110,0.28)" };
+      if (diff <= 3)  return { bg: "rgba(201,124,8,0.14)",  color: "#845004", border: "rgba(201,124,8,0.28)"  };
+      return              { bg: "rgba(42,109,217,0.12)",  color: "#1a50b5", border: "rgba(42,109,217,0.26)" };
+    }
+  };
+
+  const countColor  = isDark ? "#A78BFA"                : "#4e30a0";
+  const labelColor  = isDark ? "rgba(200,220,255,0.75)" : "rgba(0,0,0,0.6)";
+  const rowLblColor = isDark ? "rgba(180,210,255,0.65)" : "rgba(0,0,0,0.6)";
+  const emptyColor  = isDark ? "rgba(160,190,255,0.4)"  : "rgba(10,45,120,0.4)";
+  const iconBg      = isDark ? "rgba(167,139,250,0.16)" : "rgba(90,62,185,0.1)";
+  const iconColor   = isDark ? "#A78BFA"                : "#4e30a0";
+  const iconBorder  = isDark ? "rgba(167,139,250,0.28)" : "rgba(10,30,100,0.2)";
+  const moreBtnBg   = isDark ? "rgba(167,139,250,0.1)"  : "rgba(100,72,195,0.08)";
+  const moreBtnBdr  = isDark ? "rgba(167,139,250,0.35)" : "rgba(100,72,195,0.3)";
+  const moreBtnClr  = isDark ? "#A78BFA"                : "#4e30a0";
+  const srcDot = src => src === "prospect"
+    ? (isDark ? "#E67E22" : "#c97c08")
+    : (isDark ? "#64B5F6" : "#2a6dd9");
+
+  const preview = allMeetings.slice(0, PREVIEW);
+
+  return (
+    <>
+      <div className="side-card side-card-purple">
+        <div className="side-card-header">
+          <div className="side-card-icon-wrap" style={{ background: iconBg, color: iconColor, border: `1px solid ${iconBorder}` }}>
+            <IcoCalendar size={16} />
+          </div>
+          <span
+            className="side-card-label"
+            style={{ color: labelColor, cursor: "pointer", textDecoration: "underline dotted", textUnderlineOffset: 3 }}
+            onClick={() => setModalOpen(true)}
+          >
+            Upcoming Meetings
+          </span>
+          {loading
+            ? <div className="sc-skel" style={{ width: 36, height: 28, marginLeft: "auto", borderRadius: 6 }} />
+            : <span className="side-card-count" style={{ color: countColor }}>{total}</span>}
+        </div>
+        <div className="side-card-divider" />
+        <div className="side-card-rows">
+          {loading
+            ? [1,2,3].map(i => <div key={i} className="sc-skel" style={{ width:"100%",height:22,borderRadius:6,marginBottom:4 }} />)
+            : allMeetings.length === 0
+              ? <div style={{ color:emptyColor,fontSize:".71rem",textAlign:"center",padding:"8px 0",fontStyle:"italic" }}>No upcoming meetings</div>
+              : <>
+                  {preview.map((m, i) => {
+                    const diff = daysDiff(m.next_action_date);
+                    const chip = chipColor(diff);
+                    return (
+                      <div key={`${m._source}-${m.id}-${i}`} className="side-card-row" style={{ alignItems:"center" }}>
+                        <span style={{ width:7,height:7,borderRadius:"50%",background:srcDot(m._source),flexShrink:0,display:"inline-block" }} />
+                        <span className="side-card-row-lbl" style={{ color:rowLblColor,overflow:"hidden",textOverflow:"ellipsis",maxWidth:82,whiteSpace:"nowrap" }} title={m.client_name}>
+                          {m.client_name || "—"}
+                        </span>
+                        <span style={{ fontSize:".63rem",fontWeight:700,padding:"2px 6px",borderRadius:20,background:chip.bg,color:chip.color,border:`1px solid ${chip.border}`,whiteSpace:"nowrap",marginLeft:"auto",flexShrink:0 }}>
+                          {fmtShort(m.next_action_date)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {allMeetings.length > PREVIEW && (
+                    <button
+                      onClick={() => setModalOpen(true)}
+                      style={{ marginTop:6,width:"100%",background:moreBtnBg,border:`1px dashed ${moreBtnBdr}`,borderRadius:8,color:moreBtnClr,fontSize:".69rem",fontWeight:700,padding:"5px 0",cursor:"pointer",fontFamily:"inherit",letterSpacing:".03em" }}
+                    >
+                      +{allMeetings.length - PREVIEW} more · View all
+                    </button>
+                  )}
+                </>
+          }
+        </div>
+      </div>
+
+      {modalOpen && (
+        <MeetingsModal
+          meetings={allMeetings}
+          onClose={() => setModalOpen(false)}
+          theme={theme}
+        />
+      )}
+    </>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   DashboardLight  (light theme)
+══════════════════════════════════════════════════ */
 export default function DashboardLight() {
-    const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-    const [selected, setSelected] = useState(null);
-    const [headerCounts, setHeaderCounts] = useState({});
-    const [headerLoading, setHeaderLoading] = useState(true);
-    const [refreshTick, setRefreshTick] = useState(0);
-    const [sideOpen, setSideOpen] = useState(false);
-    const [initialTab, setInitialTab] = useState(null);
+  const [selected,      setSelected]      = useState(null);
+  const [headerCounts,  setHeaderCounts]  = useState({});
+  const [headerLoading, setHeaderLoading] = useState(true);
+  const [refreshTick,   setRefreshTick]   = useState(0);
+  const [sideOpen,      setSideOpen]      = useState(false);
+  const [initialTab,    setInitialTab]    = useState(null);
 
-    useEffect(() => {
-        document.body.style.background = `url('/gift-city-light-back.jpeg') center/cover no-repeat fixed`;
-    }, []);
+  useEffect(() => {
+    document.body.style.background = `url('/gift-city-light-back.jpeg') center/cover no-repeat fixed`;
+  }, []);
 
-    useEffect(() => {
-        (async () => {
-            setHeaderLoading(true);
-            try { const d = await fetch(`${API}/count/all`).then(r => r.json()); setHeaderCounts(d); } catch { }
-            finally { setHeaderLoading(false); }
-        })();
-    }, [refreshTick]);
+  useEffect(() => {
+    (async () => {
+      setHeaderLoading(true);
+      try { const d = await fetch(`${API}/count/all`).then(r => r.json()); setHeaderCounts(d); } catch {}
+      finally { setHeaderLoading(false); }
+    })();
+  }, [refreshTick]);
 
-    const refreshCounts = () => setRefreshTick(t => t + 1);
-    const handleLogout = () => { localStorage.removeItem("user"); navigate("/login"); };
+  const refreshCounts = () => setRefreshTick(t => t + 1);
+  const handleLogout  = () => { localStorage.removeItem("user"); navigate("/login"); };
 
-    const renderContent = () => {
-        if (selected === "empanelment") return <Empanelment key={initialTab} inline onDataChange={refreshCounts} initialTab={initialTab} theme="light" />;
-        if (selected === "invested") return <Invested key={initialTab} inline onDataChange={refreshCounts} initialTab={initialTab} theme="light" />;
-        if (selected === "interested") return <Interested inline onDataChange={refreshCounts} theme="light" />;
-        if (selected === "giftcity") return <GiftCity key={initialTab} inline onDataChange={refreshCounts} initialTab={initialTab} theme="light" />;
-        if (selected === "customers") return <Customers inline onDataChange={refreshCounts} theme="light" />;
-        if (selected === "products") return <Products inline onDataChange={refreshCounts} theme="light" />;
-        return null;
-    };
+  const renderContent = () => {
+    if (selected === "empanelment") return <Empanelment key={initialTab} inline onDataChange={refreshCounts} initialTab={initialTab} theme="light" />;
+    if (selected === "invested")    return <Invested    key={initialTab} inline onDataChange={refreshCounts} initialTab={initialTab} theme="light" />;
+    if (selected === "interested")  return <Interested  inline onDataChange={refreshCounts} theme="light" />;
+    if (selected === "giftcity")    return <GiftCity    key={initialTab} inline onDataChange={refreshCounts} initialTab={initialTab} theme="light" />;
+    if (selected === "customers")   return <Customers   inline onDataChange={refreshCounts} theme="light" />;
+    if (selected === "products")    return <Products    inline onDataChange={refreshCounts} theme="light" />;
+    return null;
+  };
 
-    const activeNav = NAV.find(n => n.id === selected);
+  const activeNav = NAV.find(n => n.id === selected);
 
-    return (
-        <>
-            <style>{CSS}</style>
-            <div className="root">
-                <div className="page-card">
-                    {sideOpen && <div className="side-overlay" onClick={() => setSideOpen(false)} />}
+  return (
+    <>
+      <style>{CSS}</style>
+      <div className="root">
+        <div className="page-card">
+          {sideOpen && <div className="side-overlay" onClick={() => setSideOpen(false)} />}
 
-                    {/* ════ SIDEBAR ════ */}
-                    <aside className={`side ${sideOpen ? "side-open" : ""}`}>
-                        <div className="side-logo">
-                            <div className="logo-box">
-                                <div className="logo-words">
-                                    <span className="logo-main">FINANCE DOCTOR</span>
-                                    <span className="logo-est">Est. 2002</span>
-                                </div>
-                            </div>
-                        </div>
-                        <nav className="side-nav">
-                            {NAV.map(({ id, label, Icon }) => (
-                                <button key={String(id)}
-                                    className={`nav-btn ${selected === id ? "nav-active" : ""}`}
-                                    onClick={() => { setSelected(id); setInitialTab(null); setSideOpen(false); }}>
-                                    <span className="nav-ico"><Icon /></span>
-                                    <span className="nav-lbl">{label}</span>
-                                </button>
-                            ))}
-                            <div style={{ flex: 1 }} />
-                            <div className="logout-card">
-                                <button className="nav-btn logout-nav" onClick={handleLogout}>
-                                    <span className="nav-ico"><IcoLogout /></span>
-                                    <span className="nav-lbl">Logout</span>
-                                </button>
-                            </div>
-                        </nav>
-                    </aside>
-
-                    {/* ════ MAIN ════ */}
-                    <div className="main">
-                        <header className="topbar">
-                            <button className="menu-btn" onClick={() => setSideOpen(true)} aria-label="menu"><IcoMenu /></button>
-                            <h1 className="topbar-title">{activeNav ? activeNav.label : "Finance Doctor"}</h1>
-                            <div className="theme-toggle-wrap">
-                                <span className="theme-toggle-ico">🌙</span>
-                                <label className="theme-switch" title="Switch to dark mode">
-                                    <input type="checkbox" checked={true} onChange={() => navigate("/dashboard")} />
-                                    <span className="theme-switch-track" />
-                                    <span className="theme-switch-thumb" />
-                                </label>
-                                <span className="theme-toggle-ico">☀️</span>
-                            </div>
-                            <div className="user-chip">
-                                <div className="user-av">{(user.name || "A").charAt(0).toUpperCase()}</div>
-                                <span className="user-name">{user.name || "Admin"}</span>
-                            </div>
-                        </header>
-
-                        <div className="content">
-                            {/* ── Stats ── */}
-                            <div className="stats-card">
-                                <div className="stats-row">
-                                    {STATS.map(cfg => (
-                                        <StatCard key={cfg.key} cfg={cfg} data={headerCounts[cfg.key]} loading={headerLoading} />
-                                    ))}
-                                </div>
-                            </div>
-
-                            {selected === null ? (
-                                <div className="dashboard-bottom">
-                                    <div className="amc-table-col">
-                                        <AMCTable key={refreshTick} onDataChange={refreshCounts} theme="light" />
-                                    </div>
-                                    <div className="side-cards-col">
-                                        <PendingActionsCard refreshTick={refreshTick}
-                                            onNavigate={(page, tab) => { setInitialTab(tab); setSelected(page); }} />
-                                        <UpcomingMeetingsCard refreshTick={refreshTick} onNavigate={() => setSelected("interested")} />
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="module-panel">{renderContent()}</div>
-                            )}
-                        </div>
-                    </div>
+          {/* ════ SIDEBAR ════ */}
+          <aside className={`side ${sideOpen ? "side-open" : ""}`}>
+            <div className="side-logo">
+              <div className="logo-box">
+                <div className="logo-words">
+                  <span className="logo-main">FINANCE DOCTOR</span>
+                  <span className="logo-est">Est. 2002</span>
                 </div>
+              </div>
             </div>
-        </>
-    );
+            <nav className="side-nav">
+              {NAV.map(({ id, label, Icon }) => (
+                <button key={String(id)}
+                  className={`nav-btn ${selected === id ? "nav-active" : ""}`}
+                  onClick={() => { setSelected(id); setInitialTab(null); setSideOpen(false); }}>
+                  <span className="nav-ico"><Icon /></span>
+                  <span className="nav-lbl">{label}</span>
+                </button>
+              ))}
+              <div style={{ flex: 1 }} />
+              <div className="logout-card">
+                <button className="nav-btn logout-nav" onClick={handleLogout}>
+                  <span className="nav-ico"><IcoLogout /></span>
+                  <span className="nav-lbl">Logout</span>
+                </button>
+              </div>
+            </nav>
+          </aside>
+
+          {/* ════ MAIN ════ */}
+          <div className="main">
+            <header className="topbar">
+              <button className="menu-btn" onClick={() => setSideOpen(true)} aria-label="menu"><IcoMenu /></button>
+              <h1 className="topbar-title">{activeNav ? activeNav.label : "Finance Doctor"}</h1>
+              <div className="theme-toggle-wrap">
+                <span className="theme-toggle-ico">🌙</span>
+                <label className="theme-switch" title="Switch to dark mode">
+                  <input type="checkbox" checked={true} onChange={() => navigate("/dashboard")} />
+                  <span className="theme-switch-track" />
+                  <span className="theme-switch-thumb" />
+                </label>
+                <span className="theme-toggle-ico">☀️</span>
+              </div>
+              <div className="user-chip">
+                <div className="user-av">{(user.name || "A").charAt(0).toUpperCase()}</div>
+                <span className="user-name">{user.name || "Admin"}</span>
+              </div>
+            </header>
+
+            <div className="content">
+              <div className="stats-card">
+                <div className="stats-row">
+                  {STATS.map(cfg => (
+                    <StatCard key={cfg.key} cfg={cfg} data={headerCounts[cfg.key]} loading={headerLoading} />
+                  ))}
+                </div>
+              </div>
+
+              {selected === null ? (
+                <div className="dashboard-bottom">
+                  <div className="amc-table-col">
+                    <AMCTable key={refreshTick} onDataChange={refreshCounts} theme="light" />
+                  </div>
+                  <div className="side-cards-col">
+                    <PendingActionsCard refreshTick={refreshTick}
+                      onNavigate={(page, tab) => { setInitialTab(tab); setSelected(page); }} />
+                    <UpcomingMeetingsCard refreshTick={refreshTick} theme="light" />
+                  </div>
+                </div>
+              ) : (
+                <div className="module-panel">{renderContent()}</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }
 
 const CSS = `
@@ -382,46 +671,9 @@ const CSS = `
 html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden}
 body{font-family:var(--fb);background:transparent;color:#111827;padding:12px;box-sizing:border-box}
 button{font-family:var(--fb)}
-
-/* ── ROOT LAYOUT ── */
-.root{
-  min-height:100vh;
-  display:flex;
-  align-items:stretch;
-  background:transparent;
-  box-sizing:border-box;
-  overflow:hidden;        /* ← prevents horizontal scroll at root */
-}
-.page-card{
-  display:flex;
-  flex:1;
-  min-width:0;            /* ← KEY: allows flex children to shrink */
-  gap:10px;
-  align-items:stretch;
-  border-radius:20px;
-  border:1px solid rgba(10,30,100,0.35);
-  box-shadow:0 0 40px rgba(10,30,100,0.1);
-  padding:10px;
-  background:transparent;
-  overflow:hidden;        /* ← clips anything that bleeds out */
-  width:100%;
-}
-
-/* ── SIDEBAR ── */
-.side{
-  width:var(--side-w);
-  flex-shrink:0;
-  background:transparent;
-  border:1px solid rgba(10,30,100,0.3);
-  border-radius:20px;
-  box-shadow:0 0 20px rgba(10,30,100,0.08);
-  display:flex;
-  flex-direction:column;
-  z-index:300;
-  transition:transform .4s var(--spring);
-  position:relative;
-  overflow:hidden;
-}
+.root{min-height:100vh;display:flex;align-items:stretch;background:transparent;box-sizing:border-box;overflow:hidden}
+.page-card{display:flex;flex:1;min-width:0;gap:10px;align-items:stretch;border-radius:20px;border:1px solid rgba(10,30,100,0.35);box-shadow:0 0 40px rgba(10,30,100,0.1);padding:10px;background:transparent;overflow:hidden;width:100%}
+.side{width:var(--side-w);flex-shrink:0;background:transparent;border:1px solid rgba(10,30,100,0.3);border-radius:20px;box-shadow:0 0 20px rgba(10,30,100,0.08);display:flex;flex-direction:column;z-index:300;transition:transform .4s var(--spring);position:relative;overflow:hidden}
 .side-overlay{position:fixed;inset:0;z-index:299;background:rgba(0,0,0,0.3);backdrop-filter:blur(4px)}
 .side-logo{padding:20px 14px 18px;border-bottom:1px solid rgba(10,30,100,0.2)}
 .logo-box{border:1.5px solid rgba(10,30,100,0.4);border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;background:rgba(135,206,250,0.22);backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(10,30,100,0.08),inset 0 1px 0 rgba(255,255,255,0.5)}
@@ -439,89 +691,17 @@ button{font-family:var(--fb)}
 .logout-card:hover{transform:scale(1.06) translateY(-3px);box-shadow:0 8px 24px rgba(10,30,100,0.12);border-color:rgba(10,30,100,0.35)}
 .logout-nav{width:100%;margin-bottom:0}
 .logout-nav:hover{color:#000!important;background:transparent!important;border-color:transparent!important}
-
-/* ── MAIN — THE KEY FIX ── */
-.main{
-  flex:1;
-  min-width:0;            /* ← CRITICAL: without this, main ignores flex shrink */
-  display:flex;
-  flex-direction:column;
-  position:relative;
-  z-index:1;
-  background:transparent;
-  border-radius:20px;
-  overflow:hidden;
-}
-.topbar{
-  height:var(--hdr-h);
-  display:flex;
-  align-items:center;
-  padding:0 12px;
-  gap:8px;
-  background:transparent;
-  position:sticky;
-  top:0;
-  z-index:200;
-  min-width:0;
-  overflow:hidden;        /* topbar itself must not overflow */
-}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;z-index:1;background:transparent;border-radius:20px;overflow:hidden}
+.topbar{height:var(--hdr-h);display:flex;align-items:center;padding:0 12px;gap:8px;background:transparent;position:sticky;top:0;z-index:200;min-width:0;overflow:hidden}
 .menu-btn{display:none;background:none;border:none;color:#111827;cursor:pointer;padding:5px;border-radius:7px;flex-shrink:0}
-.topbar-title{
-  flex:1;
-  min-width:0;
-  font-weight:800;
-  font-size:1.1rem;
-  color:#111827;
-  letter-spacing:.06em;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
+.topbar-title{flex:1;min-width:0;font-weight:800;font-size:1.1rem;color:#111827;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .user-chip{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;background:transparent;border:1px solid rgba(10,30,100,0.25);border-radius:40px;flex-shrink:0}
 .user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2a6dd9,#6b4ec6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff}
 .user-name{font-size:.8rem;font-weight:700;color:#111827;letter-spacing:.02em;white-space:nowrap}
-
-/* ── CONTENT ── */
-.content{
-  flex:1;
-  padding:0 12px 24px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  min-width:0;
-  overflow:hidden;
-}
-
-/* ── STATS ── */
-.stats-card{
-  border:1px solid rgba(10,30,100,0.28);
-  border-radius:20px;
-  padding:12px;
-  background:rgba(135,206,250,0.18);
-  width:100%;
-  box-sizing:border-box;
-}
-.stats-row{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);  /* 4 equal columns */
-  gap:10px;
-  width:100%;
-}
-
-/* ── STAT CARD ── */
-.sc{
-  position:relative;
-  overflow:hidden;
-  border-radius:14px;
-  border:1px solid rgba(10,30,100,0.28);
-  padding:10px 12px;
-  background:rgba(135,206,250,0.22)!important;
-  backdrop-filter:blur(12px);
-  box-shadow:0 2px 12px rgba(10,30,100,0.08),inset 0 1px 0 rgba(255,255,255,0.5);
-  transition:transform .35s var(--spring),box-shadow .35s;
-  cursor:default;
-  min-width:0;             /* ← allows card to shrink */
-}
+.content{flex:1;padding:0 12px 24px;display:flex;flex-direction:column;gap:14px;min-width:0;overflow:hidden}
+.stats-card{border:1px solid rgba(10,30,100,0.28);border-radius:20px;padding:12px;background:rgba(135,206,250,0.18);width:100%;box-sizing:border-box}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.sc{position:relative;overflow:hidden;border-radius:14px;border:1px solid rgba(10,30,100,0.28);padding:10px 12px;background:rgba(135,206,250,0.22)!important;backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(10,30,100,0.08),inset 0 1px 0 rgba(255,255,255,0.5);transition:transform .35s var(--spring),box-shadow .35s;cursor:default;min-width:0}
 .sc:hover{transform:translateY(-4px) scale(1.015);box-shadow:0 10px 28px rgba(10,30,100,0.15)}
 .sc-body{position:relative;z-index:1;display:flex;align-items:center;gap:8px;min-width:0}
 .sc-icon{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--accent);border:1.5px solid rgba(10,30,100,0.15)}
@@ -535,13 +715,9 @@ button{font-family:var(--fb)}
 .sc-sub{font-size:.55rem;color:var(--accent);margin-top:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sc-skel{height:24px;width:60px;border-radius:6px;background:rgba(10,30,100,0.08);animation:sk 1.4s infinite}
 @keyframes sk{0%,100%{opacity:.4}50%{opacity:.8}}
-
-/* ── DASHBOARD BOTTOM ── */
 .dashboard-bottom{display:flex;gap:12px;align-items:flex-start;min-width:0}
 .amc-table-col{flex:1;min-width:0;overflow:hidden}
 .side-cards-col{display:flex;flex-direction:column;gap:12px;width:190px;flex-shrink:0}
-
-/* ── SIDE CARDS ── */
 .side-card{border-radius:16px;border:1px solid rgba(10,30,100,0.28);padding:14px 12px 12px;display:flex;flex-direction:column;background:transparent;animation:pIn .38s var(--spring) both;transition:transform .28s var(--spring),box-shadow .28s;position:relative;overflow:hidden}
 .side-card-red{border-color:rgba(10,30,100,0.35)}
 .side-card-purple{border-color:rgba(10,30,100,0.35)}
@@ -560,21 +736,8 @@ button{font-family:var(--fb)}
 .side-card-row-val{font-weight:800;font-size:.76rem;flex-shrink:0}
 .pending-nav-row{border-radius:7px;padding:3px 5px;margin:0 -5px;transition:background .18s,transform .15s}
 .pending-nav-row:hover{background:rgba(10,30,100,0.06);transform:translateX(2px)}
-
-/* ── MODULE PANEL ── */
-.module-panel{
-  background:transparent;
-  border:1px solid rgba(10,30,100,0.28);
-  border-radius:18px;
-  overflow:hidden;          /* ← clips table overflow inside panel */
-  box-shadow:none;
-  animation:pIn .38s var(--spring) both;
-  min-width:0;
-  width:100%;
-}
+.module-panel{background:transparent;border:1px solid rgba(10,30,100,0.28);border-radius:18px;overflow:hidden;box-shadow:none;animation:pIn .38s var(--spring) both;min-width:0;width:100%}
 @keyframes pIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
-
-/* ── TABLE SHARED ── */
 .mod-wrap{min-height:200px;width:100%;min-width:0}
 .mod-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(10,30,100,0.15)}
 .tabs-row{display:flex;gap:6px;flex-wrap:wrap}
@@ -584,17 +747,10 @@ button{font-family:var(--fb)}
 .tbl-hdr{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(10,30,100,0.15);flex-wrap:wrap}
 .tbl-title{font-weight:800;font-size:.95rem;color:#111827;letter-spacing:.06em}
 .tbl-badge{padding:3px 10px;border-radius:20px;font-size:.65rem;font-weight:700;background:rgba(42,109,217,0.1);color:#1a50b5;border:1px solid rgba(42,109,217,0.25)}
-
-/* ── TABLE SCROLL — THE KEY FIX ── */
-.tbl-wrap{
-  overflow-x:auto;         /* horizontal scroll when needed */
-  -webkit-overflow-scrolling:touch;
-  width:100%;
-}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
 .tbl-wrap::-webkit-scrollbar{height:4px}
 .tbl-wrap::-webkit-scrollbar-track{background:rgba(10,30,100,0.04)}
 .tbl-wrap::-webkit-scrollbar-thumb{background:rgba(42,109,217,0.3);border-radius:4px}
-
 .fd-tbl{width:100%;border-collapse:collapse;font-size:.83rem;min-width:600px}
 .fd-tbl thead tr{background:rgba(10,30,100,0.05)}
 .fd-tbl th{padding:11px 14px;text-align:left;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(0,0,0,0.6);border-bottom:1px solid rgba(10,30,100,0.25);white-space:nowrap}
@@ -612,19 +768,17 @@ button{font-family:var(--fb)}
 .ab:hover{transform:scale(1.15) translateY(-2px)}
 .ab-del{background:rgba(180,50,50,0.1);color:#9a2020;border-color:rgba(180,50,50,0.18)}.ab-del:hover{background:#d14040;color:#fff;box-shadow:0 4px 14px rgba(180,50,50,0.4)}
 .ab-edit{background:rgba(42,109,217,0.1);color:#1a50b5;border-color:rgba(42,109,217,0.18)}.ab-edit:hover{background:#2a6dd9;color:#fff;box-shadow:0 4px 14px rgba(42,109,217,0.4)}
-.ab-dl{background:rgba(14,165,155,0.1);color:#0a7a72;border-color:rgba(14,165,155,0.18)}.ab-dl:hover{background:#0ea59b;color:#fff;box-shadow:0 4px 14px rgba(14,165,155,0.36)}
-.ab-promo{background:rgba(190,115,8,0.1);color:#845004;border-color:rgba(190,115,8,0.18)}.ab-promo:hover{background:#c97c08;color:#fff;box-shadow:0 4px 14px rgba(190,115,8,0.36)}
-.ab-view{background:rgba(90,62,185,0.1);color:#4e30a0;border-color:rgba(90,62,185,0.18)}.ab-view:hover{background:#6b4ec6;color:#fff;box-shadow:0 4px 14px rgba(90,62,185,0.36)}
+.ab-dl{background:rgba(14,165,155,0.1);color:#0a7a72;border-color:rgba(14,165,155,0.18)}.ab-dl:hover{background:#0ea59b;color:#fff}
+.ab-promo{background:rgba(190,115,8,0.1);color:#845004;border-color:rgba(190,115,8,0.18)}.ab-promo:hover{background:#c97c08;color:#fff}
+.ab-view{background:rgba(90,62,185,0.1);color:#4e30a0;border-color:rgba(90,62,185,0.18)}.ab-view:hover{background:#6b4ec6;color:#fff}
 .add-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:none;cursor:pointer;color:#fff;font-size:.78rem;font-weight:700;background:linear-gradient(135deg,#2a6dd9,#5a3fb5);box-shadow:0 4px 14px rgba(42,109,217,0.32);transition:all .28s var(--spring);white-space:nowrap;flex-shrink:0}
-.add-btn:hover{transform:translateY(-2px);filter:brightness(1.1);box-shadow:0 6px 20px rgba(42,109,217,0.42)}
+.add-btn:hover{transform:translateY(-2px);filter:brightness(1.1)}
 .chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.71rem;font-weight:700}
 .chip-yes{background:rgba(15,158,110,0.12);color:#076642;border:1px solid rgba(15,158,110,0.25)}
 .chip-no{background:rgba(180,50,50,0.09);color:#7a1a1a;border:1px solid rgba(180,50,50,0.2)}
 .fd-spin{display:flex;justify-content:center;align-items:center;padding:56px}
 .spinner{width:28px;height:28px;border-radius:50%;border:3px solid rgba(42,109,217,0.18);border-top-color:#2a6dd9;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── DIALOG ── */
 .dlg-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.35);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;animation:fIn .18s ease;box-sizing:border-box}
 @keyframes fIn{from{opacity:0}to{opacity:1}}
 .dlg-box{background:rgba(255,255,255,0.75);backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(10,30,100,0.2);border-radius:18px;width:100%;max-width:min(450px,calc(100vw - 32px));overflow:hidden;box-shadow:0 8px 40px rgba(10,30,100,0.15);animation:dPop .32s var(--spring);box-sizing:border-box}
@@ -654,8 +808,6 @@ button{font-family:var(--fb)}
 @keyframes snkIn{from{opacity:0;transform:translateY(16px) scale(.9)}to{opacity:1;transform:none}}
 .snack-success{background:linear-gradient(135deg,#057a52,#0f9e6e);color:#fff}
 .snack-error{background:linear-gradient(135deg,#a82424,#d14040);color:#fff}
-
-/* ── THEME TOGGLE ── */
 .theme-toggle-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .theme-toggle-ico{font-size:.85rem;line-height:1;user-select:none;pointer-events:none;opacity:.8}
 .theme-switch{position:relative;width:42px;height:23px;cursor:pointer;flex-shrink:0}
@@ -664,8 +816,6 @@ button{font-family:var(--fb)}
 .theme-switch-thumb{position:absolute;top:3px;left:3px;width:15px;height:15px;border-radius:50%;background:linear-gradient(135deg,#f7d46a,#ffb020);box-shadow:0 1px 6px rgba(200,140,0,0.5);transition:transform .3s var(--spring);transform:translateX(19px)}
 .theme-switch input:not(:checked) ~ .theme-switch-track{background:rgba(30,60,180,0.4);border-color:rgba(80,140,230,0.5)}
 .theme-switch input:not(:checked) ~ .theme-switch-thumb{transform:translateX(0);background:linear-gradient(135deg,#7eb3ff,#fff);box-shadow:0 1px 6px rgba(0,0,0,0.45)}
-
-/* ── LIGHT THEME DIALOG OVERRIDES ── */
 .theme-light .dlg-box{background:rgba(255,255,255,0.82)!important;border:1px solid rgba(10,30,100,0.2)!important}
 .theme-light .dlg-hdr{border-bottom:1px solid rgba(10,30,100,0.12)!important;background:rgba(135,206,250,0.15)!important}
 .theme-light .dlg-ttl{color:#111827!important}
@@ -674,67 +824,24 @@ button{font-family:var(--fb)}
 .theme-light .fld-inp:focus{border-color:#2a6dd9!important;box-shadow:0 0 0 3px rgba(42,109,217,0.12)!important}
 .theme-light .fld-inp option{background:#fff!important;color:#111827!important}
 .theme-light .btn-cancel{border:1px solid rgba(10,30,100,0.2)!important;color:rgba(0,0,0,0.65)!important}
-
-/* ═══════════════════════
-   RESPONSIVE BREAKPOINTS
-═══════════════════════ */
-
-/* 4 → 2 columns when stats row gets tight */
-@media(max-width:1024px){
-  .stats-row{grid-template-columns:repeat(2,1fr)}
-}
-
-/* Tablet: sidebar hidden, menu button shown */
+@media(max-width:1024px){.stats-row{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){
-  .root{padding:6px}
-  .page-card{padding:6px;gap:6px}
-  .side{
-    position:fixed;
-    top:6px;left:6px;bottom:6px;
-    border-radius:20px;
-    transform:translateX(calc(-100% - 20px));
-    background:rgba(255,255,255,0.95);
-    backdrop-filter:blur(24px);
-  }
-  .side-open{transform:translateX(0)}
-  .menu-btn{display:flex}
+  .root{padding:6px}.page-card{padding:6px;gap:6px}
+  .side{position:fixed;top:6px;left:6px;bottom:6px;border-radius:20px;transform:translateX(calc(-100% - 20px));background:rgba(255,255,255,0.95);backdrop-filter:blur(24px)}
+  .side-open{transform:translateX(0)}.menu-btn{display:flex}
   .stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
-  .content{padding:0 8px 16px}
-  .topbar{padding:0 8px;gap:6px}
-  .topbar-title{font-size:.95rem}
-  .user-name{display:none}  /* hide name on mobile, keep avatar */
-  .dashboard-bottom{flex-direction:column}
-  .side-cards-col{width:100%;flex-direction:row}
-  .side-card{flex:1}
-  .module-panel{border-radius:14px}
+  .content{padding:0 8px 16px}.topbar{padding:0 8px;gap:6px}.topbar-title{font-size:.95rem}
+  .user-name{display:none}.dashboard-bottom{flex-direction:column}
+  .side-cards-col{width:100%;flex-direction:row}.side-card{flex:1}.module-panel{border-radius:14px}
 }
-
-/* Small phone */
 @media(max-width:520px){
-  .stats-row{grid-template-columns:1fr 1fr;gap:6px}
-  .sc{padding:8px 10px}
-  .sc-big{font-size:1.3rem}
-  .sc-single{font-size:1.5rem}
-  .sc-label{font-size:.48rem}
-  .sc-icon{width:30px;height:30px}
-  .fd-tbl th,.fd-tbl td{padding:8px 10px;font-size:.76rem}
-  .topbar-title{font-size:.85rem}
+  .stats-row{grid-template-columns:1fr 1fr;gap:6px}.sc{padding:8px 10px}
+  .sc-big{font-size:1.3rem}.sc-single{font-size:1.5rem}.sc-label{font-size:.48rem}.sc-icon{width:30px;height:30px}
+  .fd-tbl th,.fd-tbl td{padding:8px 10px;font-size:.76rem}.topbar-title{font-size:.85rem}
 }
-
-/* Very small */
 @media(max-width:400px){
-  .stats-row{grid-template-columns:1fr}
-  .side-cards-col{flex-direction:column}
-  .dlg-box{border-radius:18px 18px 0 0;max-width:100%}
-  .dlg-ov{align-items:flex-end;padding:0}
+  .stats-row{grid-template-columns:1fr}.side-cards-col{flex-direction:column}
+  .dlg-box{border-radius:18px 18px 0 0;max-width:100%}.dlg-ov{align-items:flex-end;padding:0}
 }
-
-.amc-table-col .count,
-.amc-table-col .clients-count,
-.amc-table-col .clients-pending-count,
-.amc-table-col .products-count,
-.amc-table-col td span {
-  color: #111827 !important; /* black/dark */
-  font-weight: 600;
-}
-`;
+.amc-table-col .count,.amc-table-col .clients-count,.amc-table-col .clients-pending-count,.amc-table-col .products-count,.amc-table-col td span{color:#111827!important;font-weight:600}
+`; 

@@ -66,11 +66,13 @@ router.get("/pending", async (req, res) => {
 });
 
 router.post("/pending", async (req, res) => {
-  const { client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status } = req.body;
+  const { client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, next_action_date, status } = req.body;
   try {
     const [result] = await db.query(
-      "INSERT INTO customers_pending (client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status]
+      `INSERT INTO customers_pending 
+        (client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, next_action_date, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date || null, next_action_date || null, status]
     );
     const [rows] = await db.query("SELECT * FROM customers_pending WHERE id = ?", [result.insertId]);
     res.status(201).json(rows[0]);
@@ -80,11 +82,14 @@ router.post("/pending", async (req, res) => {
 });
 
 router.put("/pending/:id", async (req, res) => {
-  const { client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status } = req.body;
+  const { client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, next_action_date, status } = req.body;
   try {
     await db.query(
-      "UPDATE customers_pending SET client_name=?, amount_tobe_invested=?, scheme=?, amc_name=?, bank=?, submission_date=?, status=? WHERE id=?",
-      [client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date, status, req.params.id]
+      `UPDATE customers_pending 
+       SET client_name=?, amount_tobe_invested=?, scheme=?, amc_name=?, bank=?, 
+           submission_date=?, next_action_date=?, status=? 
+       WHERE id=?`,
+      [client_name, amount_tobe_invested, scheme, amc_name, bank, submission_date || null, next_action_date || null, status, req.params.id]
     );
     const [rows] = await db.query("SELECT * FROM customers_pending WHERE id = ?", [req.params.id]);
     res.json(rows[0]);
@@ -101,6 +106,11 @@ router.delete("/pending/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ─────────────────────────────────────────────
+// MOVE PENDING → COMPLETED
+// ─────────────────────────────────────────────
+
 router.post("/move/:id", async (req, res) => {
   const id = req.params.id;
 
@@ -117,15 +127,15 @@ router.post("/move/:id", async (req, res) => {
 
     const p = pendingRows[0];
 
-    // 2. INSERT into customers_completed (same as your current POST)
+    // 2. INSERT into customers_completed
     await db.query(
       `INSERT INTO customers_completed 
-      (client_name, first_investment, amount, scheme, amc_name, bank)
-      VALUES (?, CURDATE(), ?, ?, ?, ?)`,
+        (client_name, first_investment, amount, scheme, amc_name, bank)
+       VALUES (?, CURDATE(), ?, ?, ?, ?)`,
       [p.client_name, p.amount_tobe_invested, p.scheme, p.amc_name, p.bank]
     );
 
-    // 3. UPDATE customers table (ONLY NEW PART 🔥)
+    // 3. UPDATE or INSERT into customers table
     const [existing] = await db.query(
       "SELECT * FROM customers WHERE customer_name = ?",
       [p.client_name]
@@ -133,20 +143,17 @@ router.post("/move/:id", async (req, res) => {
 
     if (existing.length > 0) {
       await db.query(
-  `UPDATE customers 
-   SET amount_invested = ?
-   WHERE customer_name = ?`,
-  [p.amount_tobe_invested, p.client_name]
-);
+        `UPDATE customers SET amount_invested = ? WHERE customer_name = ?`,
+        [p.amount_tobe_invested, p.client_name]
+      );
     } else {
       await db.query(
-        `INSERT INTO customers (customer_name, amount_invested)
-         VALUES (?, ?)`,
+        `INSERT INTO customers (customer_name, amount_invested) VALUES (?, ?)`,
         [p.client_name, p.amount_tobe_invested]
       );
     }
 
-    // 4. DELETE from pending (you already had this logic)
+    // 4. DELETE from pending
     await db.query(
       "DELETE FROM customers_pending WHERE id = ?",
       [id]
@@ -158,4 +165,5 @@ router.post("/move/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 module.exports = router;

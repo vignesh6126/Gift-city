@@ -21,6 +21,7 @@ const PENDING_COLS = [
   { key: "scheme", label: "Scheme", type: "text" },
   { key: "bank", label: "Bank", type: "select", options: ["gift", "savings", "both"] },
   { key: "submission_date", label: "Submission Date", type: "date" },
+  { key: "next_action_date", label: "Next Action Date", type: "date" },
   { key: "status", label: "Status", type: "text" },
 ];
 const AUTO_KEYS = new Set(["client_name", "amount", "amc_name", "scheme", "bank"]);
@@ -28,7 +29,7 @@ const MANUAL_KEYS = new Set(["first_investment"]);
 
 const p2c = (r) => ({ client_name: r.client_name || "", amount: r.amount_tobe_invested || "", amc_name: r.amc_name || "", scheme: r.scheme || "", bank: r.bank || "savings", first_investment: "" });
 const emptyC = () => ({ client_name: "", first_investment: "", amount: "", scheme: "", amc_name: "", bank: "savings" });
-const emptyP = () => ({ client_name: "", amount_tobe_invested: "", scheme: "", amc_name: "", bank: "savings", submission_date: "", status: "" });
+const emptyP = () => ({ client_name: "", amount_tobe_invested: "", scheme: "", amc_name: "", bank: "savings", submission_date: "", next_action_date: "", status: "" });
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
 /* ─── Icons ─── */
