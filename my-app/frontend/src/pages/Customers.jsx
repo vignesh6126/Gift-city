@@ -27,6 +27,7 @@ const PROSPECTS_COLS = [
   { key: "client_name",     label: "Client Name",     type: "text"   },
   { key: "esops_rsu",       label: "ESOPS/RSU",        type: "select", options: ["yes", "no"] },
   { key: "discussion_date", label: "Discussion Date",  type: "date"   },
+    { key: "next_action_date", label: "Next Action Date", type: "date" },
   { key: "next_action",     label: "Next Action",      type: "text"   },
 ];
 
@@ -37,10 +38,11 @@ const toGiftCityInactive = (row) => ({
 });
 
 const toProspects = (row) => ({
-  client_name:     row.customer_name || "",
-  esops_rsu:       row.esops_rsus_stocks === "yes" ? "yes" : "no",
+  client_name: row.customer_name || "",
+  esops_rsu: row.esops_rsus_stocks === "yes" ? "yes" : "no",
   discussion_date: "",
-  next_action:     "",
+  next_action_date: "", 
+  next_action: "",
 });
 
 const GIFT_CITY_AUTO_KEYS = new Set(["customer_name"]);
@@ -543,26 +545,45 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
   const setTransferField = (k, v) => setTransferForm(p => ({ ...p, [k]: v }));
 
   const saveTransfer = async () => {
-    setTransferSaving(true);
-    try {
-      const url     = transferType === "giftcity" ? `${API}/gift-city/inactive` : `${API}/interested`;
-      const payload = transferForm;
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      showSnack(transferType === "giftcity" ? "✓ Added to Gift City Inactive!" : "✓ Added to Prospects!");
-      setTransferType(null);
-      onDataChange?.();
-    } catch (e) {
-      showSnack(e.message || "Transfer failed", "error");
-    } finally {
-      setTransferSaving(false);
-    }
-  };
+  setTransferSaving(true);
+  try {
+    const url = transferType === "giftcity"
+      ? `${API}/gift-city/inactive`
+      : `${API}/interested`;
 
+    let payload = transferForm;
+
+    // ✅ FIX FOR PROSPECTS
+    if (transferType === "prospects") {
+      payload = {
+        ...transferForm,
+        discussion_date: transferForm.discussion_date || null,
+        next_action_date: transferForm.next_action_date || null,
+        next_action: transferForm.next_action || "",
+      };
+    }
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+
+    showSnack("✓ Added to Prospects!");
+
+    // ✅ CLOSE + REFRESH
+    setTransferType(null);
+    load(); // refresh customers
+    onDataChange?.();
+
+  } catch (e) {
+    showSnack(e.message || "Transfer failed", "error");
+  } finally {
+    setTransferSaving(false);
+  }
+};
   /* ── Shared dialog styles ── */
   const ovStyle = {
     position: "fixed", inset: 0,

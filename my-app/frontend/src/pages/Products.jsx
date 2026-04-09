@@ -207,7 +207,7 @@ const structureChip = (val) => {
   );
 };
 
-/* ── Custom Select Dropdown (replaces native <select> for full dark-mode control) ── */
+/* ── Custom Select Dropdown ── */
 function CustomSelect({ options, value, onChange, isDark }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -235,7 +235,6 @@ function CustomSelect({ options, value, onChange, isDark }) {
 
   return (
     <div ref={ref} style={{ position: "relative", userSelect: "none" }}>
-      {/* Trigger */}
       <div
         onClick={() => setOpen(o => !o)}
         style={{
@@ -243,8 +242,7 @@ function CustomSelect({ options, value, onChange, isDark }) {
           padding: "9px 12px",
           borderRadius: open ? "10px 10px 0 0" : 10,
           border: `1px solid ${open ? accentC : border}`,
-          background: bg,
-          color,
+          background: bg, color,
           fontSize: ".84rem", fontFamily: "Inter,sans-serif",
           cursor: "pointer",
           boxShadow: open ? focusShadow : "none",
@@ -260,8 +258,6 @@ function CustomSelect({ options, value, onChange, isDark }) {
             strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-
-      {/* Dropdown panel */}
       {open && (
         <div style={{
           position: "absolute", top: "100%", left: 0, right: 0, zIndex: 99999,
@@ -292,7 +288,6 @@ function CustomSelect({ options, value, onChange, isDark }) {
                 onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = hoverBg; }}
                 onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
               >
-                {/* Checkmark for selected */}
                 <span style={{ width: 14, flexShrink: 0, display: "flex", alignItems: "center" }}>
                   {isSelected && (
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -328,7 +323,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
   const [confirm, setConfirm] = useState(false);
   const [snack,   setSnack]   = useState(null);
 
-  /* ── Data fetching ── */
   const load = useCallback(async () => {
     setLoading(true);
     try   { const r = await fetch(`${API}/products`); setRows((await r.json()) ?? []); }
@@ -361,7 +355,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
     } catch { showSnack("Delete failed", "error"); }
   };
 
-  /* ── Derived data ── */
   const activeTab   = TABS.find(t => t.id === tab);
   const tabFiltered = rows.filter(r => activeTab.match(r.structure));
   const cat3Count   = rows.filter(r => r.structure?.includes("cat-III")).length;
@@ -379,9 +372,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
     c.key === "structure" ? { ...c, options: STRUCTURE_OPTIONS[tab] } : c
   );
 
-  /* ════════════════════════════════════════
-     Dialog styles
-  ════════════════════════════════════════ */
+  /* Dialog styles */
   const dlgOverlay = {
     position: "fixed", inset: 0, zIndex: 99999,
     display: "flex", alignItems: "center", justifyContent: "center",
@@ -413,7 +404,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
     padding: "16px 20px",
     display: "flex", flexDirection: "column", gap: 12,
     maxHeight: "55vh", overflowY: "auto",
-    /* Allow custom dropdown to overflow the scrollable body */
     overflowX: "visible",
   };
   const dlgFooter = {
@@ -444,7 +434,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
     boxShadow: "0 4px 16px rgba(239,68,68,0.3)", transition: "all .2s",
   };
 
-  /* ── Form field component ── */
   const ProdField = ({ col, value, onChange }) => {
     const labelSt = {
       fontSize: ".67rem", fontWeight: 700, textTransform: "uppercase",
@@ -488,7 +477,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
     );
   };
 
-  /* ── Portal dialog wrapper ── */
   const renderPortalDialog = (title, sub, barColor, bodyContent, onClose, footerContent) =>
     createPortal(
       <div style={dlgOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
@@ -507,12 +495,8 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
       document.body
     );
 
-  /* ════════════════════════════
-     JSX
-  ════════════════════════════ */
   return (
     <div className={`mod-wrap${isDark ? "" : " theme-light"}`}>
-
       <style>{`
         @keyframes prodDlgIn {
           from { opacity:0; transform:translateY(18px) scale(0.96); }
@@ -664,20 +648,15 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         </div>
       )}
 
-      {/* ══════════════════════════════════════
-          ADD / EDIT DIALOG  →  portal to body
-      ══════════════════════════════════════ */}
+      {/* ADD / EDIT DIALOG */}
       {dlg && renderPortalDialog(
         editRow ? "Edit Product" : "Add Product",
         "Fill in the product details below",
         "#34D399",
-        /* body */
         colsForTab.map(c => (
           <ProdField key={c.key} col={c} value={form[c.key]} onChange={setField} />
         )),
-        /* onClose */
         () => setDlg(false),
-        /* footer */
         <>
           <button
             style={btnCancel}
@@ -704,23 +683,18 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         </>
       )}
 
-      {/* ══════════════════════════════════════
-          CONFIRM DELETE  →  portal to body
-      ══════════════════════════════════════ */}
+      {/* CONFIRM DELETE */}
       {confirm && renderPortalDialog(
         "Confirm Delete",
         "This action cannot be undone",
         "#EF4444",
-        /* body */
         <p style={{
           margin: 0, lineHeight: 1.6, fontSize: ".84rem",
           color: isDark ? "white" : "#000",
         }}>
           Are you sure you want to delete this product record?
         </p>,
-        /* onClose */
         () => setConfirm(false),
-        /* footer */
         <>
           <button
             style={btnCancel}
@@ -741,7 +715,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         </>
       )}
 
-      {/* ── Toast ── */}
       {snack && <Snack {...snack} onClose={() => setSnack(null)} />}
     </div>
   );
