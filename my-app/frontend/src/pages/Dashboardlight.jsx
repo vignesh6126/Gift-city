@@ -162,8 +162,9 @@ function UpcomingMeetingsCard({ refreshTick, onNavigate }) {
                 if (cancelled) return;
                 const rows = Array.isArray(data) ? data : [];
                 const now = new Date(); now.setHours(0, 0, 0, 0);
-                const upcoming = rows.filter(r => r.discussion_date && new Date(r.discussion_date) >= now)
-                    .sort((a, b) => new Date(a.discussion_date) - new Date(b.discussion_date));
+                const upcoming = rows
+                    .filter(r => r.next_action_date && new Date(r.next_action_date) >= now)
+                    .sort((a, b) => new Date(a.next_action_date) - new Date(b.next_action_date));
                 setTotal(upcoming.length); setAllMeetings(upcoming);
             } catch { if (!cancelled) { setTotal(0); setAllMeetings([]); } }
             finally { if (!cancelled) setLoading(false); }
@@ -213,7 +214,7 @@ function UpcomingMeetingsCard({ refreshTick, onNavigate }) {
                     ) : (
                         <>
                             {visible.map((m, i) => {
-                                const diff = daysDiff(m.discussion_date);
+                                const diff = daysDiff(m.next_action_date);
                                 const chip = chipColor(diff);
                                 return (
                                     <div key={m.id ?? i} className="side-card-row" style={{ alignItems: "center" }}>
@@ -221,7 +222,7 @@ function UpcomingMeetingsCard({ refreshTick, onNavigate }) {
                                             {m.client_name || "—"}
                                         </span>
                                         <span style={{ fontSize: ".63rem", fontWeight: 700, padding: "2px 6px", borderRadius: 20, background: chip.bg, color: chip.color, border: `1px solid ${chip.border}`, whiteSpace: "nowrap", marginLeft: "auto", flexShrink: 0 }}>
-                                            {fmtShort(m.discussion_date)}
+                                            {fmtShort(m.next_action_date)}
                                         </span>
                                     </div>
                                 );
