@@ -16,13 +16,31 @@ router.get("/", async (req, res) => {
 
 // ── POST add ──────────────────────────────────────────────────────────────────
 router.post("/", async (req, res) => {
-  const { client_name, esops_rsu, discussion_date, next_action } = req.body;
+  const { client_name, esops_rsu, discussion_date, next_action, next_action_date } = req.body;
+
   try {
     const [result] = await db.query(
-      "INSERT INTO customers_interested (client_name, esops_rsu, discussion_date, next_action) VALUES (?, ?, ?, ?)",
-      [client_name, esops_rsu || "no", discussion_date || null, next_action || null]
+      `INSERT INTO customers_interested 
+      (client_name, esops_rsu, discussion_date, next_action_date, next_action) 
+      VALUES (?, ?, ?, ?, ?)`,
+      [
+        client_name,
+        esops_rsu || "no",
+        discussion_date || null,
+        next_action_date || null,
+        next_action || null
+      ]
     );
-    res.json({ id: result.insertId, client_name, esops_rsu, discussion_date, next_action });
+
+    res.json({
+      id: result.insertId,
+      client_name,
+      esops_rsu,
+      discussion_date,
+      next_action,
+      next_action_date
+    });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -30,13 +48,25 @@ router.post("/", async (req, res) => {
 
 // ── PUT update ────────────────────────────────────────────────────────────────
 router.put("/:id", async (req, res) => {
-  const { client_name, esops_rsu, discussion_date, next_action } = req.body;
+  const { client_name, esops_rsu, discussion_date, next_action, next_action_date } = req.body;
+
   try {
     await db.query(
-      "UPDATE customers_interested SET client_name=?, esops_rsu=?, discussion_date=?, next_action=? WHERE id=?",
-      [client_name, esops_rsu || "no", discussion_date || null, next_action || null, req.params.id]
+      `UPDATE customers_interested 
+       SET client_name=?, esops_rsu=?, discussion_date=?, next_action=?, next_action_date=? 
+       WHERE id=?`,
+      [
+        client_name,
+        esops_rsu || "no",
+        discussion_date || null,
+        next_action || null,
+        next_action_date || null,
+        req.params.id
+      ]
     );
+
     res.json({ success: true });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

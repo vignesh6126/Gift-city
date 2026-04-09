@@ -6,6 +6,7 @@ const COLS = [
   { key: "client_name",     label: "Client Name",    type: "text"   },
   { key: "esops_rsu",       label: "ESOPS/RSU",       type: "select", options: ["yes", "no"] },
   { key: "discussion_date", label: "Discussion Date", type: "date"   },
+  { key: "next_action_date", label: "Next Action Date", type: "date" },
   { key: "next_action",     label: "Next Action",     type: "text"   },
 ];
 
@@ -265,6 +266,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
       client_name:     form.client_name?.trim() || "",
       esops_rsu:       form.esops_rsu || "no",
       discussion_date: toISODate(form.discussion_date) || null,
+      next_action_date: toISODate(form.next_action_date) || null,
       next_action:     form.next_action?.trim() || "",
     };
     const url    = editRow ? `${API}/interested/${editRow.id}` : `${API}/interested`;
