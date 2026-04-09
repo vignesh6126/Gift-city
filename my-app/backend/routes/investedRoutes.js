@@ -101,5 +101,61 @@ router.delete("/pending/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+router.post("/move/:id", async (req, res) => {
+  const id = req.params.id;
 
+  try {
+    // 1. Get pending record
+    const [pendingRows] = await db.query(
+      "SELECT * FROM customers_pending WHERE id = ?",
+      [id]
+    );
+
+    if (pendingRows.length === 0) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    const p = pendingRows[0];
+
+    // 2. INSERT into customers_completed (same as your current POST)
+    await db.query(
+      `INSERT INTO customers_completed 
+      (client_name, first_investment, amount, scheme, amc_name, bank)
+      VALUES (?, CURDATE(), ?, ?, ?, ?)`,
+      [p.client_name, p.amount_tobe_invested, p.scheme, p.amc_name, p.bank]
+    );
+
+    // 3. UPDATE customers table (ONLY NEW PART 🔥)
+    const [existing] = await db.query(
+      "SELECT * FROM customers WHERE customer_name = ?",
+      [p.client_name]
+    );
+
+    if (existing.length > 0) {
+      await db.query(
+  `UPDATE customers 
+   SET amount_invested = ?
+   WHERE customer_name = ?`,
+  [p.amount_tobe_invested, p.client_name]
+);
+    } else {
+      await db.query(
+        `INSERT INTO customers (customer_name, amount_invested)
+         VALUES (?, ?)`,
+        [p.client_name, p.amount_tobe_invested]
+      );
+    }
+
+    // 4. DELETE from pending (you already had this logic)
+    await db.query(
+      "DELETE FROM customers_pending WHERE id = ?",
+      [id]
+    );
+
+    res.json({ message: "Moved + Updated customers" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;

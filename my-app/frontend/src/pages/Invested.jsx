@@ -381,10 +381,10 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
   const savePromo   = async () => {
     setPromoLoading(true);
     try {
-      const a = await fetch(`${API}/invested/completed`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(promoForm) });
+      const a = await fetch(`${API}/invested/move/${promoId}`, {
+  method: "POST"
+});
       if (!a.ok) throw new Error("Add failed");
-      const d = await fetch(`${API}/invested/pending/${promoId}`, { method: "DELETE" });
-      if (!d.ok) throw new Error("Delete failed");
       showSnack("✓ Moved to Completed!"); setPromo(false); load(); onDataChange?.();
     } catch (e) { showSnack(e.message || "Failed", "error"); } finally { setPromoLoading(false); }
   };
