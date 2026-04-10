@@ -844,4 +844,4 @@ button{font-family:var(--fb)}
   .dlg-box{border-radius:18px 18px 0 0;max-width:100%}.dlg-ov{align-items:flex-end;padding:0}
 }
 .amc-table-col .count,.amc-table-col .clients-count,.amc-table-col .clients-pending-count,.amc-table-col .products-count,.amc-table-col td span{color:#111827!important;font-weight:600}
-`; 
+`;

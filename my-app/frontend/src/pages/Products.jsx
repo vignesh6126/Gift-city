@@ -46,6 +46,15 @@ const IcoDel    = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="no
 const IcoPlus   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
 const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
 const IcoClear  = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const IcoShare  = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+    <circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="2"/>
+    <circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+    <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2"/>
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
 
 /* ── Highlight search match ── */
 function Highlight({ text, query, theme = "dark" }) {
@@ -306,22 +315,269 @@ function CustomSelect({ options, value, onChange, isDark }) {
   );
 }
 
+/* ══════════════════════════════════════════
+   Share to Empanelment Pending Dialog
+══════════════════════════════════════════ */
+function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }) {
+  const isDark = theme === "dark";
+
+  // Count how many products share the same amc_name (including this one)
+  const productCount = allRows.filter(
+    r => (r.amc_name || "").toLowerCase() === (row.amc_name || "").toLowerCase()
+  ).length;
+
+  const [form, setForm] = useState({
+    AMC_name:        row.amc_name || "",
+    products:        productCount,
+    submission_date: "",
+    status:          "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [snack,  setSnack]  = useState(null);
+
+  const setField = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const save = async () => {
+    if (!form.AMC_name.trim()) { setSnack({ msg: "AMC Name is required", severity: "error" }); return; }
+    setSaving(true);
+    try {
+      // ── Duplicate check: fetch existing pending rows and compare AMC_name ──
+      const checkRes  = await fetch(`${API}/empanelment/pending`);
+      const existing  = checkRes.ok ? await checkRes.json() : [];
+      const duplicate = (Array.isArray(existing) ? existing : []).some(
+        e => (e.AMC_name || "").toLowerCase().trim() === form.AMC_name.toLowerCase().trim()
+      );
+      if (duplicate) {
+        setSnack({ msg: `"${form.AMC_name}" already exists in Empanelment Pending`, severity: "error" });
+        setSaving(false);
+        return;
+      }
+
+      const r = await fetch(`${API}/empanelment/pending`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!r.ok) throw new Error("Save failed");
+      onSaved?.();
+      onClose();
+    } catch (e) {
+      setSnack({ msg: e.message || "Save failed", severity: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* Theme tokens */
+  const overlayBg  = isDark ? "rgba(0,0,10,0.65)"         : "rgba(0,20,80,0.38)";
+  const boxBg      = isDark ? "rgba(7,9,30,0.92)"          : "rgba(255,255,255,0.95)";
+  const boxBorder  = isDark ? "rgba(245,158,11,0.5)"       : "rgba(245,158,11,0.35)";
+  const boxShadow  = isDark ? "0 8px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)"
+                            : "0 8px 40px rgba(10,30,100,0.18)";
+  const hdrBg      = isDark ? "rgba(245,158,11,0.06)"      : "rgba(245,158,11,0.07)";
+  const hdrBorder  = isDark ? "rgba(245,158,11,0.18)"      : "rgba(245,158,11,0.2)";
+  const titleColor = isDark ? "#fff"                        : "#111827";
+  const subColor   = isDark ? "rgba(180,210,255,0.5)"      : "rgba(0,0,0,0.45)";
+  const ftBorder   = isDark ? "rgba(245,158,11,0.14)"      : "rgba(245,158,11,0.18)";
+  const ftBg       = isDark ? "rgba(245,158,11,0.03)"      : "transparent";
+
+  const labelSt = {
+    fontSize: ".67rem", fontWeight: 700, textTransform: "uppercase",
+    letterSpacing: ".08em", fontFamily: "Inter,sans-serif",
+    color: isDark ? "rgba(180,210,255,0.75)" : "rgba(0,0,0,0.6)",
+  };
+  const inputSt = {
+    width: "100%", padding: "9px 12px", borderRadius: 10, outline: "none",
+    border: isDark ? "1px solid rgba(245,158,11,0.3)" : "1px solid rgba(10,30,100,0.18)",
+    background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
+    color: isDark ? "#fff" : "#111827",
+    fontSize: ".84rem", fontFamily: "Inter,sans-serif",
+    transition: "border-color .2s, box-shadow .2s", boxSizing: "border-box",
+  };
+  const disabledInputSt = {
+    ...inputSt,
+    opacity: 0.65, cursor: "not-allowed",
+    background: isDark ? "rgba(245,158,11,0.06)" : "rgba(245,158,11,0.07)",
+    border: isDark ? "1px solid rgba(245,158,11,0.2)" : "1px solid rgba(245,158,11,0.25)",
+    color: isDark ? "#f59e0b" : "#92610a",
+    fontWeight: 700,
+  };
+  const onFocus = (e) => {
+    e.target.style.borderColor = isDark ? "#f59e0b" : "#d97706";
+    e.target.style.boxShadow   = "0 0 0 3px rgba(245,158,11,0.15)";
+  };
+  const onBlur = (e) => {
+    e.target.style.borderColor = isDark ? "rgba(245,158,11,0.3)" : "rgba(10,30,100,0.18)";
+    e.target.style.boxShadow   = "none";
+  };
+
+  const btnCancel = {
+    padding: "8px 14px", borderRadius: 10, cursor: "pointer",
+    border: isDark ? "1px solid rgba(245,158,11,0.28)" : "1px solid rgba(10,30,100,0.18)",
+    background: "transparent",
+    color: isDark ? "rgba(180,210,255,0.7)" : "rgba(0,0,0,0.6)",
+    fontSize: ".8rem", fontFamily: "Inter,sans-serif", fontWeight: 600, transition: "all .2s",
+  };
+  const btnSave = {
+    padding: "8px 18px", borderRadius: 10, border: "none", cursor: saving ? "not-allowed" : "pointer",
+    color: "#fff", fontSize: ".8rem", fontFamily: "Inter,sans-serif", fontWeight: 700,
+    background: "linear-gradient(135deg,#f59e0b,#d97706)",
+    boxShadow: "0 4px 16px rgba(245,158,11,0.35)", transition: "all .2s",
+    opacity: saving ? 0.7 : 1,
+  };
+
+  /* Field definitions */
+  const PENDING_FIELDS = [
+    { key: "AMC_name",        label: "AMC Name",       auto: true,  note: "✦ Auto-filled from product" },
+    { key: "products",        label: "Products Count",  auto: true,  note: "✦ Auto-counted from products table" },
+    { key: "submission_date", label: "Submission Date", auto: false, type: "date" },
+    { key: "status",          label: "Status",          auto: false },
+  ];
+
+  return createPortal(
+    <div
+      style={{
+        position: "fixed", inset: 0, zIndex: 999999,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 16, boxSizing: "border-box",
+        background: overlayBg,
+        backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+      }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <style>{`
+        @keyframes shareDlgIn {
+          from { opacity:0; transform:translateY(18px) scale(0.96); }
+          to   { opacity:1; transform:none; }
+        }
+      `}</style>
+      <div style={{
+        width: "100%", maxWidth: "min(460px, calc(100vw - 32px))",
+        maxHeight: "calc(100vh - 40px)", overflowY: "auto",
+        borderRadius: 18, boxSizing: "border-box",
+        fontFamily: "Inter,sans-serif",
+        animation: "shareDlgIn .32s cubic-bezier(0.34,1.56,0.64,1)",
+        background: boxBg,
+        border: `1px solid ${boxBorder}`,
+        boxShadow: boxShadow,
+        backdropFilter: "blur(44px) saturate(160%)",
+        WebkitBackdropFilter: "blur(44px) saturate(160%)",
+      }}>
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "16px 20px 12px",
+          borderRadius: "18px 18px 0 0",
+          borderBottom: `1px solid ${hdrBorder}`,
+          background: hdrBg,
+        }}>
+          <div style={{ width: 4, height: 22, borderRadius: 2, background: "#f59e0b", flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: ".95rem", fontWeight: 800, color: titleColor, display: "flex", alignItems: "center", gap: 7 }}>
+              <IcoShare />
+              Send to Empanelment Pending
+            </div>
+            <div style={{ fontSize: ".67rem", marginTop: 3, color: subColor }}>
+              Orange = fill manually · Yellow = auto-filled from product
+            </div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+          {PENDING_FIELDS.map(f => (
+            <div key={f.key} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              <label style={labelSt}>{f.label}</label>
+              <input
+                style={f.auto ? disabledInputSt : inputSt}
+                type={f.type === "date" ? "date" : "text"}
+                value={form[f.key] ?? ""}
+                onChange={e => !f.auto && setField(f.key, e.target.value)}
+                onFocus={f.auto ? undefined : onFocus}
+                onBlur={f.auto ? undefined : onBlur}
+                readOnly={f.auto}
+                disabled={f.auto}
+              />
+              <div style={{
+                fontSize: ".67rem", fontWeight: 600, paddingLeft: 2,
+                color: f.auto
+                  ? (isDark ? "#f59e0b" : "#92610a")
+                  : (isDark ? "rgba(245,158,11,0.65)" : "rgba(180,100,0,0.7)"),
+              }}>
+                {f.auto ? f.note : "⚠ Fill manually"}
+              </div>
+            </div>
+          ))}
+
+          {/* Product preview card */}
+          <div style={{
+            padding: "10px 14px", borderRadius: 10,
+            border: isDark ? "1px solid rgba(245,158,11,0.2)" : "1px solid rgba(245,158,11,0.25)",
+            background: isDark ? "rgba(245,158,11,0.05)" : "rgba(245,158,11,0.06)",
+            display: "flex", flexDirection: "column", gap: 5,
+          }}>
+            <div style={{ fontSize: ".67rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: isDark ? "#f59e0b" : "#92610a" }}>
+              Product being shared
+            </div>
+            <div style={{ fontSize: ".82rem", fontWeight: 600, color: isDark ? "rgba(255,255,255,0.85)" : "#111827" }}>
+              {row.product_name || "—"}
+            </div>
+            <div style={{ fontSize: ".75rem", color: isDark ? "rgba(200,220,255,0.55)" : "rgba(0,0,0,0.5)" }}>
+              {row.structure || "—"} · {fmtAmount(row.min_investment)} · {row.lock_in || "No lock-in"}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          display: "flex", justifyContent: "flex-end", gap: 8,
+          padding: "12px 20px", borderRadius: "0 0 18px 18px",
+          borderTop: `1px solid ${ftBorder}`,
+          background: ftBg,
+        }}>
+          <button
+            style={btnCancel}
+            onClick={onClose}
+            onMouseEnter={e => { e.currentTarget.style.color = isDark ? "#fff" : "#000"; e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(10,30,100,0.4)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = isDark ? "rgba(180,210,255,0.7)" : "rgba(0,0,0,0.6)"; e.currentTarget.style.borderColor = isDark ? "rgba(245,158,11,0.28)" : "rgba(10,30,100,0.18)"; }}
+          >
+            Cancel
+          </button>
+          <button
+            style={btnSave}
+            onClick={save}
+            disabled={saving}
+            onMouseEnter={e => { if (!saving) { e.currentTarget.style.filter = "brightness(1.12)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
+            onMouseLeave={e => { e.currentTarget.style.filter = "none"; e.currentTarget.style.transform = "none"; }}
+          >
+            {saving ? "Saving…" : "Save to Pending"}
+          </button>
+        </div>
+      </div>
+
+      {snack && <Snack {...snack} onClose={() => setSnack(null)} />}
+    </div>,
+    document.body
+  );
+}
+
 /* ════════════════════════════════════════
    Main Component
 ════════════════════════════════════════ */
 export default function Products({ inline = false, onDataChange, theme = "dark" }) {
   const isDark = theme === "dark";
 
-  const [rows,    setRows]    = useState([]);
-  const [search,  setSearch]  = useState("");
-  const [loading, setLoading] = useState(false);
-  const [tab,     setTab]     = useState("cat3");
-  const [dlg,     setDlg]     = useState(false);
-  const [editRow, setEditRow] = useState(null);
-  const [form,    setForm]    = useState({});
-  const [delId,   setDelId]   = useState(null);
-  const [confirm, setConfirm] = useState(false);
-  const [snack,   setSnack]   = useState(null);
+  const [rows,      setRows]      = useState([]);
+  const [search,    setSearch]    = useState("");
+  const [loading,   setLoading]   = useState(false);
+  const [tab,       setTab]       = useState("cat3");
+  const [dlg,       setDlg]       = useState(false);
+  const [editRow,   setEditRow]   = useState(null);
+  const [form,      setForm]      = useState({});
+  const [delId,     setDelId]     = useState(null);
+  const [confirm,   setConfirm]   = useState(false);
+  const [shareRow,  setShareRow]  = useState(null);   // row being shared to pending
+  const [snack,     setSnack]     = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -516,7 +772,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         }
         .prod-tbl {
           width: 100%;
-          min-width: 740px;
+          min-width: 780px;
           border-collapse: collapse;
           table-layout: fixed;
         }
@@ -527,7 +783,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         .prod-tbl th:nth-child(5) { width: 14%;  }
         .prod-tbl th:nth-child(6) { width: 17%;  }
         .prod-tbl th:nth-child(7) { width: 10%;  }
-        .prod-tbl th:nth-child(8) { width: 88px; }
+        .prod-tbl th:nth-child(8) { width: 108px; }
         .prod-tbl td,
         .prod-tbl th {
           overflow: hidden;
@@ -537,6 +793,22 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         .prod-tbl td:nth-child(3) {
           white-space: normal;
           word-break: break-word;
+        }
+
+        /* share action button */
+        .ab-share {
+          background: rgba(245,158,11,0.12);
+          color: #f59e0b;
+        }
+        .ab-share:hover {
+          background: rgba(245,158,11,0.28);
+        }
+        .theme-light .ab-share {
+          background: rgba(180,100,0,0.1);
+          color: #92610a;
+        }
+        .theme-light .ab-share:hover {
+          background: rgba(180,100,0,0.22);
         }
       `}</style>
 
@@ -604,7 +876,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
               <tr>
                 <th style={{ width: 42 }}>#</th>
                 {COLS.map(c => <th key={c.key}>{c.label}</th>)}
-                <th style={{ textAlign: "center", width: 88 }}>Actions</th>
+                <th style={{ textAlign: "center", width: 108 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -635,6 +907,13 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
                         onClick={() => openEdit(row)}>
                         <IcoEdit />
                       </button>
+                      <button
+                        className="ab ab-share"
+                        title="Send to Empanelment Pending"
+                        onClick={() => setShareRow(row)}
+                      >
+                        <IcoShare />
+                      </button>
                       <button className="ab ab-del" title="Delete"
                         onClick={() => { setDelId(row.id); setConfirm(true); }}>
                         <IcoDel />
@@ -646,6 +925,17 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* ── Share to Pending Dialog ── */}
+      {shareRow && (
+        <ShareToPendingDialog
+          row={shareRow}
+          allRows={rows}
+          onClose={() => setShareRow(null)}
+          onSaved={() => { showSnack("✓ Added to Empanelment Pending!"); onDataChange?.(); }}
+          theme={theme}
+        />
       )}
 
       {/* ADD / EDIT DIALOG */}

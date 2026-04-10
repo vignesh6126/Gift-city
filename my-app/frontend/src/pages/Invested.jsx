@@ -442,11 +442,6 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
             </button>
           ))}
         </div>
-        {tab === "pending" && (
-          <button className="add-btn" style={addBtnStyle} onClick={openAdd}>
-            <IcoPlus /> Add Row
-          </button>
-        )}
       </div>
 
       {/* ── Search bar ── */}

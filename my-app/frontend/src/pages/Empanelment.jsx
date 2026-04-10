@@ -554,11 +554,7 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
             <button key={t.id} className={`tab-pill ${tab===t.id?"tab-active":""}`} onClick={()=>setTab(t.id)}>{t.label}</button>
           ))}
         </div>
-        {tab==="pending" && (
-          <button className="add-btn" style={{background:"linear-gradient(135deg,#4F8EF7,#7B5FFF)",boxShadow:"0 4px 14px rgba(79,142,247,.32)"}} onClick={openAdd}>
-            <IcoPlus /> Add Row
-          </button>
-        )}
+        
       </div>
 
       <SearchBar value={search} onChange={setSearch}

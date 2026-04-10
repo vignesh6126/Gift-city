@@ -502,13 +502,6 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
             </span>
           )}
         </span>
-        <button
-          className="add-btn"
-          style={{ background: `linear-gradient(135deg,${ORANGE},#ca6f1e)`, boxShadow: "0 4px 14px rgba(230,126,34,.3)" }}
-          onClick={openAdd}
-        >
-          <IcoPlus /> Add Row
-        </button>
       </div>
 
       {/* ── Search bar ── */}

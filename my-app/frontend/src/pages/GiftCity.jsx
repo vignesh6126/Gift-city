@@ -269,13 +269,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
             </button>
           ))}
         </div>
-        {tab === "inactive" && (
-          <button className="add-btn"
-            style={{ background: `linear-gradient(135deg,${GOLD},#d97706)`, boxShadow: "0 4px 14px rgba(245,158,11,.3)" }}
-            onClick={openAdd}>
-            <IcoPlus /> Add Row
-          </button>
-        )}
+
       </div>
 
       <SearchBar
