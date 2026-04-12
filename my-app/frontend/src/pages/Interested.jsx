@@ -13,15 +13,15 @@ const COLS = [
 const PENDING_COLS = [
   { key: "client_name",          label: "Client Name",           type: "text"   },
   { key: "amount_tobe_invested", label: "Amount to be Invested", type: "number" },
-  { key: "amc_name",             label: "AMC Name",              type: "text"   },
-  { key: "scheme",               label: "Scheme",                type: "text"   },
+  { key: "amc_name",             label: "AMC Name",              type: "amc_autocomplete" },
+  { key: "scheme",               label: "Scheme",                type: "scheme_dropdown"  },
   { key: "bank",                 label: "Bank",                  type: "select", options: ["gift", "savings", "both"] },
   { key: "submission_date",      label: "Submission Date",       type: "date"   },
-  { key: "next_action_date",     label: "Next Action Date",      type: "date"   },  // ← ADD
+  { key: "next_action_date",     label: "Next Action Date",      type: "date"   },
   { key: "status",               label: "Status",                type: "text"   },
 ];
 
-const SHARE_AUTO_KEYS   = new Set(["client_name", "next_action_date"]);          // ← add next_action_date
+const SHARE_AUTO_KEYS   = new Set(["client_name", "next_action_date"]);
 const SHARE_MANUAL_KEYS = new Set(["amount_tobe_invested", "amc_name", "scheme", "bank", "submission_date", "status"]);
 
 const toISODate = (val) => {
@@ -44,7 +44,7 @@ const interestedToPending = (row) => ({
   scheme:               "",
   bank:                 "savings",
   submission_date:      "",
-  next_action_date:     toISODate(row.next_action_date) || "",   // ← wrap with toISODate
+  next_action_date:     toISODate(row.next_action_date) || "",
   status:               "",
 });
 
@@ -113,7 +113,6 @@ function SearchBar({ value, onChange, resultCount, totalCount, theme = "dark" })
           }}>
             <IcoSearch />
           </span>
-
           <input
             ref={inputRef}
             type="text"
@@ -142,7 +141,6 @@ function SearchBar({ value, onChange, resultCount, totalCount, theme = "dark" })
               e.target.style.boxShadow   = isActive ? shadowActive : "none";
             }}
           />
-
           {isActive && (
             <button
               onClick={() => { onChange(""); inputRef.current?.focus(); }}
@@ -159,7 +157,6 @@ function SearchBar({ value, onChange, resultCount, totalCount, theme = "dark" })
             </button>
           )}
         </div>
-
         {isActive && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 5,
@@ -179,6 +176,550 @@ function SearchBar({ value, onChange, resultCount, totalCount, theme = "dark" })
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   Shared dropdown animation keyframes (injected once)
+══════════════════════════════════════════════════════ */
+const DROP_STYLE = `
+  @keyframes dropIn {
+    from { opacity:0; transform:translateY(-6px) scale(0.98); }
+    to   { opacity:1; transform:none; }
+  }
+  @keyframes itemIn {
+    from { opacity:0; transform:translateX(-4px); }
+    to   { opacity:1; transform:none; }
+  }
+`;
+
+/* ─── AMC Autocomplete Field ─── */
+function AmcAutocomplete({ value, onChange, onAmcSelect, isDark }) {
+  const [query, setQuery]      = useState(value || "");
+  const [suggestions, setSugs] = useState([]);
+  const [allAmcs, setAllAmcs]  = useState([]);
+  const [open, setOpen]        = useState(false);
+  const [focused, setFocused]  = useState(false);
+  const wrapRef                = useRef(null);
+
+  /* ── theme tokens ── */
+  const accent        = isDark ? "#4F8EF7"                              : "#2a6dd9";
+  const accentAlpha   = isDark ? "rgba(79,142,247,0.18)"               : "rgba(42,109,217,0.14)";
+  const inputBg       = isDark ? "rgba(255,255,255,0.04)"              : "rgba(255,255,255,0.92)";
+  const inputBgFocus  = isDark ? "rgba(79,142,247,0.07)"               : "rgba(42,109,217,0.04)";
+  const inputBorder   = isDark ? "rgba(79,142,247,0.25)"               : "rgba(0,0,0,0.15)";
+  const inputBdrFocus = accent;
+  const inputColor    = isDark ? "#e8eeff"                             : "#111827";
+  const iconColor     = isDark ? "rgba(79,142,247,0.55)"               : "rgba(42,109,217,0.45)";
+  const iconColorFoc  = accent;
+  const clearBg       = isDark ? "rgba(79,142,247,0.15)"               : "rgba(42,109,217,0.1)";
+  const clearHov      = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.2)";
+
+  /* dropdown */
+  const dropBg        = isDark ? "rgba(8,13,35,0.97)"                  : "rgba(255,255,255,0.98)";
+  const dropBorder    = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.18)";
+  const dropShadow    = isDark
+    ? "0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(79,142,247,0.12)"
+    : "0 12px 40px rgba(42,109,217,0.15), 0 2px 8px rgba(0,0,0,0.08)";
+  const headerBg      = isDark ? "rgba(79,142,247,0.06)"               : "rgba(42,109,217,0.04)";
+  const headerBdr     = isDark ? "rgba(79,142,247,0.12)"               : "rgba(42,109,217,0.1)";
+  const countBg       = isDark ? "rgba(79,142,247,0.15)"               : "rgba(42,109,217,0.1)";
+  const countColor    = accent;
+  const itemColor     = isDark ? "rgba(210,225,255,0.85)"              : "#1f2937";
+  const itemDivider   = isDark ? "rgba(79,142,247,0.07)"               : "rgba(42,109,217,0.06)";
+  const itemHoverBg   = isDark ? "rgba(79,142,247,0.1)"                : "rgba(42,109,217,0.06)";
+  const itemHoverBdr  = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.25)";
+  const dotColor      = isDark ? "rgba(79,142,247,0.5)"                : "rgba(42,109,217,0.4)";
+  const markBg        = isDark ? "rgba(230,126,34,0.35)"               : "rgba(42,109,217,0.16)";
+  const markColor     = isDark ? "#fbbf73"                             : "#1a50b5";
+  const scrollThumb   = isDark ? "rgba(79,142,247,0.2)"                : "rgba(42,109,217,0.15)";
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r    = await fetch(`${API}/products`);
+        const data = await r.json();
+        const unique = [...new Map((data || []).map(p => [p.amc_name?.toLowerCase(), p.amc_name])).values()]
+          .filter(Boolean).sort();
+        setAllAmcs(unique);
+      } catch {}
+    })();
+  }, []);
+
+  useEffect(() => { setQuery(value || ""); }, [value]);
+
+  useEffect(() => {
+    if (!query.trim()) { setSugs([]); setOpen(false); return; }
+    const q = query.toLowerCase();
+    const filtered = allAmcs.filter(a => a.toLowerCase().includes(q));
+    setSugs(filtered);
+    setOpen(filtered.length > 0);
+  }, [query, allAmcs]);
+
+  useEffect(() => {
+    const handler = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) { setOpen(false); setFocused(false); } };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSelect = (amc) => {
+    setQuery(amc); setOpen(false);
+    onChange("amc_name", amc); onAmcSelect?.(amc);
+  };
+  const handleChange = (e) => {
+    const v = e.target.value;
+    setQuery(v); onChange("amc_name", v);
+    if (!v) onAmcSelect?.("");
+  };
+
+  const isActive = focused || open;
+
+  return (
+    <div ref={wrapRef} style={{ position: "relative" }}>
+      <style>{DROP_STYLE}</style>
+
+      {/* ── Input wrapper with left icon ── */}
+      <div style={{ position: "relative" }}>
+        {/* Search icon */}
+        <span style={{
+          position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)",
+          display: "flex", pointerEvents: "none",
+          color: isActive ? iconColorFoc : iconColor,
+          transition: "color .2s",
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </span>
+
+        <input
+          type="text"
+          value={query}
+          onChange={handleChange}
+          placeholder="Search AMC name…"
+          style={{
+            width: "100%", padding: "9px 32px 9px 32px", borderRadius: 10,
+            background: isActive ? inputBgFocus : inputBg,
+            border: `1.5px solid ${isActive ? inputBdrFocus : inputBorder}`,
+            color: inputColor, fontSize: ".84rem", fontFamily: "'Inter',sans-serif",
+            outline: "none", transition: "all .2s", boxSizing: "border-box",
+            boxShadow: isActive ? `0 0 0 3px ${accentAlpha}` : "none",
+          }}
+          onFocus={e => {
+            setFocused(true);
+            if (query.trim() && suggestions.length > 0) setOpen(true);
+          }}
+          onBlur={() => setFocused(false)}
+        />
+
+        {/* Clear button */}
+        {query && (
+          <button
+            onMouseDown={e => { e.preventDefault(); setQuery(""); onChange("amc_name", ""); onAmcSelect?.(""); setSugs([]); setOpen(false); }}
+            style={{
+              position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+              background: clearBg, border: "none", borderRadius: "50%",
+              width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", color: inputColor, transition: "all .15s", padding: 0,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = clearHov}
+            onMouseLeave={e => e.currentTarget.style.background = clearBg}
+          >
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none">
+              <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+              <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* ── Dropdown panel ── */}
+      {open && suggestions.length > 0 && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 999999,
+          background: dropBg,
+          border: `1px solid ${dropBorder}`,
+          borderRadius: 14,
+          boxShadow: dropShadow,
+          overflow: "hidden",
+          animation: "dropIn .18s cubic-bezier(0.34,1.56,0.64,1)",
+        }}>
+          {/* Header bar */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "7px 12px",
+            background: headerBg,
+            borderBottom: `1px solid ${headerBdr}`,
+          }}>
+            <span style={{ fontSize: ".66rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: isDark ? "rgba(180,210,255,0.5)" : "rgba(0,0,0,0.4)", fontFamily: "'Inter',sans-serif" }}>
+              AMC Results
+            </span>
+            <span style={{
+              fontSize: ".66rem", fontWeight: 800, padding: "2px 8px", borderRadius: 20,
+              background: countBg, color: countColor, fontFamily: "'Inter',sans-serif",
+            }}>
+              {suggestions.length}
+            </span>
+          </div>
+
+          {/* Scrollable list */}
+          <div style={{ maxHeight: 188, overflowY: "auto" }}>
+            <style>{`
+              .amc-drop-list::-webkit-scrollbar { width: 4px; }
+              .amc-drop-list::-webkit-scrollbar-track { background: transparent; }
+              .amc-drop-list::-webkit-scrollbar-thumb { background: ${scrollThumb}; border-radius: 4px; }
+            `}</style>
+            <div className="amc-drop-list" style={{ maxHeight: 188, overflowY: "auto" }}>
+              {suggestions.map((amc, i) => {
+                const idx = amc.toLowerCase().indexOf(query.toLowerCase());
+                return (
+                  <div
+                    key={amc}
+                    onMouseDown={() => handleSelect(amc)}
+                    style={{
+                      padding: "9px 12px",
+                      display: "flex", alignItems: "center", gap: 9,
+                      fontSize: ".84rem", fontFamily: "'Inter',sans-serif",
+                      color: itemColor, cursor: "pointer",
+                      borderBottom: i < suggestions.length - 1 ? `1px solid ${itemDivider}` : "none",
+                      borderLeft: "2px solid transparent",
+                      transition: "all .13s",
+                      animation: `itemIn .15s ease ${Math.min(i * 0.03, 0.15)}s both`,
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background   = itemHoverBg;
+                      e.currentTarget.style.borderLeftColor = itemHoverBdr;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background   = "transparent";
+                      e.currentTarget.style.borderLeftColor = "transparent";
+                    }}
+                  >
+                    {/* dot */}
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+                    <span>
+                      {idx === -1 ? amc : (
+                        <>
+                          {amc.slice(0, idx)}
+                          <mark style={{ background: markBg, color: markColor, borderRadius: 3, padding: "0 2px", fontWeight: 700 }}>
+                            {amc.slice(idx, idx + query.length)}
+                          </mark>
+                          {amc.slice(idx + query.length)}
+                        </>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Scheme Search Autocomplete ─── */
+function SchemeDropdown({ value, amcName, onChange, isDark }) {
+  const [query, setQuery]       = useState(value || "");
+  const [allProducts, setAllP]  = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [open, setOpen]         = useState(false);
+  const [focused, setFocused]   = useState(false);
+  const wrapRef                 = useRef(null);
+
+  /* ── theme tokens (mirrors AmcAutocomplete) ── */
+  const accent        = isDark ? "#4F8EF7"                              : "#2a6dd9";
+  const accentAlpha   = isDark ? "rgba(79,142,247,0.18)"               : "rgba(42,109,217,0.14)";
+  const inputBg       = isDark ? "rgba(255,255,255,0.04)"              : "rgba(255,255,255,0.92)";
+  const inputBgFocus  = isDark ? "rgba(79,142,247,0.07)"               : "rgba(42,109,217,0.04)";
+  const inputBorder   = isDark ? "rgba(79,142,247,0.25)"               : "rgba(0,0,0,0.15)";
+  const inputBdrFocus = accent;
+  const inputColor    = isDark ? "#e8eeff"                             : "#111827";
+  const disabledBg    = isDark ? "rgba(255,255,255,0.02)"              : "rgba(0,0,0,0.03)";
+  const iconColor     = isDark ? "rgba(79,142,247,0.55)"               : "rgba(42,109,217,0.45)";
+  const iconColorFoc  = accent;
+  const clearBg       = isDark ? "rgba(79,142,247,0.15)"               : "rgba(42,109,217,0.1)";
+  const clearHov      = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.2)";
+
+  /* dropdown */
+  const dropBg        = isDark ? "rgba(8,13,35,0.97)"                  : "rgba(255,255,255,0.98)";
+  const dropBorder    = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.18)";
+  const dropShadow    = isDark
+    ? "0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(79,142,247,0.12)"
+    : "0 12px 40px rgba(42,109,217,0.15), 0 2px 8px rgba(0,0,0,0.08)";
+  const headerBg      = isDark ? "rgba(79,142,247,0.06)"               : "rgba(42,109,217,0.04)";
+  const headerBdr     = isDark ? "rgba(79,142,247,0.12)"               : "rgba(42,109,217,0.1)";
+  const countBg       = isDark ? "rgba(79,142,247,0.15)"               : "rgba(42,109,217,0.1)";
+  const countColor    = accent;
+  const itemColor     = isDark ? "rgba(210,225,255,0.85)"              : "#1f2937";
+  const itemDivider   = isDark ? "rgba(79,142,247,0.07)"               : "rgba(42,109,217,0.06)";
+  const itemHoverBg   = isDark ? "rgba(79,142,247,0.1)"                : "rgba(42,109,217,0.06)";
+  const itemHoverBdr  = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.25)";
+  const itemSelBg     = isDark
+    ? "linear-gradient(90deg,rgba(79,142,247,0.22),rgba(79,142,247,0.08))"
+    : "linear-gradient(90deg,rgba(42,109,217,0.12),rgba(42,109,217,0.04))";
+  const itemSelColor  = accent;
+  const itemSelBdr    = isDark ? "rgba(79,142,247,0.55)"               : "rgba(42,109,217,0.45)";
+  const subColor      = isDark ? "rgba(160,190,255,0.45)"              : "rgba(0,0,0,0.42)";
+  const checkBg       = isDark ? "rgba(79,142,247,0.2)"                : "rgba(42,109,217,0.12)";
+  const checkColor    = accent;
+  const markBg        = isDark ? "rgba(230,126,34,0.35)"               : "rgba(42,109,217,0.16)";
+  const markColor     = isDark ? "#fbbf73"                             : "#1a50b5";
+  const emptyColor    = isDark ? "rgba(160,190,255,0.4)"               : "rgba(0,0,0,0.35)";
+  const chipBg        = isDark ? "rgba(255,255,255,0.06)"              : "rgba(0,0,0,0.05)";
+  const chipColor     = isDark ? "rgba(180,210,255,0.55)"              : "rgba(0,0,0,0.45)";
+  const scrollThumb   = isDark ? "rgba(79,142,247,0.2)"                : "rgba(42,109,217,0.15)";
+
+  /* Reload products whenever AMC changes */
+  useEffect(() => {
+    setQuery(""); onChange("scheme", ""); setAllP([]); setFiltered([]); setOpen(false);
+    if (!amcName?.trim()) return;
+    (async () => {
+      try {
+        const r    = await fetch(`${API}/products`);
+        const data = await r.json();
+        const prods = (data || []).filter(
+          p => (p.amc_name || "").toLowerCase() === amcName.toLowerCase()
+        );
+        setAllP(prods); setFiltered(prods);
+      } catch { setAllP([]); setFiltered([]); }
+    })();
+  }, [amcName]);
+
+  useEffect(() => { setQuery(value || ""); }, [value]);
+
+  useEffect(() => {
+    if (!query.trim()) { setFiltered(allProducts); return; }
+    const q = query.toLowerCase();
+    setFiltered(allProducts.filter(p => p.product_name?.toLowerCase().includes(q)));
+  }, [query, allProducts]);
+
+  useEffect(() => {
+    const handler = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) { setOpen(false); setFocused(false); } };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const noAmc    = !amcName?.trim();
+  const disabled = noAmc;
+  const placeholder = noAmc ? "Select an AMC first…" : allProducts.length === 0 ? "No products for this AMC" : "Search scheme…";
+
+  const handleSelect = (p) => { setQuery(p.product_name); onChange("scheme", p.product_name); setOpen(false); };
+  const handleChange = (e) => { setQuery(e.target.value); onChange("scheme", e.target.value); setOpen(true); };
+
+  const isActive = focused || open;
+
+  /* structure → chip colour */
+  const structureColor = (s) => {
+    if (!s) return chipColor;
+    if (s.includes("cat-III")) return isDark ? "#818cf8" : "#4f46e5";
+    if (s.includes("retail"))  return isDark ? "#34d399" : "#059669";
+    return chipColor;
+  };
+
+  return (
+    <div ref={wrapRef} style={{ position: "relative" }}>
+
+      {/* ── Input wrapper ── */}
+      <div style={{ position: "relative" }}>
+        {/* Search icon */}
+        <span style={{
+          position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)",
+          display: "flex", pointerEvents: "none",
+          color: disabled ? (isDark ? "rgba(79,142,247,0.2)" : "rgba(0,0,0,0.2)") : (isActive ? iconColorFoc : iconColor),
+          transition: "color .2s",
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </span>
+
+        <input
+          type="text"
+          value={query}
+          onChange={handleChange}
+          disabled={disabled}
+          placeholder={placeholder}
+          style={{
+            width: "100%", padding: "9px 32px 9px 32px", borderRadius: 10,
+            background: disabled ? disabledBg : (isActive ? inputBgFocus : inputBg),
+            border: `1.5px solid ${isActive && !disabled ? inputBdrFocus : inputBorder}`,
+            color: inputColor, fontSize: ".84rem", fontFamily: "'Inter',sans-serif",
+            outline: "none", transition: "all .2s", boxSizing: "border-box",
+            boxShadow: isActive && !disabled ? `0 0 0 3px ${accentAlpha}` : "none",
+            cursor: disabled ? "not-allowed" : "text",
+            opacity: disabled ? 0.45 : 1,
+          }}
+          onFocus={() => { if (disabled) return; setFocused(true); setOpen(true); }}
+          onBlur={() => setFocused(false)}
+        />
+
+        {/* Clear button */}
+        {query && !disabled && (
+          <button
+            onMouseDown={e => { e.preventDefault(); setQuery(""); onChange("scheme", ""); setFiltered(allProducts); }}
+            style={{
+              position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+              background: clearBg, border: "none", borderRadius: "50%",
+              width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", color: inputColor, transition: "all .15s", padding: 0,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = clearHov}
+            onMouseLeave={e => e.currentTarget.style.background = clearBg}
+          >
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none">
+              <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+              <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* ── Dropdown panel ── */}
+      {open && !disabled && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 999999,
+          background: dropBg,
+          border: `1px solid ${dropBorder}`,
+          borderRadius: 14,
+          boxShadow: dropShadow,
+          overflow: "hidden",
+          animation: "dropIn .18s cubic-bezier(0.34,1.56,0.64,1)",
+        }}>
+          {/* Header */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "7px 12px",
+            background: headerBg, borderBottom: `1px solid ${headerBdr}`,
+          }}>
+            <span style={{ fontSize: ".66rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: isDark ? "rgba(180,210,255,0.5)" : "rgba(0,0,0,0.4)", fontFamily: "'Inter',sans-serif" }}>
+              Schemes
+            </span>
+            <span style={{
+              fontSize: ".66rem", fontWeight: 800, padding: "2px 8px", borderRadius: 20,
+              background: countBg, color: countColor, fontFamily: "'Inter',sans-serif",
+            }}>
+              {filtered.length}
+            </span>
+          </div>
+
+          {/* List */}
+          <div style={{ maxHeight: 210, overflowY: "auto" }}>
+            <style>{`
+              .scheme-drop-list::-webkit-scrollbar { width: 4px; }
+              .scheme-drop-list::-webkit-scrollbar-track { background: transparent; }
+              .scheme-drop-list::-webkit-scrollbar-thumb { background: ${scrollThumb}; border-radius: 4px; }
+            `}</style>
+            <div className="scheme-drop-list" style={{ maxHeight: 210, overflowY: "auto" }}>
+              {filtered.length === 0 ? (
+                <div style={{
+                  padding: "16px 14px", display: "flex", alignItems: "center", gap: 8,
+                  fontSize: ".82rem", fontFamily: "'Inter',sans-serif", color: emptyColor,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: .5 }}>
+                    <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  No matching schemes found
+                </div>
+              ) : filtered.map((p, i) => {
+                const isSelected = value === p.product_name;
+                const idx = query.trim() ? p.product_name.toLowerCase().indexOf(query.toLowerCase()) : -1;
+                const sColor = structureColor(p.structure);
+                return (
+                  <div
+                    key={p.id}
+                    onMouseDown={() => handleSelect(p)}
+                    style={{
+                      padding: "10px 12px", cursor: "pointer",
+                      borderBottom: i < filtered.length - 1 ? `1px solid ${itemDivider}` : "none",
+                      background: isSelected ? itemSelBg : "transparent",
+                      borderLeft: `2px solid ${isSelected ? itemSelBdr : "transparent"}`,
+                      transition: "all .13s",
+                      display: "flex", alignItems: "flex-start", gap: 10,
+                      animation: `itemIn .15s ease ${Math.min(i * 0.03, 0.15)}s both`,
+                    }}
+                    onMouseEnter={e => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background     = itemHoverBg;
+                        e.currentTarget.style.borderLeftColor = itemHoverBdr;
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background     = "transparent";
+                        e.currentTarget.style.borderLeftColor = "transparent";
+                      }
+                    }}
+                  >
+                    {/* checkmark circle */}
+                    <span style={{
+                      width: 18, height: 18, borderRadius: "50%", flexShrink: 0, marginTop: 1,
+                      background: isSelected ? checkBg : "transparent",
+                      border: `1.5px solid ${isSelected ? checkColor : (isDark ? "rgba(79,142,247,0.2)" : "rgba(0,0,0,0.12)")}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all .15s",
+                    }}>
+                      {isSelected && (
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none">
+                          <polyline points="20 6 9 17 4 12" stroke={checkColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
+
+                    {/* content */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: ".84rem", fontFamily: "'Inter',sans-serif",
+                        fontWeight: isSelected ? 700 : 500,
+                        color: isSelected ? itemSelColor : itemColor,
+                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                      }}>
+                        {idx === -1 || !query.trim() ? p.product_name : (
+                          <>
+                            {p.product_name.slice(0, idx)}
+                            <mark style={{ background: markBg, color: markColor, borderRadius: 3, padding: "0 2px", fontWeight: 700 }}>
+                              {p.product_name.slice(idx, idx + query.length)}
+                            </mark>
+                            {p.product_name.slice(idx + query.length)}
+                          </>
+                        )}
+                      </div>
+                      {/* chips row */}
+                      <div style={{ display: "flex", gap: 5, marginTop: 4, flexWrap: "wrap" }}>
+                        {p.structure && (
+                          <span style={{
+                            fontSize: ".62rem", fontWeight: 700, padding: "1px 6px", borderRadius: 20,
+                            background: chipBg, color: sColor,
+                            border: `1px solid ${sColor}30`,
+                            fontFamily: "'Inter',sans-serif",
+                          }}>
+                            {p.structure}
+                          </span>
+                        )}
+                        {p.lock_in && (
+                          <span style={{
+                            fontSize: ".62rem", fontWeight: 600, padding: "1px 6px", borderRadius: 20,
+                            background: chipBg, color: chipColor,
+                            border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
+                            fontFamily: "'Inter',sans-serif",
+                          }}>
+                            🔒 {p.lock_in}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -227,7 +768,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   const [shareOpen,     setShareOpen]     = useState(false);
   const [shareForm,     setShareForm]     = useState({});
   const [shareSaving,   setShareSaving]   = useState(false);
-  const [shareSourceId, setShareSourceId] = useState(null); // tracks which interested row to delete
+  const [shareSourceId, setShareSourceId] = useState(null);
 
   const showSnack = (msg, severity = "success") => setSnack({ msg, severity });
 
@@ -308,27 +849,31 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
 
   /* ─── Share → Customers Pending ─── */
   const openShare = (row) => {
-    setShareSourceId(row.id);                // store the id separately — not in the form payload
+    setShareSourceId(row.id);
     setShareForm(interestedToPending(row));
     setShareOpen(true);
   };
   const setShareFld = (k, v) => setShareForm(p => ({ ...p, [k]: v }));
+
+  // When AMC changes, clear scheme so stale value doesn't persist
+  const handleAmcSelect = (amc) => {
+    setShareForm(p => ({ ...p, amc_name: amc, scheme: "" }));
+  };
 
   const saveShare = async () => {
     setShareSaving(true);
     try {
       const payload = {
         ...shareForm,
-        next_action_date: toISODate(shareForm.next_action_date) || null,  // ← normalize before send
+        next_action_date: toISODate(shareForm.next_action_date) || null,
       };
       const postRes = await fetch(`${API}/invested/pending`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),   // ← use payload, not shareForm
+        body: JSON.stringify(payload),
       });
       if (!postRes.ok) throw new Error(`Failed to add to Pending (HTTP ${postRes.status})`);
 
-      // 2. Delete the source Interested record
       const delRes = await fetch(`${API}/interested/${shareSourceId}`, { method: "DELETE" });
       if (!delRes.ok) throw new Error(`Failed to remove from Interested (HTTP ${delRes.status})`);
 
@@ -341,6 +886,57 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
     } finally {
       setShareSaving(false);
     }
+  };
+
+  /* ─── Render a share form field ─── */
+  const renderShareField = (col) => {
+    if (col.type === "amc_autocomplete") {
+      return (
+        <div key={col.key}>
+          <div className="fld">
+            <label className="fld-lbl">{col.label}</label>
+            <AmcAutocomplete
+              value={shareForm[col.key] || ""}
+              onChange={setShareFld}
+              onAmcSelect={handleAmcSelect}
+              isDark={isDark}
+            />
+          </div>
+          {SHARE_MANUAL_KEYS.has(col.key) && (
+            <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Search and select AMC</div>
+          )}
+        </div>
+      );
+    }
+    if (col.type === "scheme_dropdown") {
+      return (
+        <div key={col.key}>
+          <div className="fld">
+            <label className="fld-lbl">{col.label}</label>
+            <SchemeDropdown
+              value={shareForm[col.key] || ""}
+              amcName={shareForm.amc_name || ""}
+              onChange={setShareFld}
+              isDark={isDark}
+            />
+          </div>
+          {SHARE_MANUAL_KEYS.has(col.key) && (
+            <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Select scheme for chosen AMC</div>
+          )}
+        </div>
+      );
+    }
+    return (
+      <div key={col.key}>
+        <Field col={col} value={shareForm[col.key]} onChange={setShareFld} />
+        {SHARE_AUTO_KEYS.has(col.key) && (
+          <div className="fld-note" style={{ color: "#34D399" }}>✓ Auto-filled from prospect</div>
+        )}
+        {SHARE_MANUAL_KEYS.has(col.key) && (
+          <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Fill manually</div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -405,7 +1001,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   /* ── Dialog body ── */
   .dlg-body {
     padding:16px 20px; display:flex; flex-direction:column; gap:12px;
-    max-height:58vh; overflow-y:auto;
+    max-height:58vh; overflow-y:auto; overflow-x:visible;
   }
   .dlg-body::-webkit-scrollbar { width:4px; }
   .dlg-body::-webkit-scrollbar-thumb { background:rgba(79,142,247,0.2); border-radius:4px; }
@@ -577,93 +1173,80 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
       )}
 
       {/* ── Add / Edit Dialog ── */}
-      {/* ── Add / Edit Dialog ── */}
-{dlg && createPortal(
-  <div className={`dlg-ov${theme === "light" ? " theme-light" : ""}`} onClick={e => e.target === e.currentTarget && setDlg(false)}>
-    <div className="dlg-box">
-      <div className="dlg-hdr">
-        <div className="dlg-bar" style={{ background: ORANGE }} />
-        <div className="dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
-      </div>
-      <div className="dlg-body">
-        {COLS.map(c => <Field key={c.key} col={c} value={form[c.key]} onChange={setField} />)}
-      </div>
-      <div className="dlg-foot">
-        <button className="btn-cancel" onClick={() => setDlg(false)} disabled={saving}>Cancel</button>
-        <button
-          className="btn-ok"
-          style={{ background: `linear-gradient(135deg,${ORANGE},#ca6f1e)`, boxShadow: "0 4px 14px rgba(230,126,34,.3)", opacity: saving ? 0.7 : 1 }}
-          onClick={save}
-          disabled={saving}
-        >
-          {saving ? "Saving…" : editRow ? "Update" : "Save"}
-        </button>
-      </div>
-    </div>
-  </div>,
-  document.body
-)}
-
-      {/* ── Delete Confirm ── */}
-      {/* ── Delete Confirm ── */}
-{confirm && createPortal(
-  <div className={`dlg-ov${theme === "light" ? " theme-light" : ""}`} onClick={e => e.target === e.currentTarget && setConfirm(false)}>
-    <div className="dlg-box" style={{ maxWidth: 370 }}>
-      <div className="dlg-hdr">
-        <div className="dlg-bar" style={{ background: "#EF4444" }} />
-        <div className="dlg-ttl">Confirm Delete</div>
-      </div>
-      <div className="dlg-body">
-        <p style={{ margin: 0, lineHeight: 1.6, fontSize: ".84rem", color: isDark ? "white" : "#000" }}>
-          Are you sure you want to delete this prospects record?
-        </p>
-      </div>
-      <div className="dlg-foot">
-        <button className="btn-cancel" onClick={() => setConfirm(false)}>Cancel</button>
-        <button className="btn-ok btn-danger" onClick={del}>Delete</button>
-      </div>
-    </div>
-  </div>,
-  document.body
-)}
-
-      {/* ── Share → Customers Pending Dialog ── */}
-      {/* ── Share → Customers Pending Dialog ── */}
-{shareOpen && createPortal(
-  <div className={`dlg-ov${theme === "light" ? " theme-light" : ""}`} onClick={e => e.target === e.currentTarget && setShareOpen(false)}>
-    <div className="dlg-box">
-      <div className="dlg-hdr">
-        <div className="dlg-bar" style={{ background: "#34D399" }} />
-        <div>
-          <div className="dlg-ttl">Send to Customers Pending</div>
-          <div className="dlg-sub">Green fields are auto-filled · Orange fields need manual entry</div>
-        </div>
-      </div>
-      <div className="dlg-body">
-        {PENDING_COLS.map(c => (
-          <div key={c.key}>
-            <Field col={c} value={shareForm[c.key]} onChange={setShareFld} />
-            {SHARE_AUTO_KEYS.has(c.key) && (
-              <div className="fld-note" style={{ color: "#34D399" }}>✓ Auto-filled from prospect</div>
-            )}
-            {SHARE_MANUAL_KEYS.has(c.key) && (
-              <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Fill manually</div>
-            )}
+      {dlg && createPortal(
+        <div className={`dlg-ov${theme === "light" ? " theme-light" : ""}`} onClick={e => e.target === e.currentTarget && setDlg(false)}>
+          <div className="dlg-box">
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background: ORANGE }} />
+              <div className="dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
+            </div>
+            <div className="dlg-body">
+              {COLS.map(c => <Field key={c.key} col={c} value={form[c.key]} onChange={setField} />)}
+            </div>
+            <div className="dlg-foot">
+              <button className="btn-cancel" onClick={() => setDlg(false)} disabled={saving}>Cancel</button>
+              <button
+                className="btn-ok"
+                style={{ background: `linear-gradient(135deg,${ORANGE},#ca6f1e)`, boxShadow: "0 4px 14px rgba(230,126,34,.3)", opacity: saving ? 0.7 : 1 }}
+                onClick={save}
+                disabled={saving}
+              >
+                {saving ? "Saving…" : editRow ? "Update" : "Save"}
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
-      <div className="dlg-foot">
-        <button className="btn-cancel" onClick={() => setShareOpen(false)} disabled={shareSaving}>
-          Cancel
-        </button>
-        <button className="btn-ok btn-success" onClick={saveShare} disabled={shareSaving}>
-          {shareSaving ? "Saving…" : "Save & Send to Pending"}
-        </button>
-      </div>
-    </div>
-  </div>,
-  document.body
-)}
+        </div>,
+        document.body
+      )}
+
+      {/* ── Delete Confirm ── */}
+      {confirm && createPortal(
+        <div className={`dlg-ov${theme === "light" ? " theme-light" : ""}`} onClick={e => e.target === e.currentTarget && setConfirm(false)}>
+          <div className="dlg-box" style={{ maxWidth: 370 }}>
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background: "#EF4444" }} />
+              <div className="dlg-ttl">Confirm Delete</div>
+            </div>
+            <div className="dlg-body">
+              <p style={{ margin: 0, lineHeight: 1.6, fontSize: ".84rem", color: isDark ? "white" : "#000" }}>
+                Are you sure you want to delete this prospects record?
+              </p>
+            </div>
+            <div className="dlg-foot">
+              <button className="btn-cancel" onClick={() => setConfirm(false)}>Cancel</button>
+              <button className="btn-ok btn-danger" onClick={del}>Delete</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Share → Customers Pending Dialog ── */}
+      {shareOpen && createPortal(
+        <div className={`dlg-ov${theme === "light" ? " theme-light" : ""}`} onClick={e => e.target === e.currentTarget && setShareOpen(false)}>
+          <div className="dlg-box">
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background: "#34D399" }} />
+              <div>
+                <div className="dlg-ttl">Send to Customers Pending</div>
+                <div className="dlg-sub">Green fields are auto-filled · Orange fields need manual entry</div>
+              </div>
+            </div>
+            <div className="dlg-body">
+              {PENDING_COLS.map(col => renderShareField(col))}
+            </div>
+            <div className="dlg-foot">
+              <button className="btn-cancel" onClick={() => setShareOpen(false)} disabled={shareSaving}>
+                Cancel
+              </button>
+              <button className="btn-ok btn-success" onClick={saveShare} disabled={shareSaving}>
+                {shareSaving ? "Saving…" : "Save & Send to Pending"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {snack && createPortal(<Snack {...snack} onClose={() => setSnack(null)} />, document.body)}
     </div>
