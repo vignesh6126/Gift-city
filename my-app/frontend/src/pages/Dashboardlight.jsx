@@ -502,7 +502,7 @@ export default function DashboardLight() {
   );
 }
 
-/* ─── Light-theme CSS string (plain template literal — NOT a CSS module) ─── */
+/* ─── Light-theme CSS string ─── */
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -593,6 +593,34 @@ button{font-family:var(--fb)}
 .module-panel{background:rgba(255,255,255,0.6);border:1px solid rgba(42,109,217,0.22);border-radius:18px;overflow:hidden;backdrop-filter:blur(8px);box-shadow:0 4px 24px rgba(10,30,100,0.08);animation:pIn .38s var(--spring) both;min-width:0;width:100%;flex:1;min-height:0}
 @keyframes pIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 
+/* ── MODULE WRAP & HEADER (fixes the broken layout in Customers/Products) ── */
+.mod-wrap{min-height:200px;width:100%;min-width:0;display:flex;flex-direction:column;height:100%}
+.mod-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(42,109,217,0.15);background:rgba(255,255,255,0.4);flex-shrink:0}
+.tabs-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tab-pill{padding:6px 16px;border-radius:50px;border:1px solid rgba(42,109,217,0.28);background:rgba(255,255,255,0.6);color:rgba(0,0,0,0.6);backdrop-filter:blur(8px);font-size:.8rem;font-weight:600;cursor:pointer;font-family:var(--fh);transition:all .28s var(--spring);white-space:nowrap}
+.tab-pill:hover{color:#111827;border-color:rgba(42,109,217,0.5);background:rgba(42,109,217,0.08)}
+.tab-active{background:linear-gradient(90deg,rgba(42,109,217,0.18),rgba(42,109,217,0.08))!important;color:#111827!important;border-color:rgba(42,109,217,0.45)!important;box-shadow:0 0 12px rgba(42,109,217,0.12);transform:translateY(-1px)}
+.add-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:none;cursor:pointer;color:#fff;font-size:.78rem;font-weight:700;transition:all .28s var(--spring);white-space:nowrap;flex-shrink:0}
+.add-btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+
+/* ── TABLE HEADER SECTION ── */
+.tbl-hdr{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(42,109,217,0.12);flex-wrap:wrap;background:rgba(255,255,255,0.3);flex-shrink:0}
+.tbl-title{font-weight:700;font-size:.95rem;color:#111827;letter-spacing:.04em}
+.tbl-badge{padding:3px 10px;border-radius:20px;font-size:.65rem;font-weight:700;background:rgba(42,109,217,0.1);color:#1a50b5;border:1px solid rgba(42,109,217,0.25)}
+
+/* ── TABLE SCROLL WRAPPERS ── */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;overflow-y:auto;flex:1}
+.tbl-wrap::-webkit-scrollbar{width:4px;height:4px}
+.tbl-wrap::-webkit-scrollbar-track{background:rgba(42,109,217,0.04)}
+.tbl-wrap::-webkit-scrollbar-thumb{background:rgba(42,109,217,0.25);border-radius:4px}
+.tbl-wrap::-webkit-scrollbar-thumb:hover{background:rgba(42,109,217,0.45)}
+.prod-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;overflow-y:auto;flex:1}
+.prod-tbl-wrap::-webkit-scrollbar{width:4px;height:4px}
+.prod-tbl-wrap::-webkit-scrollbar-track{background:rgba(42,109,217,0.04)}
+.prod-tbl-wrap::-webkit-scrollbar-thumb{background:rgba(42,109,217,0.25);border-radius:4px}
+.prod-tbl-wrap::-webkit-scrollbar-thumb:hover{background:rgba(42,109,217,0.45)}
+
+/* ── TABLES ── */
 .fd-tbl{width:100%;border-collapse:collapse;font-size:.83rem;min-width:600px}
 .fd-tbl thead tr{background:rgba(224,236,255,0.97)}
 .fd-tbl th{padding:11px 14px;text-align:left;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(30,65,150,0.8);border-bottom:1px solid rgba(42,109,217,0.2);white-space:nowrap}
@@ -608,13 +636,37 @@ button{font-family:var(--fb)}
 .spinner{width:28px;height:28px;border-radius:50%;border:3px solid rgba(42,109,217,0.15);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ── PRODUCTS TABLE SPECIFIC ── */
+.prod-tbl{width:100%;min-width:780px;border-collapse:collapse;table-layout:fixed}
+.prod-tbl th:nth-child(1){width:42px}
+.prod-tbl th:nth-child(2){width:14%}
+.prod-tbl th:nth-child(3){width:24%}
+.prod-tbl th:nth-child(4){width:11%}
+.prod-tbl th:nth-child(5){width:14%}
+.prod-tbl th:nth-child(6){width:17%}
+.prod-tbl th:nth-child(7){width:10%}
+.prod-tbl th:nth-child(8){width:108px}
+.prod-tbl td,.prod-tbl th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prod-tbl td:nth-child(3){white-space:normal;word-break:break-word}
+
+/* ── SEARCH BAR ── */
+.theme-light input::placeholder{color:rgba(0,0,0,0.28)}
+
+/* ── ACTION BUTTONS ── */
 .act-cell{display:flex;gap:5px;align-items:center;justify-content:center}
 .ab{width:28px;height:28px;border-radius:8px;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .22s var(--spring);flex-shrink:0}
 .ab:hover{transform:scale(1.15) translateY(-2px)}
 .ab-del{background:rgba(176,32,32,0.1);color:#b02020;border-color:rgba(176,32,32,0.25)}.ab-del:hover{background:#b02020;color:#fff}
 .ab-edit{background:rgba(42,109,217,0.1);color:#1a50b5;border-color:rgba(42,109,217,0.25)}.ab-edit:hover{background:#2a6dd9;color:#fff}
 .ab-promo{background:rgba(15,158,110,0.1);color:#0a7a56;border-color:rgba(15,158,110,0.25)}.ab-promo:hover{background:#0f9e6e;color:#fff}
+.ab-share{background:rgba(180,100,0,0.1);color:#92610a;border:1px solid rgba(180,100,0,0.2);border-radius:7px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}.ab-share:hover{background:rgba(180,100,0,0.22)}
 
+/* ── CHIPS ── */
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.71rem;font-weight:700}
+.chip-yes{background:rgba(15,158,110,0.12);color:#076642;border:1px solid rgba(15,158,110,0.25)}
+.chip-no{background:rgba(176,32,32,0.1);color:#b02020;border:1px solid rgba(176,32,32,0.2)}
+
+/* ── DIALOGS ── */
 .dlg-ov{position:fixed;inset:0;z-index:1000;background:rgba(10,20,80,0.3);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;animation:fIn .18s ease;box-sizing:border-box}
 @keyframes fIn{from{opacity:0}to{opacity:1}}
 .dlg-box{background:rgba(255,255,255,0.95);backdrop-filter:blur(44px);border:1px solid rgba(42,109,217,0.25);border-radius:18px;width:100%;max-width:min(450px,calc(100vw - 32px));overflow:hidden;box-shadow:0 8px 40px rgba(10,30,100,0.18),inset 0 1px 0 rgba(255,255,255,0.9);animation:dPop .32s var(--spring);box-sizing:border-box}
@@ -639,14 +691,14 @@ button{font-family:var(--fb)}
 .btn-primary{background:linear-gradient(135deg,#2a6dd9,#6b4ec6);box-shadow:0 4px 16px rgba(42,109,217,0.3)}
 .btn-success{background:linear-gradient(135deg,#0f9e6e,#059669);box-shadow:0 4px 16px rgba(15,158,110,0.25)}
 .btn-danger{background:linear-gradient(135deg,#b02020,#9a1a1a);box-shadow:0 4px 16px rgba(176,32,32,0.25)}
-.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.71rem;font-weight:700}
-.chip-yes{background:rgba(15,158,110,0.12);color:#076642;border:1px solid rgba(15,158,110,0.25)}
-.chip-no{background:rgba(176,32,32,0.1);color:#b02020;border:1px solid rgba(176,32,32,0.2)}
+
+/* ── SNACKS ── */
 .snack{position:fixed;bottom:22px;right:22px;z-index:2000;padding:11px 18px;border-radius:12px;font-size:.84rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,0.15);animation:snkIn .32s var(--spring)}
 @keyframes snkIn{from{opacity:0;transform:translateY(16px) scale(.9)}to{opacity:1;transform:none}}
 .snack-success{background:linear-gradient(135deg,#059669,#0f9e6e);color:#fff}
 .snack-error{background:linear-gradient(135deg,#b02020,#9a1a1a);color:#fff}
 
+/* ── THEME TOGGLE ── */
 .theme-toggle-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .theme-toggle-ico{font-size:.85rem;line-height:1;user-select:none;pointer-events:none;opacity:.8}
 .theme-switch{position:relative;width:42px;height:23px;cursor:pointer;flex-shrink:0}

@@ -584,7 +584,7 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
     setTransferSaving(false);
   }
 };
-  /* ── Shared dialog styles ── */
+  /* ── Shared dialog styles ── */   
   const ovStyle = {
     position: "fixed", inset: 0,
     background: isDark ? "rgba(0,0,10,0.55)" : "rgba(0,20,80,0.35)",
