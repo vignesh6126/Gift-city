@@ -138,9 +138,6 @@ function PendingActionsCard({ refreshTick, onNavigate }) {
   );
 }
 
-/* ══════════════════════════════════════════════════
-   MeetingsModal  — theme-aware portal popup
-══════════════════════════════════════════════════ */
 function MeetingsModal({ meetings, onClose, theme }) {
   const isDark = theme !== "light";
 
@@ -160,218 +157,102 @@ function MeetingsModal({ meetings, onClose, theme }) {
     return Math.round((dt - today) / 86400000);
   };
   const chipStyle = diff => {
-    if (isDark) {
-      if (diff === 0) return { bg: "rgba(52,211,153,0.18)",  color: "#34D399", border: "rgba(52,211,153,0.3)"  };
-      if (diff <= 3)  return { bg: "rgba(245,158,11,0.18)",  color: "#F59E0B", border: "rgba(245,158,11,0.3)"  };
-      return              { bg: "rgba(79,142,247,0.14)",  color: "#4F8EF7", border: "rgba(79,142,247,0.28)" };
-    } else {
-      if (diff === 0) return { bg: "rgba(15,158,110,0.14)", color: "#0a7a56", border: "rgba(15,158,110,0.28)" };
-      if (diff <= 3)  return { bg: "rgba(201,124,8,0.14)",  color: "#845004", border: "rgba(201,124,8,0.28)"  };
-      return              { bg: "rgba(42,109,217,0.12)",  color: "#1a50b5", border: "rgba(42,109,217,0.26)" };
-    }
+    if (diff === 0) return { bg: "rgba(52,211,153,0.18)",  color: "#34D399", border: "rgba(52,211,153,0.3)"  };
+    if (diff <= 3)  return { bg: "rgba(245,158,11,0.18)",  color: "#F59E0B", border: "rgba(245,158,11,0.3)"  };
+    return                 { bg: "rgba(79,142,247,0.14)",  color: "#4F8EF7", border: "rgba(79,142,247,0.28)" };
   };
-  const sourceBadge = src => {
-    if (isDark) {
-      return src === "prospect"
-        ? { bg: "rgba(230,126,34,0.15)", color: "#E67E22", border: "rgba(230,126,34,0.3)"   }
-        : { bg: "rgba(100,181,246,0.12)", color: "#64B5F6", border: "rgba(100,181,246,0.28)" };
-    } else {
-      return src === "prospect"
-        ? { bg: "rgba(201,124,8,0.12)",  color: "#845004", border: "rgba(201,124,8,0.28)"  }
-        : { bg: "rgba(42,109,217,0.1)",  color: "#1a50b5", border: "rgba(42,109,217,0.25)" };
-    }
-  };
+  const sourceBadge = src => src === "prospect"
+    ? { bg: "rgba(230,126,34,0.15)", color: "#E67E22", border: "rgba(230,126,34,0.3)" }
+    : { bg: "rgba(100,181,246,0.12)", color: "#64B5F6", border: "rgba(100,181,246,0.28)" };
 
-  /* ── design tokens ── */
-  const overlayBg      = isDark ? "rgba(0,0,10,0.72)"          : "rgba(10,20,80,0.35)";
-  const boxBg          = isDark ? "rgba(7,9,30,0.97)"           : "rgba(255,255,255,0.97)";
-  const boxBorder      = isDark ? "rgba(79,142,247,0.48)"       : "rgba(42,109,217,0.22)";
-  const boxShadow      = isDark
-    ? "0 8px 48px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.07)"
-    : "0 8px 40px rgba(10,30,100,0.18)";
-  const hdrBg          = isDark ? "rgba(79,142,247,0.05)"       : "rgba(42,109,217,0.06)";
-  const hdrBdr         = isDark ? "rgba(79,142,247,0.18)"       : "rgba(42,109,217,0.15)";
-  const accentBar      = isDark ? "linear-gradient(180deg,#4F8EF7,#A78BFA)" : "#2a6dd9";
-  const titleClr       = isDark ? "#fff"                        : "#111827";
-  const subClr         = isDark ? "rgba(180,210,255,0.5)"       : "rgba(0,0,0,0.5)";
-  const badgeBg        = isDark ? "rgba(167,139,250,0.15)"      : "rgba(100,72,195,0.1)";
-  const badgeClr       = isDark ? "#A78BFA"                     : "#4e30a0";
-  const badgeBdr       = isDark ? "rgba(167,139,250,0.3)"       : "rgba(100,72,195,0.25)";
-  const closeBg        = isDark ? "rgba(79,142,247,0.12)"       : "rgba(42,109,217,0.1)";
-  const closeBdr       = isDark ? "rgba(79,142,247,0.28)"       : "rgba(42,109,217,0.2)";
-  const closeClr       = isDark ? "rgba(180,210,255,0.8)"       : "rgba(0,0,0,0.6)";
-  const legendBg       = isDark ? "rgba(0,0,0,0.18)"            : "rgba(0,0,0,0.02)";
-  const rowBdr         = isDark ? "rgba(79,142,247,0.09)"       : "rgba(10,30,100,0.1)";
-  const rowHoverBg     = isDark ? "rgba(79,142,247,0.07)"       : "rgba(42,109,217,0.05)";
-  const numClr         = isDark ? "rgba(130,160,255,0.35)"      : "rgba(0,0,0,0.3)";
-  const nameClr        = isDark ? "rgba(220,235,255,0.9)"       : "#111827";
-  const emptyClr       = isDark ? "rgba(160,190,255,0.4)"       : "rgba(0,0,0,0.4)";
-  const scrollThumb    = isDark ? "rgba(79,142,247,0.28)"       : "rgba(42,109,217,0.2)";
-  const footBtnHoverBd = isDark ? "#4F8EF7"                     : "#2a6dd9";
-  const footBtnHoverCl = isDark ? "#4F8EF7"                     : "#2a6dd9";
-
-  const srcDot = src => src === "prospect"
-    ? (isDark ? "#E67E22" : "#c97c08")
-    : (isDark ? "#64B5F6" : "#2a6dd9");
+  const overlayBg   = "rgba(0,0,10,0.72)";
+  const boxBg       = "rgba(7,9,30,0.97)";
+  const boxBorder   = "rgba(79,142,247,0.48)";
+  const boxShadow   = "0 8px 48px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.07)";
+  const hdrBg       = "rgba(79,142,247,0.05)";
+  const hdrBdr      = "rgba(79,142,247,0.18)";
+  const accentBar   = "linear-gradient(180deg,#4F8EF7,#A78BFA)";
+  const titleClr    = "#fff";
+  const subClr      = "rgba(180,210,255,0.5)";
+  const badgeBg     = "rgba(167,139,250,0.15)";
+  const badgeClr    = "#A78BFA";
+  const badgeBdr    = "rgba(167,139,250,0.3)";
+  const closeBg     = "rgba(79,142,247,0.12)";
+  const closeBdr    = "rgba(79,142,247,0.28)";
+  const closeClr    = "rgba(180,210,255,0.8)";
+  const legendBg    = "rgba(0,0,0,0.18)";
+  const rowBdr      = "rgba(79,142,247,0.09)";
+  const rowHoverBg  = "rgba(79,142,247,0.07)";
+  const numClr      = "rgba(130,160,255,0.35)";
+  const nameClr     = "rgba(220,235,255,0.9)";
+  const emptyClr    = "rgba(160,190,255,0.4)";
+  const scrollThumb = "rgba(79,142,247,0.28)";
+  const srcDot = src => src === "prospect" ? "#E67E22" : "#64B5F6";
 
   return createPortal(
-    <div
-      onClick={e => e.target === e.currentTarget && onClose()}
-      style={{
-        position: "fixed", inset: 0, zIndex: 99999,
-        background: overlayBg,
-        backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 16, boxSizing: "border-box", overflowY: "auto",
-        animation: "umFadeIn .2s ease",
-      }}
-    >
+    <div onClick={e => e.target === e.currentTarget && onClose()} style={{
+      position: "fixed", inset: 0, zIndex: 99999, background: overlayBg,
+      backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: 16, boxSizing: "border-box", overflowY: "auto", animation: "umFadeIn .2s ease",
+    }}>
       <style>{`
         @keyframes umFadeIn  { from{opacity:0} to{opacity:1} }
         @keyframes umSlideIn { from{opacity:0;transform:translateY(20px) scale(.96)} to{opacity:1;transform:none} }
         .um-row:hover  { background: ${rowHoverBg} !important; }
-        .um-close:hover { background: ${isDark ? "rgba(79,142,247,0.25)" : "rgba(42,109,217,0.18)"} !important; color:${isDark ? "#fff" : "#000"} !important; }
+        .um-close:hover { background: rgba(79,142,247,0.25) !important; color:#fff !important; }
         .um-scroll::-webkit-scrollbar { width:4px; }
         .um-scroll::-webkit-scrollbar-thumb { background:${scrollThumb}; border-radius:4px; }
-        .um-foot-btn:hover { border-color:${footBtnHoverBd} !important; color:${footBtnHoverCl} !important; }
+        .um-foot-btn:hover { border-color:#4F8EF7 !important; color:#4F8EF7 !important; }
       `}</style>
-
       <div className="um-scroll" style={{
-        background: boxBg,
-        backdropFilter: "blur(48px) saturate(180%)",
-        WebkitBackdropFilter: "blur(48px) saturate(180%)",
-        border: `1px solid ${boxBorder}`,
-        borderRadius: 22,
-        boxShadow: boxShadow,
+        background: boxBg, backdropFilter: "blur(48px) saturate(180%)",
+        border: `1px solid ${boxBorder}`, borderRadius: 22, boxShadow: boxShadow,
         width: "100%", maxWidth: "min(540px, calc(100vw - 32px))",
-        maxHeight: "calc(100vh - 48px)",
-        display: "flex", flexDirection: "column",
+        maxHeight: "calc(100vh - 48px)", display: "flex", flexDirection: "column",
         animation: "umSlideIn .32s cubic-bezier(0.34,1.56,0.64,1)",
         boxSizing: "border-box", overflow: "hidden",
       }}>
-
-        {/* ── Header ── */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 12,
-          padding: "18px 22px 15px",
-          borderBottom: `1px solid ${hdrBdr}`,
-          background: hdrBg, flexShrink: 0,
-        }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "18px 22px 15px", borderBottom: `1px solid ${hdrBdr}`, background: hdrBg, flexShrink: 0 }}>
           <div style={{ width: 4, height: 26, borderRadius: 2, background: accentBar, flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 800, fontSize: "1rem", color: titleClr, letterSpacing: ".02em", fontFamily: "'Inter',sans-serif" }}>
-              Upcoming Meetings
-            </div>
-            <div style={{ fontSize: ".7rem", color: subClr, marginTop: 3, fontFamily: "'Inter',sans-serif" }}>
-              Prospects &amp; Pending Clients · sorted by nearest date
-            </div>
+            <div style={{ fontWeight: 800, fontSize: "1rem", color: titleClr, letterSpacing: ".02em", fontFamily: "'Inter',sans-serif" }}>Upcoming Meetings</div>
+            <div style={{ fontSize: ".7rem", color: subClr, marginTop: 3, fontFamily: "'Inter',sans-serif" }}>Prospects &amp; Pending Clients · sorted by nearest date</div>
           </div>
-          <div style={{
-            padding: "3px 12px", borderRadius: 20,
-            background: badgeBg, border: `1px solid ${badgeBdr}`,
-            color: badgeClr, fontSize: ".72rem", fontWeight: 700,
-            fontFamily: "'Inter',sans-serif", flexShrink: 0,
-          }}>
-            {meetings.length} total
-          </div>
-          <button className="um-close" onClick={onClose} style={{
-            background: closeBg, border: `1px solid ${closeBdr}`,
-            borderRadius: 9, width: 32, height: 32,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: closeClr, fontSize: "1.15rem",
-            fontWeight: 700, transition: "all .18s", flexShrink: 0, lineHeight: 1,
-          }}>×</button>
+          <div style={{ padding: "3px 12px", borderRadius: 20, background: badgeBg, border: `1px solid ${badgeBdr}`, color: badgeClr, fontSize: ".72rem", fontWeight: 700, fontFamily: "'Inter',sans-serif", flexShrink: 0 }}>{meetings.length} total</div>
+          <button className="um-close" onClick={onClose} style={{ background: closeBg, border: `1px solid ${closeBdr}`, borderRadius: 9, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: closeClr, fontSize: "1.15rem", fontWeight: 700, transition: "all .18s", flexShrink: 0, lineHeight: 1 }}>×</button>
         </div>
-
-        {/* ── Legend ── */}
-        <div style={{
-          display: "flex", gap: 10, padding: "10px 22px",
-          borderBottom: `1px solid ${hdrBdr}`,
-          background: legendBg, flexShrink: 0, flexWrap: "wrap", alignItems: "center",
-        }}>
+        <div style={{ display: "flex", gap: 10, padding: "10px 22px", borderBottom: `1px solid ${hdrBdr}`, background: legendBg, flexShrink: 0, flexWrap: "wrap", alignItems: "center" }}>
           {[{ src: "prospect", label: "Prospect" }, { src: "pending", label: "Pending Client" }].map(({ src, label }) => {
             const b = sourceBadge(src);
             return (
-              <span key={src} style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "3px 11px", borderRadius: 20,
-                background: b.bg, border: `1px solid ${b.border}`,
-                color: b.color, fontSize: ".65rem", fontWeight: 700,
-                fontFamily: "'Inter',sans-serif",
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: b.color, display: "inline-block", flexShrink: 0 }} />
-                {label}
+              <span key={src} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 11px", borderRadius: 20, background: b.bg, border: `1px solid ${b.border}`, color: b.color, fontSize: ".65rem", fontWeight: 700, fontFamily: "'Inter',sans-serif" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: b.color, display: "inline-block", flexShrink: 0 }} />{label}
               </span>
             );
           })}
-          <span style={{ fontSize: ".63rem", color: isDark ? "rgba(120,150,220,0.4)" : "rgba(0,0,0,0.3)", fontFamily: "'Inter',sans-serif" }}>
-            · chip colour = urgency
-          </span>
+          <span style={{ fontSize: ".63rem", color: "rgba(120,150,220,0.4)", fontFamily: "'Inter',sans-serif" }}>· chip colour = urgency</span>
         </div>
-
-        {/* ── Body ── */}
         <div className="um-scroll" style={{ overflowY: "auto", flex: 1 }}>
           {meetings.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "52px 20px", color: emptyClr, fontSize: ".84rem", fontStyle: "italic" }}>
-              No upcoming meetings found
-            </div>
+            <div style={{ textAlign: "center", padding: "52px 20px", color: emptyClr, fontSize: ".84rem", fontStyle: "italic" }}>No upcoming meetings found</div>
           ) : meetings.map((m, i) => {
-            const diff  = daysDiff(m.next_action_date);
-            const chip  = chipStyle(diff);
+            const diff = daysDiff(m.next_action_date);
+            const chip = chipStyle(diff);
             const badge = sourceBadge(m._source);
             return (
-              <div key={`${m._source}-${m.id}-${i}`} className="um-row" style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "12px 22px",
-                borderBottom: `1px solid ${rowBdr}`,
-                transition: "background .15s", cursor: "default",
-              }}>
-                <span style={{ fontSize: ".7rem", fontWeight: 700, color: numClr, width: 24, textAlign: "right", flexShrink: 0 }}>
-                  {i + 1}
-                </span>
+              <div key={`${m._source}-${m.id}-${i}`} className="um-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 22px", borderBottom: `1px solid ${rowBdr}`, transition: "background .15s", cursor: "default" }}>
+                <span style={{ fontSize: ".7rem", fontWeight: 700, color: numClr, width: 24, textAlign: "right", flexShrink: 0 }}>{i + 1}</span>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: srcDot(m._source), flexShrink: 0, display: "inline-block" }} />
-                <span style={{
-                  flex: 1, minWidth: 0, fontSize: ".84rem", fontWeight: 600,
-                  color: nameClr, overflow: "hidden", textOverflow: "ellipsis",
-                  whiteSpace: "nowrap", fontFamily: "'Inter',sans-serif",
-                }} title={m.client_name}>
-                  {m.client_name || "—"}
-                </span>
-                <span style={{
-                  padding: "2px 9px", borderRadius: 20,
-                  background: badge.bg, border: `1px solid ${badge.border}`,
-                  color: badge.color, fontSize: ".62rem", fontWeight: 700,
-                  fontFamily: "'Inter',sans-serif", whiteSpace: "nowrap", flexShrink: 0,
-                }}>
-                  {m._source === "prospect" ? "Prospect" : "Pending"}
-                </span>
-                <span style={{
-                  padding: "3px 10px", borderRadius: 20,
-                  background: chip.bg, border: `1px solid ${chip.border}`,
-                  color: chip.color, fontSize: ".68rem", fontWeight: 700,
-                  fontFamily: "'Inter',sans-serif", whiteSpace: "nowrap", flexShrink: 0,
-                }}>
-                  {fmtDate(m.next_action_date)}
-                </span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: ".84rem", fontWeight: 600, color: nameClr, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "'Inter',sans-serif" }} title={m.client_name}>{m.client_name || "—"}</span>
+                <span style={{ padding: "2px 9px", borderRadius: 20, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color, fontSize: ".62rem", fontWeight: 700, fontFamily: "'Inter',sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>{m._source === "prospect" ? "Prospect" : "Pending"}</span>
+                <span style={{ padding: "3px 10px", borderRadius: 20, background: chip.bg, border: `1px solid ${chip.border}`, color: chip.color, fontSize: ".68rem", fontWeight: 700, fontFamily: "'Inter',sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>{fmtDate(m.next_action_date)}</span>
               </div>
             );
           })}
         </div>
-
-        {/* ── Footer ── */}
-        <div style={{
-          padding: "12px 22px", borderTop: `1px solid ${hdrBdr}`,
-          background: hdrBg, display: "flex", justifyContent: "flex-end", flexShrink: 0,
-        }}>
-          <button className="um-foot-btn" onClick={onClose} style={{
-            padding: "8px 20px", borderRadius: 10,
-            border: `1px solid ${closeBdr}`, background: "none",
-            color: closeClr, cursor: "pointer",
-            fontSize: ".8rem", fontWeight: 600, fontFamily: "'Inter',sans-serif",
-            transition: "all .18s",
-          }}>
-            Close
-          </button>
+        <div style={{ padding: "12px 22px", borderTop: `1px solid ${hdrBdr}`, background: hdrBg, display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
+          <button className="um-foot-btn" onClick={onClose} style={{ padding: "8px 20px", borderRadius: 10, border: `1px solid ${closeBdr}`, background: "none", color: closeClr, cursor: "pointer", fontSize: ".8rem", fontWeight: 600, fontFamily: "'Inter',sans-serif", transition: "all .18s" }}>Close</button>
         </div>
       </div>
     </div>,
@@ -379,16 +260,12 @@ function MeetingsModal({ meetings, onClose, theme }) {
   );
 }
 
-/* ══════════════════════════════════════════════════
-   UpcomingMeetingsCard — fetches from BOTH tables
-══════════════════════════════════════════════════ */
 function UpcomingMeetingsCard({ refreshTick, theme = "dark" }) {
   const [allMeetings, setAllMeetings] = useState([]);
   const [total,       setTotal]       = useState(null);
   const [loading,     setLoading]     = useState(true);
   const [modalOpen,   setModalOpen]   = useState(false);
   const PREVIEW = 3;
-  const isDark  = theme !== "light";
 
   useEffect(() => {
     let cancelled = false;
@@ -401,18 +278,14 @@ function UpcomingMeetingsCard({ refreshTick, theme = "dark" }) {
         ]);
         if (cancelled) return;
         const now = new Date(); now.setHours(0, 0, 0, 0);
-
-        const fromInterested = (Array.isArray(intData)  ? intData  : [])
+        const fromInterested = (Array.isArray(intData) ? intData : [])
           .filter(r => r.next_action_date && new Date(r.next_action_date) >= now)
           .map(r => ({ ...r, _source: "prospect" }));
-
         const fromPending = (Array.isArray(pendData) ? pendData : [])
           .filter(r => r.next_action_date && new Date(r.next_action_date) >= now)
           .map(r => ({ ...r, _source: "pending" }));
-
         const combined = [...fromInterested, ...fromPending]
           .sort((a, b) => new Date(a.next_action_date) - new Date(b.next_action_date));
-
         setAllMeetings(combined);
         setTotal(combined.length);
       } catch {
@@ -440,30 +313,10 @@ function UpcomingMeetingsCard({ refreshTick, theme = "dark" }) {
     return Math.round((dt - today) / 86400000);
   };
   const chipColor = diff => {
-    if (isDark) {
-      if (diff === 0) return { bg: "rgba(52,211,153,0.18)",  color: "#34D399", border: "rgba(52,211,153,0.3)"  };
-      if (diff <= 3)  return { bg: "rgba(245,158,11,0.18)",  color: "#F59E0B", border: "rgba(245,158,11,0.3)"  };
-      return              { bg: "rgba(79,142,247,0.14)",  color: "#4F8EF7", border: "rgba(79,142,247,0.28)" };
-    } else {
-      if (diff === 0) return { bg: "rgba(15,158,110,0.14)", color: "#0a7a56", border: "rgba(15,158,110,0.28)" };
-      if (diff <= 3)  return { bg: "rgba(201,124,8,0.14)",  color: "#845004", border: "rgba(201,124,8,0.28)"  };
-      return              { bg: "rgba(42,109,217,0.12)",  color: "#1a50b5", border: "rgba(42,109,217,0.26)" };
-    }
+    if (diff === 0) return { bg: "rgba(52,211,153,0.18)",  color: "#34D399", border: "rgba(52,211,153,0.3)"  };
+    if (diff <= 3)  return { bg: "rgba(245,158,11,0.18)",  color: "#F59E0B", border: "rgba(245,158,11,0.3)"  };
+    return                 { bg: "rgba(79,142,247,0.14)",  color: "#4F8EF7", border: "rgba(79,142,247,0.28)" };
   };
-
-  const countColor  = isDark ? "#A78BFA"                : "#4e30a0";
-  const labelColor  = isDark ? "rgba(200,220,255,0.75)" : "rgba(0,0,0,0.6)";
-  const rowLblColor = isDark ? "rgba(180,210,255,0.65)" : "rgba(0,0,0,0.6)";
-  const emptyColor  = isDark ? "rgba(160,190,255,0.4)"  : "rgba(10,45,120,0.4)";
-  const iconBg      = isDark ? "rgba(167,139,250,0.16)" : "rgba(90,62,185,0.1)";
-  const iconColor   = isDark ? "#A78BFA"                : "#4e30a0";
-  const iconBorder  = isDark ? "rgba(167,139,250,0.28)" : "rgba(10,30,100,0.2)";
-  const moreBtnBg   = isDark ? "rgba(167,139,250,0.1)"  : "rgba(100,72,195,0.08)";
-  const moreBtnBdr  = isDark ? "rgba(167,139,250,0.35)" : "rgba(100,72,195,0.3)";
-  const moreBtnClr  = isDark ? "#A78BFA"                : "#4e30a0";
-  const srcDot = src => src === "prospect"
-    ? (isDark ? "#E67E22" : "#c97c08")
-    : (isDark ? "#64B5F6" : "#2a6dd9");
 
   const preview = allMeetings.slice(0, PREVIEW);
 
@@ -471,47 +324,37 @@ function UpcomingMeetingsCard({ refreshTick, theme = "dark" }) {
     <>
       <div className="side-card side-card-purple">
         <div className="side-card-header">
-          <div className="side-card-icon-wrap" style={{ background: iconBg, color: iconColor, border: `1px solid ${iconBorder}` }}>
+          <div className="side-card-icon-wrap" style={{ background: "rgba(167,139,250,0.16)", color: "#A78BFA", border: "1px solid rgba(167,139,250,0.28)" }}>
             <IcoCalendar size={16} />
           </div>
-          <span
-            className="side-card-label"
-            style={{ color: labelColor, cursor: "pointer", textDecoration: "underline dotted", textUnderlineOffset: 3 }}
-            onClick={() => setModalOpen(true)}
-          >
+          <span className="side-card-label" style={{ color: "rgba(200,220,255,0.75)", cursor: "pointer", textDecoration: "underline dotted", textUnderlineOffset: 3 }} onClick={() => setModalOpen(true)}>
             Upcoming Meetings
           </span>
           {loading
             ? <div className="sc-skel" style={{ width: 36, height: 28, marginLeft: "auto", borderRadius: 6 }} />
-            : <span className="side-card-count" style={{ color: countColor }}>{total}</span>}
+            : <span className="side-card-count" style={{ color: "#A78BFA" }}>{total}</span>}
         </div>
         <div className="side-card-divider" />
         <div className="side-card-rows">
           {loading
             ? [1,2,3].map(i => <div key={i} className="sc-skel" style={{ width:"100%",height:22,borderRadius:6,marginBottom:4 }} />)
             : allMeetings.length === 0
-              ? <div style={{ color:emptyColor,fontSize:".71rem",textAlign:"center",padding:"8px 0",fontStyle:"italic" }}>No upcoming meetings</div>
+              ? <div style={{ color:"rgba(160,190,255,0.4)",fontSize:".71rem",textAlign:"center",padding:"8px 0",fontStyle:"italic" }}>No upcoming meetings</div>
               : <>
                   {preview.map((m, i) => {
                     const diff = daysDiff(m.next_action_date);
                     const chip = chipColor(diff);
+                    const srcDot = m._source === "prospect" ? "#E67E22" : "#64B5F6";
                     return (
                       <div key={`${m._source}-${m.id}-${i}`} className="side-card-row" style={{ alignItems:"center" }}>
-                        <span style={{ width:7,height:7,borderRadius:"50%",background:srcDot(m._source),flexShrink:0,display:"inline-block" }} />
-                        <span className="side-card-row-lbl" style={{ color:rowLblColor,overflow:"hidden",textOverflow:"ellipsis",maxWidth:82,whiteSpace:"nowrap" }} title={m.client_name}>
-                          {m.client_name || "—"}
-                        </span>
-                        <span style={{ fontSize:".63rem",fontWeight:700,padding:"2px 6px",borderRadius:20,background:chip.bg,color:chip.color,border:`1px solid ${chip.border}`,whiteSpace:"nowrap",marginLeft:"auto",flexShrink:0 }}>
-                          {fmtShort(m.next_action_date)}
-                        </span>
+                        <span style={{ width:7,height:7,borderRadius:"50%",background:srcDot,flexShrink:0,display:"inline-block" }} />
+                        <span className="side-card-row-lbl" style={{ color:"rgba(180,210,255,0.65)",overflow:"hidden",textOverflow:"ellipsis",maxWidth:82,whiteSpace:"nowrap" }} title={m.client_name}>{m.client_name || "—"}</span>
+                        <span style={{ fontSize:".63rem",fontWeight:700,padding:"2px 6px",borderRadius:20,background:chip.bg,color:chip.color,border:`1px solid ${chip.border}`,whiteSpace:"nowrap",marginLeft:"auto",flexShrink:0 }}>{fmtShort(m.next_action_date)}</span>
                       </div>
                     );
                   })}
                   {allMeetings.length > PREVIEW && (
-                    <button
-                      onClick={() => setModalOpen(true)}
-                      style={{ marginTop:6,width:"100%",background:moreBtnBg,border:`1px dashed ${moreBtnBdr}`,borderRadius:8,color:moreBtnClr,fontSize:".69rem",fontWeight:700,padding:"5px 0",cursor:"pointer",fontFamily:"inherit",letterSpacing:".03em" }}
-                    >
+                    <button onClick={() => setModalOpen(true)} style={{ marginTop:6,width:"100%",background:"rgba(167,139,250,0.1)",border:"1px dashed rgba(167,139,250,0.35)",borderRadius:8,color:"#A78BFA",fontSize:".69rem",fontWeight:700,padding:"5px 0",cursor:"pointer",fontFamily:"inherit",letterSpacing:".03em" }}>
                       +{allMeetings.length - PREVIEW} more · View all
                     </button>
                   )}
@@ -519,21 +362,11 @@ function UpcomingMeetingsCard({ refreshTick, theme = "dark" }) {
           }
         </div>
       </div>
-
-      {modalOpen && (
-        <MeetingsModal
-          meetings={allMeetings}
-          onClose={() => setModalOpen(false)}
-          theme={theme}
-        />
-      )}
+      {modalOpen && <MeetingsModal meetings={allMeetings} onClose={() => setModalOpen(false)} theme="dark" />}
     </>
   );
 }
 
-/* ══════════════════════════════════════════════════
-   Dashboard  (dark)
-══════════════════════════════════════════════════ */
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -579,7 +412,6 @@ export default function Dashboard() {
         <div className="page-card">
           {sideOpen && <div className="side-overlay" onClick={() => setSideOpen(false)} />}
 
-          {/* ════ SIDEBAR ════ */}
           <aside className={`side ${sideOpen ? "side-open" : ""}`}>
             <div className="side-logo">
               <div className="logo-box">
@@ -608,7 +440,6 @@ export default function Dashboard() {
             </nav>
           </aside>
 
-          {/* ════ MAIN ════ */}
           <div className="main">
             <header className="topbar">
               <button className="menu-btn" onClick={() => setSideOpen(true)} aria-label="menu"><IcoMenu /></button>
@@ -668,38 +499,38 @@ const CSS = `
   --spring:cubic-bezier(0.34,1.56,0.64,1);--smooth:cubic-bezier(0.4,0,0.2,1);
   --fh:'Inter',sans-serif;--fb:'Inter',sans-serif;
 }
-html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden}
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
 body{font-family:var(--fb);background:transparent;color:#fff;padding:12px;box-sizing:border-box}
 button{font-family:var(--fb)}
-.root{min-height:100vh;display:flex;align-items:stretch;background:transparent;box-sizing:border-box;overflow:hidden}
-.page-card{display:flex;flex:1;min-width:0;gap:10px;align-items:stretch;border-radius:20px;border:1px solid rgba(79,142,247,0.35);box-shadow:0 0 40px rgba(30,60,180,0.25),0 0 80px rgba(10,20,80,0.4);padding:10px;background:transparent;overflow:hidden;width:100%}
+.root{height:100vh;display:flex;align-items:stretch;background:transparent;box-sizing:border-box;overflow:hidden}
+.page-card{display:flex;flex:1;min-width:0;gap:10px;align-items:stretch;border-radius:20px;border:1px solid rgba(79,142,247,0.35);box-shadow:0 0 40px rgba(30,60,180,0.25),0 0 80px rgba(10,20,80,0.4);padding:10px;background:transparent;overflow:hidden;width:100%;height:100%}
 .side{width:var(--side-w);flex-shrink:0;background:transparent;border:1px solid rgba(79,142,247,0.35);border-radius:20px;box-shadow:0 0 30px rgba(30,60,180,0.2);display:flex;flex-direction:column;z-index:300;transition:transform .4s var(--spring);position:relative;overflow:hidden}
 .side-overlay{position:fixed;inset:0;z-index:299;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px)}
-.side-logo{padding:20px 14px 18px;border-bottom:1px solid rgba(79,142,247,0.2)}
+.side-logo{padding:20px 14px 18px;border-bottom:1px solid rgba(79,142,247,0.2);flex-shrink:0}
 .logo-box{border:1.5px solid rgba(79,142,247,0.72);border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;background:rgba(79,142,247,0.06);box-shadow:0 0 32px rgba(79,142,247,0.22),inset 0 1px 0 rgba(255,255,255,0.07)}
 .logo-words{display:flex;flex-direction:column;align-items:center;width:100%;gap:3px}
 .logo-main{font-weight:700;font-size:.85rem;color:#fff;letter-spacing:.1em;text-align:center;line-height:1.3;word-break:break-word;text-shadow:0 0 22px rgba(79,142,247,0.65)}
 .logo-est{font-size:.63rem;color:rgba(160,190,255,0.65);letter-spacing:.16em;text-align:center;text-transform:uppercase;margin-top:2px}
-.side-nav{flex:1;padding:18px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.side-nav{flex:1;padding:18px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;min-height:0}
 .nav-btn{width:100%;display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;border:1px solid transparent;background:transparent;cursor:pointer;color:rgba(200,220,255,0.75);font-size:.88rem;font-weight:500;transition:all .22s var(--smooth);text-align:left;letter-spacing:.01em}
 .nav-btn:hover{color:#fff;background:rgba(79,142,247,0.1);border-color:rgba(79,142,247,0.22)}
 .nav-active{color:#fff!important;background:linear-gradient(90deg,rgba(79,142,247,0.38),rgba(79,142,247,0.15))!important;border-color:rgba(79,142,247,0.5)!important;box-shadow:0 0 18px rgba(79,142,247,0.2);position:relative}
 .nav-active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:3px;border-radius:0 2px 2px 0;background:linear-gradient(180deg,var(--blue),var(--purple));box-shadow:0 0 8px var(--blue)}
 .nav-ico{display:flex;align-items:center;flex-shrink:0}
 .nav-lbl{font-weight:500;font-size:.72rem;letter-spacing:.04em}
-.logout-card{margin:8px 0 16px;padding:6px;border-radius:12px;border:1px solid rgba(79,142,247,0.25);background:rgba(79,142,247,0.05);transition:transform .28s var(--spring),box-shadow .28s}
+.logout-card{margin:8px 0 16px;padding:6px;border-radius:12px;border:1px solid rgba(79,142,247,0.25);background:rgba(79,142,247,0.05);transition:transform .28s var(--spring),box-shadow .28s;flex-shrink:0}
 .logout-card:hover{transform:scale(1.06) translateY(-3px);box-shadow:0 10px 30px rgba(79,142,247,0.3)}
 .logout-nav{width:100%;margin-bottom:0}
 .logout-nav:hover{color:#fff!important;background:transparent!important;border-color:transparent!important}
-.main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;z-index:1;background:transparent;border-radius:20px;overflow:hidden}
-.topbar{height:var(--hdr-h);display:flex;align-items:center;padding:0 12px;gap:8px;background:transparent;position:sticky;top:0;z-index:200;min-width:0;overflow:hidden}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;z-index:1;background:transparent;border-radius:20px;overflow:hidden;min-height:0}
+.topbar{height:var(--hdr-h);display:flex;align-items:center;padding:0 12px;gap:8px;background:transparent;z-index:200;min-width:0;overflow:hidden;flex-shrink:0}
 .menu-btn{display:none;background:none;border:none;color:#fff;cursor:pointer;padding:5px;border-radius:7px;flex-shrink:0}
 .topbar-title{flex:1;min-width:0;font-weight:700;font-size:1.1rem;color:#fff;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .user-chip{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;background:rgba(12,20,65,0.5);border:1px solid rgba(79,142,247,0.45);border-radius:40px;backdrop-filter:blur(14px);flex-shrink:0}
 .user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2050c8,#6622bb);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff;box-shadow:0 0 14px rgba(79,142,247,0.5)}
 .user-name{font-size:.8rem;font-weight:600;color:#fff;letter-spacing:.02em;white-space:nowrap}
-.content{flex:1;padding:0 12px 24px;display:flex;flex-direction:column;gap:14px;min-width:0;overflow:hidden}
-.stats-card{border:1px solid rgba(79,142,247,0.32);border-radius:20px;padding:12px;background:transparent;width:100%;box-sizing:border-box}
+.content{flex:1;padding:0 12px 12px;display:flex;flex-direction:column;gap:14px;min-width:0;overflow:hidden;min-height:0}
+.stats-card{border:1px solid rgba(79,142,247,0.32);border-radius:20px;padding:12px;background:transparent;width:100%;box-sizing:border-box;flex-shrink:0}
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
 .sc{position:relative;overflow:hidden;border-radius:14px;border:1px solid rgba(79,142,247,0.45);padding:10px 12px;transition:transform .35s var(--spring),box-shadow .35s;cursor:default;box-shadow:0 0 14px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.05);min-width:0}
 .sc:hover{transform:translateY(-4px) scale(1.015)}
@@ -715,10 +546,14 @@ button{font-family:var(--fb)}
 .sc-sub{font-size:.55rem;color:var(--accent);margin-top:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sc-skel{height:24px;width:60px;border-radius:6px;background:rgba(255,255,255,0.07);animation:sk 1.4s infinite}
 @keyframes sk{0%,100%{opacity:.4}50%{opacity:.8}}
-.dashboard-bottom{display:flex;gap:12px;align-items:flex-start;min-width:0}
-.amc-table-col{flex:1;min-width:0;overflow:hidden}
-.side-cards-col{display:flex;flex-direction:column;gap:12px;width:190px;flex-shrink:0}
-.side-card{border-radius:16px;border:1px solid rgba(79,142,247,0.28);padding:14px 12px 12px;display:flex;flex-direction:column;background:rgba(8,12,48,0.45);backdrop-filter:blur(8px);animation:pIn .38s var(--spring) both;transition:transform .28s var(--spring),box-shadow .28s;position:relative;overflow:hidden}
+.dashboard-bottom{display:flex;gap:12px;align-items:stretch;min-width:0;flex:1;min-height:0;overflow:hidden}
+.amc-table-col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.side-cards-col{display:flex;flex-direction:column;gap:12px;width:190px;flex-shrink:0;overflow-y:auto;max-height:100%;scrollbar-width:thin;scrollbar-color:rgba(167,139,250,0.4) transparent;padding-right:2px}
+.side-cards-col::-webkit-scrollbar{width:3px}
+.side-cards-col::-webkit-scrollbar-track{background:transparent}
+.side-cards-col::-webkit-scrollbar-thumb{background:rgba(167,139,250,0.4);border-radius:3px}
+.side-cards-col::-webkit-scrollbar-thumb:hover{background:rgba(167,139,250,0.65)}
+.side-card{border-radius:16px;border:1px solid rgba(79,142,247,0.28);padding:14px 12px 12px;display:flex;flex-direction:column;background:rgba(8,12,48,0.45);backdrop-filter:blur(8px);animation:pIn .38s var(--spring) both;transition:transform .28s var(--spring),box-shadow .28s;position:relative;overflow:hidden;flex-shrink:0}
 .side-card-red{border-color:rgba(248,113,113,0.28);box-shadow:0 0 24px rgba(248,113,113,0.07)}
 .side-card-purple{border-color:rgba(167,139,250,0.28);box-shadow:0 0 24px rgba(167,139,250,0.07)}
 .side-card:hover{transform:translateY(-3px) scale(1.01)}
@@ -736,7 +571,7 @@ button{font-family:var(--fb)}
 .side-card-row-val{font-weight:800;font-size:.76rem;flex-shrink:0}
 .pending-nav-row{border-radius:7px;padding:3px 5px;margin:0 -5px;transition:background .18s,transform .15s}
 .pending-nav-row:hover{background:rgba(79,142,247,0.1);transform:translateX(2px)}
-.module-panel{background:rgba(8,12,45,0.32);border:1px solid rgba(79,142,247,0.28);border-radius:18px;overflow:hidden;backdrop-filter:blur(4px);box-shadow:0 0 0 1px rgba(79,142,247,0.08),0 8px 40px rgba(0,0,60,0.35);animation:pIn .38s var(--spring) both;min-width:0;width:100%}
+.module-panel{background:rgba(8,12,45,0.32);border:1px solid rgba(79,142,247,0.28);border-radius:18px;overflow:hidden;backdrop-filter:blur(4px);box-shadow:0 0 0 1px rgba(79,142,247,0.08),0 8px 40px rgba(0,0,60,0.35);animation:pIn .38s var(--spring) both;min-width:0;width:100%;flex:1;min-height:0}
 @keyframes pIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 .mod-wrap{min-height:200px;width:100%;min-width:0}
 .mod-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(79,142,247,0.15)}
@@ -776,7 +611,7 @@ button{font-family:var(--fb)}
 .chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.71rem;font-weight:700}
 .chip-yes{background:rgba(52,211,153,0.13);color:var(--green);border:1px solid rgba(52,211,153,0.24)}
 .chip-no{background:rgba(248,113,113,0.1);color:var(--red);border:1px solid rgba(248,113,113,0.2)}
-.fd-spin{display:flex;justify-content:center;align-items:center;padding:56px}
+.fd-spin{display:flex;justify-content:center;align-items:center;padding:56px;flex-shrink:0}
 .spinner{width:28px;height:28px;border-radius:50%;border:3px solid rgba(79,142,247,0.18);border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .dlg-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,10,0.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;animation:fIn .18s ease;box-sizing:border-box}
@@ -817,13 +652,14 @@ button{font-family:var(--fb)}
 .theme-switch input:checked ~ .theme-switch-thumb{transform:translateX(19px)}
 @media(max-width:1024px){.stats-row{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){
-  .root{padding:6px}.page-card{padding:6px;gap:6px}
+  .root{padding:6px;height:100dvh}.page-card{padding:6px;gap:6px}
   .side{position:fixed;top:6px;left:6px;bottom:6px;border-radius:20px;transform:translateX(calc(-100% - 20px));background:rgba(5,8,28,0.97);backdrop-filter:blur(20px)}
   .side-open{transform:translateX(0)}.menu-btn{display:flex}
   .stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
-  .content{padding:0 8px 16px}.topbar{padding:0 8px;gap:6px}.topbar-title{font-size:.95rem}
-  .user-name{display:none}.dashboard-bottom{flex-direction:column}
-  .side-cards-col{width:100%;flex-direction:row}.side-card{flex:1}.module-panel{border-radius:14px}
+  .content{padding:0 8px 10px}.topbar{padding:0 8px;gap:6px}.topbar-title{font-size:.95rem}
+  .user-name{display:none}.dashboard-bottom{flex-direction:column;overflow-y:auto}
+  .side-cards-col{width:100%;flex-direction:row;overflow-y:visible;max-height:none}
+  .side-card{flex:1}.module-panel{border-radius:14px}
 }
 @media(max-width:520px){
   .stats-row{grid-template-columns:1fr 1fr;gap:6px}.sc{padding:8px 10px}

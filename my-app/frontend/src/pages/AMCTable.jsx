@@ -478,7 +478,6 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
         { value: "pending",   label: "Inactive"      },
     ];
 
-    // Products: unique product names across all AMCs
     const allProductNames = [...new Set(
         Object.values(productsMap).flat().map(p => p.product_name).filter(Boolean)
     )].sort((a, b) => a.localeCompare(b));
@@ -488,7 +487,6 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
         ...allProductNames.map(name => ({ value: name, label: name })),
     ];
 
-    // Clients: unique client names from BOTH completed AND pending
     const allClientNames = [...new Set([
         ...Object.values(custCompMap).flat().map(c => c.client_name),
         ...Object.values(custPendMap).flat().map(c => c.client_name),
@@ -504,12 +502,10 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
         if (filterAMC !== "all" && row.normKey !== filterAMC) return false;
         if (filterStatus !== "all" && row.status !== filterStatus) return false;
         if (filterProducts !== "all") {
-            // keep row only if it has a product with that name
             const rowProducts = productsMap[row.normKey] || [];
             if (!rowProducts.some(p => p.product_name === filterProducts)) return false;
         }
         if (filterClients !== "all") {
-            // keep row if the client appears in completed OR pending
             const rowCompClients = custCompMap[row.normKey] || [];
             const rowPendClients = custPendMap[row.normKey] || [];
             const found = rowCompClients.some(c => c.client_name === filterClients) ||
@@ -599,7 +595,6 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
                 </div>
 
                 <div className="amc-filter-right">
-                    {/* Result count */}
                     <span className="amc-filter-count">
                         {hasActiveFilters
                             ? <>{filteredRows.length} <span style={{ opacity: 0.5 }}>of {rows.length}</span></>
@@ -607,7 +602,6 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
                         }
                     </span>
 
-                    {/* Clear all */}
                     {hasActiveFilters && (
                         <button className="amc-clear-btn" onClick={clearAllFilters}>
                             <IcoX /> Clear all
@@ -708,23 +702,33 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
     );
 }
 
-/* ─── Styles ─── */
+/* ─── Dark Theme Styles ─── */
 const AMC_CSS_DARK = `
   @keyframes ddIn {
     from { opacity:0; transform:translateY(-6px) scale(.97); }
     to   { opacity:1; transform:none; }
   }
 
+  /* KEY FIX: amc-wrap is now a flex column that fills its parent height */
   .amc-wrap {
-    background:transparent; border:1px solid rgba(79,142,247,0.28);
-    border-radius:18px; overflow:visible; margin:0 4px 4px;
+    background:transparent;
+    border:1px solid rgba(79,142,247,0.28);
+    border-radius:18px;
+    overflow:hidden;
+    margin:0 4px 4px;
     animation:pIn .38s cubic-bezier(0.34,1.56,0.64,1) both;
     position:relative;
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    min-height:0;
   }
+
   .amc-hdr {
     display:flex; align-items:center; justify-content:space-between;
     flex-wrap:wrap; gap:10px; padding:14px 20px;
     border-bottom:1px solid rgba(79,142,247,0.15);
+    flex-shrink:0;
   }
   .amc-hdr-left { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   .amc-title { font-family:var(--fh,'Orbitron',sans-serif); font-weight:700; font-size:1rem; color:#fff; letter-spacing:.06em; }
@@ -755,6 +759,7 @@ const AMC_CSS_DARK = `
     padding:10px 20px;
     border-bottom:1px solid rgba(79,142,247,0.12);
     background:rgba(79,142,247,0.03);
+    flex-shrink:0;
   }
   .amc-filter-label {
     display:inline-flex; align-items:center; gap:5px;
@@ -818,7 +823,46 @@ const AMC_CSS_DARK = `
   .amc-click-purple:hover { background:rgba(167,139,250,0.35)!important; border-color:rgba(167,139,250,0.7)!important; color:#fff!important; transform:scale(1.18) translateY(-1px); box-shadow:0 4px 16px rgba(167,139,250,0.45); }
 
   .amc-zero  { color:rgba(160,190,255,0.3); font-size:.82rem; }
-  .amc-error { text-align:center; padding:40px; color:#F87171; font-size:.84rem; }
+  .amc-error { text-align:center; padding:40px; color:#F87171; font-size:.84rem; flex-shrink:0; }
+
+  /* KEY FIX: tbl-wrap scrolls, not the page */
+  .amc-wrap .tbl-wrap {
+    flex:1;
+    overflow-y:auto;
+    overflow-x:auto;
+    min-height:0;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(79,142,247,0.45) rgba(79,142,247,0.06);
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar {
+    width:5px;
+    height:5px;
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar-track {
+    background:rgba(79,142,247,0.05);
+    border-radius:4px;
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar-thumb {
+    background:linear-gradient(180deg,rgba(79,142,247,0.65),rgba(167,139,250,0.55));
+    border-radius:4px;
+    box-shadow:0 0 8px rgba(79,142,247,0.35);
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar-thumb:hover {
+    background:linear-gradient(180deg,rgba(79,142,247,0.9),rgba(167,139,250,0.8));
+    box-shadow:0 0 12px rgba(79,142,247,0.55);
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar-corner {
+    background:transparent;
+  }
+
+  /* Sticky header so it stays while body scrolls */
+  .amc-wrap .fd-tbl thead tr {
+    position:sticky;
+    top:0;
+    z-index:2;
+    background:rgba(10,16,55,0.95);
+    backdrop-filter:blur(8px);
+  }
 
   .modal-close-btn {
     background:rgba(79,142,247,0.1); border:1px solid rgba(79,142,247,0.28);
@@ -853,17 +897,25 @@ const AMC_CSS_LIGHT = `
     to   { opacity:1; transform:none; }
   }
 
+  /* KEY FIX: amc-wrap is now a flex column that fills its parent height */
   .amc-wrap {
     background: transparent;
     border: 1.5px solid rgba(0,0,0,0.22);
-    border-radius: 18px; overflow: visible; margin: 0 4px 4px;
+    border-radius: 18px;
+    overflow: hidden;
+    margin: 0 4px 4px;
     animation: pIn .38s cubic-bezier(0.34,1.56,0.64,1) both;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
   }
   .amc-hdr {
     display: flex; align-items: center; justify-content: space-between;
     flex-wrap: wrap; gap: 10px; padding: 14px 20px;
     border-bottom: 1.5px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
   }
   .amc-hdr-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .amc-title { font-weight: 800; font-size: 1rem; color: #111827; letter-spacing: .06em; }
@@ -898,6 +950,7 @@ const AMC_CSS_LIGHT = `
     padding: 10px 20px;
     border-bottom: 1.5px solid rgba(0,0,0,0.15);
     background: rgba(0,0,0,0.03);
+    flex-shrink: 0;
   }
   .amc-filter-label {
     display: inline-flex; align-items: center; gap: 5px;
@@ -929,7 +982,7 @@ const AMC_CSS_LIGHT = `
   .amc-name  { font-weight: 700; color: #111827; font-size: .87rem; }
   .amc-aum   { font-weight: 700; color: #1a50b5; font-size: .86rem; }
   .amc-zero  { color: rgba(0,0,0,0.3); font-size: .82rem; }
-  .amc-error { text-align: center; padding: 40px; color: #b02020; font-size: .84rem; }
+  .amc-error { text-align: center; padding: 40px; color: #b02020; font-size: .84rem; flex-shrink: 0; }
 
   .amc-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: .71rem; font-weight: 700; }
   .amc-chip-done { background: rgba(15,158,110,0.12); color: #076642; border: 1.5px solid rgba(15,158,110,0.3); }
@@ -951,6 +1004,43 @@ const AMC_CSS_LIGHT = `
   .amc-click-blue:hover   { background: rgba(42,109,217,0.28) !important; border-color: rgba(42,109,217,0.7) !important; color: #fff !important; transform: scale(1.18) translateY(-1px); box-shadow: 0 4px 14px rgba(42,109,217,0.4); }
   .amc-click-orange:hover { background: rgba(201,124,8,0.28)  !important; border-color: rgba(201,124,8,0.7)  !important; color: #fff !important; transform: scale(1.18) translateY(-1px); box-shadow: 0 4px 14px rgba(201,124,8,0.4); }
   .amc-click-purple:hover { background: rgba(107,78,198,0.28) !important; border-color: rgba(107,78,198,0.7) !important; color: #fff !important; transform: scale(1.18) translateY(-1px); box-shadow: 0 4px 14px rgba(107,78,198,0.4); }
+
+  /* KEY FIX: tbl-wrap scrolls, not the page */
+  .amc-wrap .tbl-wrap {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(42,109,217,0.4) rgba(42,109,217,0.05);
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar-track {
+    background: rgba(42,109,217,0.04);
+    border-radius: 4px;
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(42,109,217,0.55), rgba(107,78,198,0.45));
+    border-radius: 4px;
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(42,109,217,0.8), rgba(107,78,198,0.7));
+  }
+  .amc-wrap .tbl-wrap::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Sticky header so it stays while body scrolls */
+  .amc-wrap .fd-tbl thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: rgba(240,244,255,0.97);
+    backdrop-filter: blur(8px);
+  }
 
   /* ── Modal overrides ── */
   .modal-close-btn {
