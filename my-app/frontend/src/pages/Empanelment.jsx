@@ -496,15 +496,6 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
       {productsPopup  && <ProductsPopup  amcName={productsPopup}  onClose={() => setProductsPopup(null)}  theme={theme} />}
       {boardingsPopup && <BoardingsPopup amcName={boardingsPopup} onClose={() => setBoardingsPopup(null)} theme={theme} />}
 
-      {/*
-        ══════════════════════════════════════════════════════════
-        emp-scroll-area: THE single scrollable container.
-        - Tabs, search bar, title bar, and table ALL live inside.
-        - The table thead uses position:sticky + top:0 so column
-          headers pin to the top of THIS scroll container.
-        - tbl-wrap only handles horizontal overflow.
-        ══════════════════════════════════════════════════════════
-      */}
       <div className="emp-scroll-area">
 
         {/* ── Tabs ── */}
@@ -537,7 +528,7 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
           )}
         </div>
 
-        {/* ── Table (thead is sticky within emp-scroll-area) ── */}
+        {/* ── Table ── */}
         {loading ? (
           <div className="fd-spin"><div className="spinner"/></div>
         ) : (
@@ -669,12 +660,6 @@ const EMP_CSS = `
   @keyframes dlgIn { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:none} }
   @keyframes fIn   { from{opacity:0} to{opacity:1} }
 
-  /* ══════════════════════════════════════════════
-     CORE LAYOUT
-     mod-wrap fills the .module-panel from Dashboard
-     (which already has flex:1, min-height:0, overflow:hidden).
-     emp-scroll-area is the ONE and ONLY scroll container.
-  ══════════════════════════════════════════════ */
   .mod-wrap {
     display: flex;
     flex-direction: column;
@@ -683,7 +668,6 @@ const EMP_CSS = `
     overflow: hidden;
   }
 
-  /* Single scrollable zone — tabs + search + title + table all scroll together */
   .emp-scroll-area {
     flex: 1;
     min-height: 0;
@@ -700,7 +684,6 @@ const EMP_CSS = `
   .theme-light .emp-scroll-area::-webkit-scrollbar-thumb       { background: rgba(42,109,217,0.35); }
   .theme-light .emp-scroll-area::-webkit-scrollbar-thumb:hover { background: rgba(42,109,217,0.6); }
 
-  /* tbl-wrap: horizontal scroll only; vertical is emp-scroll-area's job */
   .tbl-wrap {
     overflow-x: auto;
     overflow-y: visible;
@@ -712,9 +695,9 @@ const EMP_CSS = `
   .tbl-wrap::-webkit-scrollbar-thumb  { background: rgba(79,142,247,0.3); border-radius: 4px; }
 
   /* ══════════════════════════════════════════════
-     STICKY COLUMN HEADERS
-     thead sticks to top:0 inside emp-scroll-area.
-     Background must be fully opaque to cover rows.
+     STICKY COLUMN HEADERS — DARK THEME
+     Deep navy-blue with a blue accent glow.
+     No more near-black; feels part of the UI.
   ══════════════════════════════════════════════ */
   .fd-tbl thead {
     position: sticky;
@@ -722,14 +705,28 @@ const EMP_CSS = `
     z-index: 10;
   }
   .fd-tbl thead tr {
-    background: rgba(5, 8, 32, 0.98);
+    background: linear-gradient(180deg,
+      rgba(15, 25, 70, 0.98) 0%,
+      rgba(10, 18, 55, 0.98) 100%
+    );
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 1px 0 rgba(79,142,247,0.22), 0 3px 10px rgba(0,0,0,0.45);
+    box-shadow:
+      0 1px 0 rgba(79,142,247,0.30),
+      0 3px 14px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(79,142,247,0.12);
   }
+
+  /* ── LIGHT THEME thead ── */
   .theme-light .fd-tbl thead tr {
-    background: rgba(232, 240, 255, 0.99) !important;
-    box-shadow: 0 1px 0 rgba(42,109,217,0.2), 0 3px 10px rgba(10,30,100,0.08) !important;
+    background: linear-gradient(180deg,
+      rgba(224, 236, 255, 0.99) 0%,
+      rgba(210, 228, 255, 0.99) 100%
+    ) !important;
+    box-shadow:
+      0 1px 0 rgba(42,109,217,0.25),
+      0 3px 10px rgba(10,30,100,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.85) !important;
   }
 
   .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
@@ -799,12 +796,24 @@ const EMP_CSS = `
 
   /* ── Table ── */
   .fd-tbl { width:100%;border-collapse:collapse;font-size:.8rem;min-width:560px; }
-  .fd-tbl th { padding:10px 14px;text-align:left;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(79,142,247,.78);font-family:var(--fh,'Orbitron',sans-serif);white-space:nowrap; }
+  .fd-tbl th {
+    padding:10px 14px;
+    text-align:left;
+    font-size:.68rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.07em;
+    color:rgba(120,175,255,0.9);
+    font-family:var(--fh,'Orbitron',sans-serif);
+    white-space:nowrap;
+  }
   .fd-tbl td { padding:9px 14px;border-bottom:1px solid rgba(79,142,247,.07);color:rgba(200,220,255,.85);white-space:nowrap; }
   .fd-tbl tbody tr { transition:background .15s; }
   .fd-tbl tbody tr:hover { background:rgba(79,142,247,.06); }
   .fd-num { color:rgba(79,142,247,.4) !important;font-size:.72rem !important;width:42px; }
-  .theme-light .fd-tbl th { color:rgba(0,0,0,0.52); }
+
+  /* ── Light theme table overrides ── */
+  .theme-light .fd-tbl th { color:rgba(30,65,150,0.85) !important; }
   .theme-light .fd-tbl td { color:#1e293b;border-bottom-color:rgba(10,30,100,0.09); }
   .theme-light .fd-tbl tbody tr:hover { background:rgba(42,109,217,0.05); }
   .theme-light .fd-num { color:rgba(0,0,0,0.3) !important; }
