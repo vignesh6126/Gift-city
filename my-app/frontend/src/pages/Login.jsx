@@ -23,7 +23,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(""); // Add error state
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,7 +34,7 @@ const Login = () => {
     }
 
     setLoading(true);
-    setError(""); // Clear previous errors
+    setError("");
 
     try {
       const response = await fetch(`${API}/login`, {
@@ -48,13 +48,10 @@ const Login = () => {
       const data = await response.json();
 
       if (data.status === "success") {
-        // ✅ Store user data
         localStorage.setItem("user", JSON.stringify(data.user));
-        
-        // ✅ Directly navigate to dashboard WITHOUT alert
-        navigate("/dashboard");
+        // ✅ Default to light theme on login
+        navigate("/Dashboardlight");
       } else {
-        // Show error message for failed login
         setError(data.message);
       }
     } catch (error) {

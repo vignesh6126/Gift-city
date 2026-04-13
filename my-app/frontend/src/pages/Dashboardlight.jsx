@@ -719,7 +719,7 @@ button{font-family:var(--fb)}
   .side-card{flex:1}.module-panel{border-radius:14px}
 }
 @media(max-width:520px){
-  .stats-row{grid-template-columns:1fr 1fr;gap:6px}.sc{padding:8px 10px}
+  .stats-row{grid-template-columns:1fr 1fr;gap: 6px}.sc{padding:8px 10px}
   .sc-big{font-size:1.3rem}.sc-single{font-size:1.5rem}.sc-label{font-size:.48rem}.sc-icon{width:30px;height:30px}
   .fd-tbl th,.fd-tbl td{padding:8px 10px;font-size:.76rem}.topbar-title{font-size:.85rem}
 }
