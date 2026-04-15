@@ -35,12 +35,12 @@ const IcoX = () => (
 
 /* ─── Helpers ─── */
 function formatAUM(val) {
-  if (!val && val !== 0) return "—";
-  const n = Number(val);
-  if (isNaN(n)) return "—";
-  if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1) + "M";
-  if (n >= 1_000)     return "$" + (n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1) + "K";
-  return "$" + n.toLocaleString("en-US");
+    if (!val && val !== 0) return "—";
+    const n = Number(val);
+    if (isNaN(n)) return "—";
+    if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1) + "M";
+    if (n >= 1_000) return "$" + (n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1) + "K";
+    return "$" + n.toLocaleString("en-US");
 }
 
 function formatDate(val) {
@@ -250,7 +250,7 @@ function ClientsModal({ amcName, clients, onClose }) {
                                     <td>
                                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                             <Avatar name={c.client_name} />
-                                            <span style={{ color: "#e8f0ff", fontWeight: 600 }}>{c.client_name || "—"}</span>
+                                            <span style={{ color: "#111827", fontWeight: 600 }}>{c.client_name || "—"}</span>
                                         </div>
                                     </td>
                                     <td><span style={{ color: "rgba(180,210,255,0.7)", fontSize: ".78rem" }}>{formatDate(c.first_investment)}</span></td>
@@ -301,7 +301,7 @@ function PendingModal({ amcName, clients, onClose }) {
                                     <td>
                                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                             <Avatar name={c.client_name} color="linear-gradient(135deg,#b45309,#d97706)" />
-                                            <span style={{ color: "#e8f0ff", fontWeight: 600 }}>{c.client_name || "—"}</span>
+                                            <span style={{ color: "#111827", fontWeight: 600 }}>{c.client_name || "—"}</span>
                                         </div>
                                     </td>
                                     <td><span style={{ color: "#F59E0B", fontWeight: 700, fontFamily: "var(--fh,'Orbitron',sans-serif)", fontSize: ".78rem" }}>{c.amount_tobe_invested != null ? formatAUM(c.amount_tobe_invested) : "—"}</span></td>
@@ -349,8 +349,7 @@ function ProductsModal({ amcName, products, onClose }) {
                             {products.map((p, i) => (
                                 <tr key={p.id ?? i}>
                                     <td className="fd-num">{i + 1}</td>
-                                    <td><span style={{ color: "#e8f0ff", fontWeight: 600 }}>{p.product_name || "—"}</span></td>
-                                    <td><span style={{ color: "#A78BFA", fontWeight: 700, fontFamily: "var(--fh,'Orbitron',sans-serif)", fontSize: ".78rem" }}>{p.min_investment != null ? formatAUM(p.min_investment) : "—"}</span></td>
+                                    <span style={{ color: "#111827", fontWeight: 600 }}>{c.client_name || "—"}</span>                                    <td><span style={{ color: "#A78BFA", fontWeight: 700, fontFamily: "var(--fh,'Orbitron',sans-serif)", fontSize: ".78rem" }}>{p.min_investment != null ? formatAUM(p.min_investment) : "—"}</span></td>
                                     <td>{p.onboarding_process ? <span className={`modal-chip ${p.onboarding_process === "online" ? "modal-chip-green" : "modal-chip-teal"}`}>{p.onboarding_process}</span> : <span className="modal-dash">—</span>}</td>
                                     <td>{p.structure ? <span className="modal-chip modal-chip-blue" style={{ maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block" }}>{p.structure}</span> : <span className="modal-dash">—</span>}</td>
                                     <td>{p.lock_in ? <span className="modal-chip modal-chip-orange">{p.lock_in}</span> : <span className="modal-dash">—</span>}</td>
@@ -368,18 +367,18 @@ function ProductsModal({ amcName, products, onClose }) {
    MAIN AMCTable
    ══════════════════════════════════════════ */
 export default function AMCTable({ onDataChange, theme = "dark" }) {
-    const [rows,        setRows]        = useState([]);
-    const [loading,     setLoading]     = useState(false);
-    const [error,       setError]       = useState(null);
+    const [rows, setRows] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const [custCompMap, setCustCompMap] = useState({});
     const [custPendMap, setCustPendMap] = useState({});
     const [productsMap, setProductsMap] = useState({});
 
     // Filters
-    const [filterAMC,     setFilterAMC]     = useState("all");
-    const [filterStatus,  setFilterStatus]  = useState("all");
-    const [filterProducts,setFilterProducts]= useState("all");
+    const [filterAMC, setFilterAMC] = useState("all");
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [filterProducts, setFilterProducts] = useState("all");
     const [filterClients, setFilterClients] = useState("all");
 
     // modal
@@ -446,11 +445,11 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
 
             const tableRows = Array.from(amcMap.entries()).map(([normKey, displayName]) => ({
                 amc: displayName, normKey,
-                status:         completedSet.has(normKey) ? "completed" : "pending",
-                aum:            aumMap.get(normKey)     || 0,
-                clients:        clientsMap.get(normKey) || 0,
+                status: completedSet.has(normKey) ? "completed" : "pending",
+                aum: aumMap.get(normKey) || 0,
+                clients: clientsMap.get(normKey) || 0,
                 clientsPending: pendingMap.get(normKey) || 0,
-                products:       prodMap.get(normKey)    || 0,
+                products: prodMap.get(normKey) || 0,
             }));
             tableRows.sort((a, b) => {
                 if (a.status !== b.status) return a.status === "completed" ? -1 : 1;
@@ -473,9 +472,9 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
     ];
 
     const statusOptions = [
-        { value: "all",       label: "All Statuses" },
-        { value: "completed", label: "Active"        },
-        { value: "pending",   label: "Inactive"      },
+        { value: "all", label: "All Statuses" },
+        { value: "completed", label: "Active" },
+        { value: "pending", label: "Inactive" },
     ];
 
     const allProductNames = [...new Set(
@@ -509,7 +508,7 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
             const rowCompClients = custCompMap[row.normKey] || [];
             const rowPendClients = custPendMap[row.normKey] || [];
             const found = rowCompClients.some(c => c.client_name === filterClients) ||
-                          rowPendClients.some(c => c.client_name === filterClients);
+                rowPendClients.some(c => c.client_name === filterClients);
             if (!found) return false;
         }
         return true;
@@ -525,8 +524,8 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
     };
 
     const completedCount = rows.filter(r => r.status === "completed").length;
-    const pendingCount   = rows.filter(r => r.status === "pending").length;
-    const totalAUM       = rows.reduce((s, r) => s + r.aum, 0);
+    const pendingCount = rows.filter(r => r.status === "pending").length;
+    const totalAUM = rows.reduce((s, r) => s + r.aum, 0);
 
     return (
         <div className="amc-wrap">
