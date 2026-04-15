@@ -253,7 +253,7 @@ function ClientsModal({ amcName, clients, onClose }) {
                                             <span style={{ color: "#111827", fontWeight: 600 }}>{c.client_name || "—"}</span>
                                         </div>
                                     </td>
-                                    <td><span style={{ color: "rgba(180,210,255,0.7)", fontSize: ".78rem" }}>{formatDate(c.first_investment)}</span></td>
+                                    <td><span style={{ color: "inherit", fontSize: ".78rem" }}>{formatDate(c.first_investment)}</span></td>
                                     <td><span style={{ color: "#4F8EF7", fontWeight: 700, fontFamily: "var(--fh,'Orbitron',sans-serif)", fontSize: ".78rem" }}>{c.amount != null ? formatAUM(c.amount) : "—"}</span></td>
                                     <td>{c.scheme ? <span className="modal-chip modal-chip-purple">{c.scheme}</span> : <span className="modal-dash">—</span>}</td>
                                     <td>{c.bank ? <span className="modal-chip modal-chip-teal">{c.bank}</span> : <span className="modal-dash">—</span>}</td>
@@ -307,7 +307,7 @@ function PendingModal({ amcName, clients, onClose }) {
                                     <td><span style={{ color: "#F59E0B", fontWeight: 700, fontFamily: "var(--fh,'Orbitron',sans-serif)", fontSize: ".78rem" }}>{c.amount_tobe_invested != null ? formatAUM(c.amount_tobe_invested) : "—"}</span></td>
                                     <td>{c.scheme ? <span className="modal-chip modal-chip-purple">{c.scheme}</span> : <span className="modal-dash">—</span>}</td>
                                     <td>{c.bank ? <span className="modal-chip modal-chip-teal">{c.bank}</span> : <span className="modal-dash">—</span>}</td>
-                                    <td><span style={{ color: "rgba(180,210,255,0.7)", fontSize: ".78rem" }}>{formatDate(c.submission_date)}</span></td>
+                                    <td><span style={{ color: "inherit", fontSize: ".78rem" }}>{formatDate(c.submission_date)}</span></td>
                                     <td>{c.status ? <span className="modal-chip modal-chip-orange">{c.status}</span> : <span className="modal-dash">—</span>}</td>
                                 </tr>
                             ))}
@@ -327,7 +327,7 @@ function ProductsModal({ amcName, products, onClose }) {
         <Modal
             title={`Products — ${amcName}`}
             subtitle={`${products.length} product${products.length !== 1 ? "s" : ""}`}
-            barColor="linear-gradient(180deg,#A78BFA,#7C3AED)"
+            barColor="linear-gradient(180deg,#111827,#7C3AED)"
             onClose={onClose}
         >
             {products.length === 0 ? (
@@ -349,7 +349,8 @@ function ProductsModal({ amcName, products, onClose }) {
                             {products.map((p, i) => (
                                 <tr key={p.id ?? i}>
                                     <td className="fd-num">{i + 1}</td>
-                                    <span style={{ color: "#111827", fontWeight: 600 }}>{c.client_name || "—"}</span>                                    <td><span style={{ color: "#A78BFA", fontWeight: 700, fontFamily: "var(--fh,'Orbitron',sans-serif)", fontSize: ".78rem" }}>{p.min_investment != null ? formatAUM(p.min_investment) : "—"}</span></td>
+                                    <td><span style={{ color: "#111827", fontWeight: 600 }}>{p.product_name || "—"}</span></td>
+                                    <td><span style={{ color: "#111827", fontWeight: 700, fontFamily: "var(--fh,'Orbitron',sans-serif)", fontSize: ".78rem" }}>{p.min_investment != null ? formatAUM(p.min_investment) : "—"}</span></td>
                                     <td>{p.onboarding_process ? <span className={`modal-chip ${p.onboarding_process === "online" ? "modal-chip-green" : "modal-chip-teal"}`}>{p.onboarding_process}</span> : <span className="modal-dash">—</span>}</td>
                                     <td>{p.structure ? <span className="modal-chip modal-chip-blue" style={{ maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block" }}>{p.structure}</span> : <span className="modal-dash">—</span>}</td>
                                     <td>{p.lock_in ? <span className="modal-chip modal-chip-orange">{p.lock_in}</span> : <span className="modal-dash">—</span>}</td>
@@ -362,7 +363,6 @@ function ProductsModal({ amcName, products, onClose }) {
         </Modal>
     );
 }
-
 /* ══════════════════════════════════════════
    MAIN AMCTable
    ══════════════════════════════════════════ */
@@ -578,7 +578,7 @@ export default function AMCTable({ onDataChange, theme = "dark" }) {
                         value={filterProducts}
                         options={productsOptions}
                         onChange={setFilterProducts}
-                        accent="#A78BFA"
+                        accent="#111827"
                         accentRgb="167,139,250"
                         theme={theme}
                     />
@@ -813,7 +813,7 @@ const AMC_CSS_DARK = `
   }
   .amc-count-blue   { background:rgba(79,142,247,0.14);  color:#4F8EF7; border:1px solid rgba(79,142,247,0.22);  }
   .amc-count-orange { background:rgba(245,158,11,0.14);  color:#F59E0B; border:1px solid rgba(245,158,11,0.22);  }
-  .amc-count-purple { background:rgba(167,139,250,0.14); color:#A78BFA; border:1px solid rgba(167,139,250,0.22); }
+  .amc-count-purple { background:rgba(167,139,250,0.14); color:#111827; border:1px solid rgba(167,139,250,0.22); }
 
   .amc-click { position:relative; }
   .amc-click::after { content:''; position:absolute; inset:-3px; border-radius:10px; opacity:0; transition:opacity .2s; }
@@ -875,7 +875,7 @@ const AMC_CSS_DARK = `
     display:inline-block; padding:2px 9px; border-radius:20px;
     font-size:.7rem; font-weight:600; white-space:nowrap;
   }
-  .modal-chip-purple { background:rgba(167,139,250,0.13); color:#A78BFA; border:1px solid rgba(167,139,250,0.22); }
+  .modal-chip-purple { background:rgba(167,139,250,0.13); color:#111827; border:1px solid rgba(167,139,250,0.22); }
   .modal-chip-teal   { background:rgba(20,184,166,0.13);  color:#2dd4bf; border:1px solid rgba(20,184,166,0.22);  }
   .modal-chip-orange { background:rgba(245,158,11,0.13);  color:#F59E0B; border:1px solid rgba(245,158,11,0.22);  }
   .modal-chip-green  { background:rgba(52,211,153,0.13);  color:#34D399; border:1px solid rgba(52,211,153,0.22);  }
