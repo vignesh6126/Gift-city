@@ -39,23 +39,23 @@ const Login = () => {
     try {
       const response = await fetch(`${API}/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
+      console.log("Response status:", response.status);
       const data = await response.json();
+      console.log("Response data:", data);
 
       if (data.status === "success") {
         localStorage.setItem("user", JSON.stringify(data.user));
-        // ✅ Default to light theme on login
-        navigate("/Dashboardlight");
+        console.log("Navigating to /dashboardlight...");
+        navigate("/dashboardlight");
       } else {
-        setError(data.message);
+        setError(data.message || "Login failed");
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("Fetch error:", err);
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -73,61 +73,31 @@ const Login = () => {
         background: "linear-gradient(to right, #2c3e50, #4ca1af)",
       }}
     >
-      <Card
-        sx={{
-          width: 400,
-          p: 3,
-          borderRadius: 3,
-          boxShadow: 6,
-        }}
-      >
+      <Card sx={{ width: 400, p: 3, borderRadius: 3, boxShadow: 6 }}>
         <CardContent>
-          {/* LOGO */}
           <Box display="flex" justifyContent="center" mb={2}>
             <Box
               component="img"
               src={logo}
               alt="Finance Doctor"
-              sx={{
-                width: "240px",
-                height: "auto",
-                p: 1,
-                backgroundColor: "#fff",
-              }}
+              sx={{ width: "240px", height: "auto", p: 1, backgroundColor: "#fff" }}
             />
           </Box>
 
-          {/* TITLE */}
-          <Typography
-            variant="h6"
-            align="center"
-            sx={{ fontWeight: 600 }}
-          >
+          <Typography variant="h6" align="center" sx={{ fontWeight: 600 }}>
             Finance Doctor
           </Typography>
 
-          <Typography
-            variant="body2"
-            align="center"
-            color="text.secondary"
-            mb={2}
-          >
+          <Typography variant="body2" align="center" color="text.secondary" mb={2}>
             Wealth Management
           </Typography>
 
-          {/* Error Message */}
           {error && (
-            <Typography
-              color="error"
-              variant="body2"
-              align="center"
-              sx={{ mb: 2, mt: 1 }}
-            >
+            <Typography color="error" variant="body2" align="center" sx={{ mb: 2, mt: 1 }}>
               {error}
             </Typography>
           )}
 
-          {/* FORM */}
           <form onSubmit={handleSubmit}>
             <TextField
               label="Email"
@@ -175,9 +145,7 @@ const Login = () => {
                 fontSize: "16px",
                 borderRadius: 2,
                 backgroundColor: "#2c3e50",
-                "&:hover": {
-                  backgroundColor: "#1a252f",
-                },
+                "&:hover": { backgroundColor: "#1a252f" },
               }}
             >
               {loading ? "Logging in..." : "Login"}
