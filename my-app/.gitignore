@@ -2,3 +2,6 @@
 *.pub
 frontend/vite
 frontend/my-app@0.0.0
+.ssh/
+sshkey
+*.pem
