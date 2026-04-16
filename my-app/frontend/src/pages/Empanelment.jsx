@@ -637,17 +637,39 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
 
       {/* ── Delete Confirm ── */}
       {confirm && (
-        <div className="dlg-ov" onClick={e=>e.target===e.currentTarget&&setConfirm(false)}>
-          <div className="dlg-box" style={{maxWidth:370}}>
-            <div className="dlg-hdr"><div className="dlg-bar" style={{background:"#EF4444"}}/><div className="dlg-ttl">Confirm Delete</div></div>
-            <div className="dlg-body"><p style={{color:"white",fontSize:".84rem",lineHeight:1.6}}>Are you sure you want to delete this record? This action cannot be undone.</p></div>
-            <div className="dlg-foot">
-              <button className="btn-cancel" onClick={()=>setConfirm(false)}>Cancel</button>
-              <button className="btn-ok btn-danger" onClick={del}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="dlg-ov" onClick={e=>e.target===e.currentTarget&&setConfirm(false)}>
+    <div className="dlg-box" style={{
+      maxWidth:370,
+      background: theme === "light" ? "rgba(7,9,30,0.96)" : undefined,
+      border: theme === "light" ? "1px solid rgba(239,68,68,0.45)" : undefined,
+    }}>
+      <div className="dlg-hdr" style={{
+        borderBottom: theme === "light" ? "1px solid rgba(239,68,68,0.2)" : undefined,
+        background: theme === "light" ? "rgba(239,68,68,0.06)" : undefined,
+      }}>
+        <div className="dlg-bar" style={{background:"#EF4444"}}/>
+        <div className="dlg-ttl" style={{color:"#fff"}}>Confirm Delete</div>
+      </div>
+      <div className="dlg-body">
+        <p style={{
+          margin: 0, lineHeight: 1.6, fontSize: ".84rem",
+          color: theme === "dark" ? "white" : "#000",
+        }}>
+          Are you sure you want to delete this gift city record?
+        </p>
+      </div>
+      <div className="dlg-foot" style={{
+        borderTop: theme === "light" ? "1px solid rgba(239,68,68,0.15)" : undefined,
+      }}>
+        <button className="btn-cancel" style={{
+          border:"1px solid rgba(239,68,68,0.3)",
+          color:"rgba(220,235,255,0.75)"
+        }} onClick={()=>setConfirm(false)}>Cancel</button>
+        <button className="btn-ok btn-danger" onClick={del}>Delete</button>
+      </div>
+    </div>
+  </div>
+)}
 
       {snack && <Snack {...snack} onClose={()=>setSnack(null)}/>}
     </div>
