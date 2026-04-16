@@ -11,7 +11,7 @@ router.get("/all", async (req, res) => {
       db.query("SELECT COUNT(*) AS cnt FROM customers_pending"),
       db.query("SELECT COUNT(*) AS cnt FROM gift_city_ac_active"),
       db.query("SELECT COUNT(*) AS cnt FROM gift_city_ac_inactive"),
-      db.query("SELECT COUNT(*) AS cnt FROM customers_interested"),  // ← correct table name
+      db.query("SELECT COUNT(*) AS cnt FROM customers_interested"),
     ]);
 
     const getCount = (result) => {
