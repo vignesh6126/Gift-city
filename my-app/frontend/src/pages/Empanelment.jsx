@@ -259,8 +259,8 @@ function ProductsPopup({ amcName, onClose, theme="dark" }) {
           {loading ? <div className="fd-spin"><div className="spinner" style={!d?{borderColor:"rgba(42,109,217,0.15)",borderTopColor:"#2a6dd9"}:{}}/></div>
             : products.length===0 ? <div style={pEmp(d)}>No products found for this AMC.</div>
             : <div className="tbl-wrap"><table className="fd-tbl" style={{minWidth:520}}>
-                <thead><tr style={{borderBottom:d?"1px solid rgba(79,142,247,.15)":"1px solid rgba(10,30,100,0.18)"}}>
-                  <th style={{width:36,...pTh(d)}}>#</th>
+                <thead><tr style={{borderBottom:d?"1px solid rgba(79,142,247,.15)":"1px solid rgba(10,30,100,0.18)", background:d?"linear-gradient(180deg,rgba(15,25,70,0.98) 0%,rgba(10,18,55,0.98) 100%)":"linear-gradient(180deg,rgba(224,236,255,0.99) 0%,rgba(210,228,255,0.99) 100%)"}}>
+                    <th style={{width:36,...pTh(d)}}>#</th>
                   {["Product Name","Min. Investment","Onboarding","Structure","Lock-in"].map(h=><th key={h} style={pTh(d)}>{h}</th>)}
                 </tr></thead>
                 <tbody>{products.map((p,i)=>(
@@ -315,8 +315,8 @@ function BoardingsPopup({ amcName, onClose, theme="dark" }) {
           {loading ? <div className="fd-spin"><div className="spinner" style={!d?{borderColor:"rgba(42,109,217,0.15)",borderTopColor:"#2a6dd9"}:{}}/></div>
             : clients.length===0 ? <div style={pEmp(d)}>No clients found for this AMC.</div>
             : <div className="tbl-wrap"><table className="fd-tbl" style={{minWidth:580}}>
-                <thead><tr style={{borderBottom:d?"1px solid rgba(79,142,247,.15)":"1px solid rgba(10,30,100,0.18)"}}>
-                  <th style={{width:36,...pTh(d)}}>#</th>
+                <thead><tr style={{borderBottom:d?"1px solid rgba(79,142,247,.15)":"1px solid rgba(10,30,100,0.18)", background:d?"linear-gradient(180deg,rgba(15,25,70,0.98) 0%,rgba(10,18,55,0.98) 100%)":"linear-gradient(180deg,rgba(224,236,255,0.99) 0%,rgba(210,228,255,0.99) 100%)"}}>
+                    <th style={{width:36,...pTh(d)}}>#</th>
                   {["Client Name","Scheme","Amount","Bank","First Investment"].map(h=><th key={h} style={pTh(d)}>{h}</th>)}
                 </tr></thead>
                 <tbody>{clients.map((c,i)=>(
