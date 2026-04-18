@@ -24,11 +24,11 @@ const GIFT_CITY_COLS = [
 ];
 
 const PROSPECTS_COLS = [
-  { key: "client_name",     label: "Client Name",     type: "text"   },
-  { key: "esops_rsu",       label: "ESOPS/RSU",        type: "select", options: ["yes", "no"] },
-  { key: "discussion_date", label: "Discussion Date",  type: "date"   },
-    { key: "next_action_date", label: "Next Action Date", type: "date" },
-  { key: "next_action",     label: "Next Action",      type: "text"   },
+  { key: "client_name",      label: "Client Name",      type: "text"   },
+  { key: "esops_rsu",        label: "ESOPS/RSU",         type: "select", options: ["yes", "no"] },
+  { key: "discussion_date",  label: "Discussion Date",   type: "date"   },
+  { key: "next_action_date", label: "Next Action Date",  type: "date"   },
+  { key: "next_action",      label: "Next Action",       type: "text"   },
 ];
 
 const toGiftCityInactive = (row) => ({
@@ -38,11 +38,11 @@ const toGiftCityInactive = (row) => ({
 });
 
 const toProspects = (row) => ({
-  client_name: row.customer_name || "",
-  esops_rsu: row.esops_rsus_stocks === "yes" ? "yes" : "no",
-  discussion_date: "",
-  next_action_date: "", 
-  next_action: "",
+  client_name:      row.customer_name || "",
+  esops_rsu:        row.esops_rsus_stocks === "yes" ? "yes" : "no",
+  discussion_date:  "",
+  next_action_date: "",
+  next_action:      "",
 });
 
 const GIFT_CITY_AUTO_KEYS = new Set(["customer_name"]);
@@ -125,7 +125,7 @@ function SearchBar({ value, onChange, resultCount, totalCount, theme = "dark" })
   const sectionBdr   = theme === "light" ? "1px solid rgba(0,0,0,0.1)"      : "1px solid rgba(79,142,247,0.12)";
 
   return (
-    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg }}>
+    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 420 }}>
           <span style={{
@@ -191,7 +191,7 @@ function SearchBar({ value, onChange, resultCount, totalCount, theme = "dark" })
   );
 }
 
-/* ── Custom Select (replaces native <select> for proper dark mode) ── */
+/* ── Custom Select ── */
 function CustomSelect({ col, value, onChange, isDark, readOnly }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
@@ -224,9 +224,7 @@ function CustomSelect({ col, value, onChange, isDark, readOnly }) {
     opacity: readOnly ? 0.6 : 1,
     ...(open && {
       borderColor: isDark ? "#4F8EF7" : "#2a6dd9",
-      boxShadow: isDark
-        ? "0 0 0 3px rgba(79,142,247,0.16)"
-        : "0 0 0 3px rgba(42,109,217,0.12)",
+      boxShadow: isDark ? "0 0 0 3px rgba(79,142,247,0.16)" : "0 0 0 3px rgba(42,109,217,0.12)",
     }),
   };
 
@@ -234,23 +232,14 @@ function CustomSelect({ col, value, onChange, isDark, readOnly }) {
     position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0,
     borderRadius: 10, overflow: "hidden", zIndex: 99999,
     background: isDark ? "rgba(10,15,50,0.97)" : "#fff",
-    border: isDark
-      ? "1px solid rgba(79,142,247,0.35)"
-      : "1px solid rgba(10,30,100,0.18)",
-    boxShadow: isDark
-      ? "0 8px 30px rgba(0,0,0,0.45)"
-      : "0 8px 24px rgba(10,30,100,0.12)",
+    border: isDark ? "1px solid rgba(79,142,247,0.35)" : "1px solid rgba(10,30,100,0.18)",
+    boxShadow: isDark ? "0 8px 30px rgba(0,0,0,0.45)" : "0 8px 24px rgba(10,30,100,0.12)",
     animation: "csDropIn .15s ease",
   };
 
   return (
     <div ref={wrapRef} style={{ position: "relative", userSelect: "none" }}>
-      <style>{`
-        @keyframes csDropIn {
-          from { opacity: 0; transform: translateY(-4px); }
-          to   { opacity: 1; transform: none; }
-        }
-      `}</style>
+      <style>{`@keyframes csDropIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}`}</style>
       <div
         style={baseTrigger}
         onClick={() => !readOnly && setOpen(o => !o)}
@@ -266,45 +255,28 @@ function CustomSelect({ col, value, onChange, isDark, readOnly }) {
         }}
       >
         <span>{display}</span>
-        <span style={{
-          display: "flex", opacity: 0.55,
-          transform: open ? "rotate(180deg)" : "none",
-          transition: "transform .2s",
-        }}>
+        <span style={{ display: "flex", opacity: 0.55, transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }}>
           <IcoChevron />
         </span>
       </div>
-
       {open && (
         <div style={dropStyle}>
           {col.options.map(opt => {
             const selected = value === opt;
-            const label = opt[0].toUpperCase() + opt.slice(1);
             return (
               <div
                 key={opt}
                 onClick={() => { onChange(col.key, opt); setOpen(false); }}
                 style={{
-                  padding: "9px 12px", fontSize: ".84rem",
-                  fontFamily: "Inter,sans-serif", cursor: "pointer",
-                  fontWeight: selected ? 700 : 400,
-                  transition: "background .15s",
-                  background: selected
-                    ? (isDark ? "rgba(79,142,247,0.18)" : "rgba(42,109,217,0.09)")
-                    : "transparent",
-                  color: selected
-                    ? (isDark ? "#fff" : "#1a50b5")
-                    : (isDark ? "rgba(200,220,255,0.9)" : "#111827"),
+                  padding: "9px 12px", fontSize: ".84rem", fontFamily: "Inter,sans-serif",
+                  cursor: "pointer", fontWeight: selected ? 700 : 400, transition: "background .15s",
+                  background: selected ? (isDark ? "rgba(79,142,247,0.18)" : "rgba(42,109,217,0.09)") : "transparent",
+                  color: selected ? (isDark ? "#fff" : "#1a50b5") : (isDark ? "rgba(200,220,255,0.9)" : "#111827"),
                 }}
-                onMouseEnter={e => {
-                  if (!selected) e.currentTarget.style.background = isDark
-                    ? "rgba(79,142,247,0.1)" : "rgba(42,109,217,0.06)";
-                }}
-                onMouseLeave={e => {
-                  if (!selected) e.currentTarget.style.background = "transparent";
-                }}
+                onMouseEnter={e => { if (!selected) e.currentTarget.style.background = isDark ? "rgba(79,142,247,0.1)" : "rgba(42,109,217,0.06)"; }}
+                onMouseLeave={e => { if (!selected) e.currentTarget.style.background = "transparent"; }}
               >
-                {label}
+                {opt[0].toUpperCase() + opt.slice(1)}
               </div>
             );
           })}
@@ -317,7 +289,6 @@ function CustomSelect({ col, value, onChange, isDark, readOnly }) {
 /* ── CustField ── */
 function CustField({ col, value, onChange, theme = "dark", readOnly = false }) {
   const isDark = theme === "dark";
-
   const labelStyle = {
     fontSize: ".67rem", fontWeight: 700, textTransform: "uppercase",
     letterSpacing: ".08em", fontFamily: "Inter,sans-serif",
@@ -334,10 +305,8 @@ function CustField({ col, value, onChange, theme = "dark", readOnly = false }) {
       : (isDark ? "#fff" : "#111827"),
     fontSize: ".84rem", fontFamily: "Inter,sans-serif",
     outline: "none", transition: "border-color .2s, box-shadow .2s",
-    boxSizing: "border-box",
-    cursor: readOnly ? "not-allowed" : "text",
+    boxSizing: "border-box", cursor: readOnly ? "not-allowed" : "text",
   };
-
   const handleFocus = (e) => {
     if (readOnly) return;
     e.target.style.borderColor = isDark ? "#4F8EF7" : "#2a6dd9";
@@ -350,17 +319,10 @@ function CustField({ col, value, onChange, theme = "dark", readOnly = false }) {
     if (!isDark && !readOnly) e.target.style.background = "rgba(255,255,255,0.7)";
   };
 
-  /* Select → custom component */
   if (col.type === "select") return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <label style={labelStyle}>{col.label}</label>
-      <CustomSelect
-        col={col}
-        value={value}
-        onChange={onChange}
-        isDark={isDark}
-        readOnly={readOnly}
-      />
+      <CustomSelect col={col} value={value} onChange={onChange} isDark={isDark} readOnly={readOnly} />
     </div>
   );
 
@@ -382,15 +344,12 @@ function CustField({ col, value, onChange, theme = "dark", readOnly = false }) {
 
 function Snack({ msg, severity, onClose }) {
   useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, []);
-  const isSuccess = severity === "success";
   return createPortal(
     <div style={{
       position: "fixed", bottom: 24, right: 22, zIndex: 999999,
       padding: "11px 18px", borderRadius: 12, fontSize: ".84rem", fontWeight: 600,
       fontFamily: "Inter,sans-serif", boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
-      background: isSuccess
-        ? "linear-gradient(135deg,#057a52,#0f9e6e)"
-        : "linear-gradient(135deg,#a82424,#d14040)",
+      background: severity === "success" ? "linear-gradient(135deg,#057a52,#0f9e6e)" : "linear-gradient(135deg,#a82424,#d14040)",
       color: "#fff",
     }}>
       {msg}
@@ -406,8 +365,7 @@ function TransferPopover({ anchor, onSelect, onClose, theme = "dark" }) {
 
   useEffect(() => {
     const handle = (e) => {
-      if (popRef.current && !popRef.current.contains(e.target) && !anchor.contains(e.target))
-        onClose();
+      if (popRef.current && !popRef.current.contains(e.target) && !anchor.contains(e.target)) onClose();
     };
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
@@ -423,8 +381,7 @@ function TransferPopover({ anchor, onSelect, onClose, theme = "dark" }) {
     background: "transparent", border: "none",
     color: isDark ? "rgba(200,220,255,0.85)" : "#111827",
     fontSize: ".8rem", fontFamily: "Inter,sans-serif", fontWeight: 600,
-    cursor: "pointer", borderRadius: 8, transition: "all .15s",
-    textAlign: "left",
+    cursor: "pointer", borderRadius: 8, transition: "all .15s", textAlign: "left",
   };
 
   return createPortal(
@@ -433,37 +390,27 @@ function TransferPopover({ anchor, onSelect, onClose, theme = "dark" }) {
       background: isDark ? "rgba(10,15,50,0.95)" : "rgba(255,255,255,0.98)",
       border: isDark ? "1px solid rgba(79,142,247,0.3)" : "1px solid rgba(10,30,100,0.15)",
       borderRadius: 12,
-      boxShadow: isDark
-        ? "0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)"
-        : "0 8px 30px rgba(10,30,100,0.15)",
+      boxShadow: isDark ? "0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)" : "0 8px 30px rgba(10,30,100,0.15)",
       backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
       padding: "6px", zIndex: 999998, minWidth: 180,
       animation: "popIn .18s cubic-bezier(0.34,1.56,0.64,1)",
     }}>
-      <style>{`
-        @keyframes popIn {
-          from { opacity: 0; transform: translateY(-6px) scale(0.96); }
-          to   { opacity: 1; transform: none; }
-        }
-      `}</style>
+      <style>{`@keyframes popIn{from{opacity:0;transform:translateY(-6px) scale(0.96)}to{opacity:1;transform:none}}`}</style>
       <div style={{
-        fontSize: ".62rem", fontWeight: 800, textTransform: "uppercase",
-        letterSpacing: ".1em",
+        fontSize: ".62rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em",
         color: isDark ? "rgba(120,150,200,0.6)" : "rgba(0,0,0,0.4)",
         padding: "4px 14px 6px", fontFamily: "Inter,sans-serif",
       }}>
         Transfer to
       </div>
-      <button
-        style={btnStyle}
+      <button style={btnStyle}
         onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,158,11,0.12)"; e.currentTarget.style.color = "#F59E0B"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = isDark ? "rgba(200,220,255,0.85)" : "#111827"; }}
         onClick={() => onSelect("giftcity")}
       >
         <IcoGift /> Gift City Inactive
       </button>
-      <button
-        style={btnStyle}
+      <button style={btnStyle}
         onMouseEnter={e => { e.currentTarget.style.background = "rgba(230,126,34,0.12)"; e.currentTarget.style.color = "#E67E22"; }}
         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = isDark ? "rgba(200,220,255,0.85)" : "#111827"; }}
         onClick={() => onSelect("prospects")}
@@ -475,22 +422,22 @@ function TransferPopover({ anchor, onSelect, onClose, theme = "dark" }) {
   );
 }
 
-/* ── Main Component ── */
+/* ════════════════════════════════════════
+   Main Component
+════════════════════════════════════════ */
 export default function Customers({ inline = false, onDataChange, theme = "dark" }) {
   const isDark = theme === "dark";
-  const [rows,    setRows]    = useState([]);
-  const [search,  setSearch]  = useState("");
-  const [loading, setLoading] = useState(false);
-  const [dlg,     setDlg]     = useState(false);
-  const [editRow, setEditRow] = useState(null);
-  const [form,    setForm]    = useState({});
-  const [delId,   setDelId]   = useState(null);
-  const [confirm, setConfirm] = useState(false);
-  const [snack,   setSnack]   = useState(null);
-
-  const [popoverAnchor, setPopoverAnchor] = useState(null);
-  const [popoverRow,    setPopoverRow]    = useState(null);
-
+  const [rows,           setRows]           = useState([]);
+  const [search,         setSearch]         = useState("");
+  const [loading,        setLoading]        = useState(false);
+  const [dlg,            setDlg]            = useState(false);
+  const [editRow,        setEditRow]        = useState(null);
+  const [form,           setForm]           = useState({});
+  const [delId,          setDelId]          = useState(null);
+  const [confirm,        setConfirm]        = useState(false);
+  const [snack,          setSnack]          = useState(null);
+  const [popoverAnchor,  setPopoverAnchor]  = useState(null);
+  const [popoverRow,     setPopoverRow]     = useState(null);
   const [transferType,   setTransferType]   = useState(null);
   const [transferForm,   setTransferForm]   = useState({});
   const [transferSaving, setTransferSaving] = useState(false);
@@ -545,46 +492,31 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
   const setTransferField = (k, v) => setTransferForm(p => ({ ...p, [k]: v }));
 
   const saveTransfer = async () => {
-  setTransferSaving(true);
-  try {
-    const url = transferType === "giftcity"
-      ? `${API}/gift-city/inactive`
-      : `${API}/interested`;
-
-    let payload = transferForm;
-
-    // ✅ FIX FOR PROSPECTS
-    if (transferType === "prospects") {
-      payload = {
-        ...transferForm,
-        discussion_date: transferForm.discussion_date || null,
-        next_action_date: transferForm.next_action_date || null,
-        next_action: transferForm.next_action || "",
-      };
+    setTransferSaving(true);
+    try {
+      const url = transferType === "giftcity" ? `${API}/gift-city/inactive` : `${API}/interested`;
+      let payload = transferForm;
+      if (transferType === "prospects") {
+        payload = {
+          ...transferForm,
+          discussion_date:  transferForm.discussion_date  || null,
+          next_action_date: transferForm.next_action_date || null,
+          next_action:      transferForm.next_action      || "",
+        };
+      }
+      const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      showSnack("✓ Added to Prospects!");
+      setTransferType(null);
+      load(); onDataChange?.();
+    } catch (e) {
+      showSnack(e.message || "Transfer failed", "error");
+    } finally {
+      setTransferSaving(false);
     }
+  };
 
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-
-    showSnack("✓ Added to Prospects!");
-
-    // ✅ CLOSE + REFRESH
-    setTransferType(null);
-    load(); // refresh customers
-    onDataChange?.();
-
-  } catch (e) {
-    showSnack(e.message || "Transfer failed", "error");
-  } finally {
-    setTransferSaving(false);
-  }
-};
-  /* ── Shared dialog styles ── */   
+  /* ── Shared dialog styles ── */
   const ovStyle = {
     position: "fixed", inset: 0,
     background: isDark ? "rgba(0,0,10,0.55)" : "rgba(0,20,80,0.35)",
@@ -598,17 +530,14 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
     WebkitBackdropFilter: isDark ? "blur(44px) saturate(160%)" : "blur(40px) saturate(180%)",
     border: isDark ? "1px solid rgba(79,142,247,0.52)" : "1px solid rgba(10,30,100,0.2)",
     borderRadius: 18,
-    boxShadow: isDark
-      ? "0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.09)"
-      : "0 8px 40px rgba(10,30,100,0.15)",
+    boxShadow: isDark ? "0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.09)" : "0 8px 40px rgba(10,30,100,0.15)",
     width: "100%", maxWidth: "min(460px, calc(100vw - 32px))",
     maxHeight: "calc(100vh - 40px)", overflowY: "auto",
     boxSizing: "border-box", fontFamily: "Inter,sans-serif",
     animation: "custDlgIn .32s cubic-bezier(0.34,1.56,0.64,1)",
   };
   const hdrStyle = {
-    display: "flex", alignItems: "center", gap: 12,
-    padding: "16px 20px 12px",
+    display: "flex", alignItems: "center", gap: 12, padding: "16px 20px 12px",
     borderBottom: isDark ? "1px solid rgba(79,142,247,0.18)" : "1px solid rgba(10,30,100,0.12)",
     background: isDark ? "transparent" : "rgba(135,206,250,0.15)",
     borderRadius: "18px 18px 0 0",
@@ -618,8 +547,7 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
     gap: 12, maxHeight: "55vh", overflowY: "auto", background: "transparent",
   };
   const footStyle = {
-    display: "flex", justifyContent: "flex-end", gap: 8,
-    padding: "12px 20px",
+    display: "flex", justifyContent: "flex-end", gap: 8, padding: "12px 20px",
     borderTop: isDark ? "1px solid rgba(79,142,247,0.15)" : "1px solid rgba(10,30,100,0.12)",
     background: "transparent", borderRadius: "0 0 18px 18px",
   };
@@ -628,10 +556,8 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
   const cancelStyle = {
     padding: "8px 14px", borderRadius: 10,
     border: isDark ? "1px solid rgba(79,142,247,0.25)" : "1px solid rgba(10,30,100,0.2)",
-    background: "none",
-    color: isDark ? "rgba(180,210,255,0.7)" : "rgba(0,0,0,0.65)",
-    fontSize: ".8rem", fontFamily: "Inter,sans-serif", fontWeight: 600, cursor: "pointer",
-    transition: "all .2s",
+    background: "none", color: isDark ? "rgba(180,210,255,0.7)" : "rgba(0,0,0,0.65)",
+    fontSize: ".8rem", fontFamily: "Inter,sans-serif", fontWeight: 600, cursor: "pointer", transition: "all .2s",
   };
   const primaryStyle = {
     padding: "8px 16px", borderRadius: 10, border: "none", color: "#fff",
@@ -668,7 +594,6 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
   const transferAutoKeys = transferType === "giftcity" ? GIFT_CITY_AUTO_KEYS : PROSPECTS_AUTO_KEYS;
   const transferColor    = transferType === "giftcity" ? "#F59E0B" : "#E67E22";
   const transferTitle    = transferType === "giftcity" ? "Add to Gift City Inactive" : "Add to Prospects";
-  const transferSub      = "✅ Auto-filled  ·  ✏️ Fill manually";
 
   return (
     <div className={`mod-wrap${isDark ? "" : " theme-light"}`}>
@@ -677,6 +602,48 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
           from { opacity:0; transform:translateY(16px) scale(0.97); }
           to   { opacity:1; transform:none; }
         }
+
+        /* ── flex column so table fills remaining height ── */
+        .mod-wrap {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          min-height: 0;
+          max-width: 100%;
+        }
+
+        /* ── static sections must not shrink ── */
+        .mod-hdr  { flex-shrink: 0; }
+        .tbl-hdr  { flex-shrink: 0; }
+        .fd-spin  { flex-shrink: 0; }
+
+        /* ── search bar static too ── */
+        .cust-search-wrap { flex-shrink: 0; }
+
+        /* ── table wrapper fills leftover space and scrolls ── */
+        .tbl-wrap {
+          flex: 1;
+          min-height: 0;
+          overflow-x: auto;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        /* ── scrollbar styling (dark) ── */
+        .tbl-wrap::-webkit-scrollbar { height: 5px; width: 5px; }
+        .tbl-wrap::-webkit-scrollbar-track { background: rgba(79,142,247,0.06); border-radius: 4px; }
+        .tbl-wrap::-webkit-scrollbar-thumb { background: rgba(79,142,247,0.3); border-radius: 4px; }
+        .tbl-wrap::-webkit-scrollbar-thumb:hover { background: rgba(79,142,247,0.55); }
+        .tbl-wrap { scrollbar-width: thin; scrollbar-color: rgba(79,142,247,0.3) rgba(79,142,247,0.06); }
+
+        /* ── scrollbar styling (light) ── */
+        .theme-light .tbl-wrap::-webkit-scrollbar-track { background: rgba(42,109,217,0.05); }
+        .theme-light .tbl-wrap::-webkit-scrollbar-thumb { background: rgba(42,109,217,0.25); }
+        .theme-light .tbl-wrap::-webkit-scrollbar-thumb:hover { background: rgba(42,109,217,0.5); }
+        .theme-light .tbl-wrap { scrollbar-color: rgba(42,109,217,0.25) rgba(42,109,217,0.05); }
+
+        .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
+        .mod-wrap.theme-light input::placeholder { color: rgba(0,0,0,0.28); }
       `}</style>
 
       {/* ── Header ── */}
@@ -689,8 +656,10 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
         </button>
       </div>
 
+      {/* ── Search bar ── */}
       <SearchBar value={search} onChange={setSearch} resultCount={filteredRows.length} totalCount={rows.length} theme={theme} />
 
+      {/* ── Table title ── */}
       <div className="tbl-hdr">
         <span className="tbl-title">All Customers</span>
         {!loading && (
@@ -702,6 +671,7 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
         )}
       </div>
 
+      {/* ── Table ── */}
       {loading ? (
         <div className="fd-spin"><div className="spinner" /></div>
       ) : (
@@ -768,18 +738,17 @@ export default function Customers({ inline = false, onDataChange, theme = "dark"
 
       {/* ── Transfer Dialog ── */}
       {transferType && renderDialog(
-        transferTitle, transferSub, transferColor,
+        transferTitle, "✅ Auto-filled  ·  ✏️ Fill manually", transferColor,
         <>
           {transferCols.map(c => {
             const isAuto = transferAutoKeys.has(c.key);
             return (
               <div key={c.key}>
                 <CustField col={c} value={transferForm[c.key]} onChange={setTransferField} theme={theme} readOnly={isAuto} />
-                {isAuto ? (
-                  <div style={{ fontSize: ".67rem", marginTop: 3, marginLeft: 2, color: "#10B981", fontWeight: 600 }}>✅ Auto-filled</div>
-                ) : (
-                  <div style={{ fontSize: ".67rem", marginTop: 3, marginLeft: 2, color: transferColor, fontWeight: 600 }}>✏️ Fill manually</div>
-                )}
+                {isAuto
+                  ? <div style={{ fontSize: ".67rem", marginTop: 3, marginLeft: 2, color: "#10B981", fontWeight: 600 }}>✅ Auto-filled</div>
+                  : <div style={{ fontSize: ".67rem", marginTop: 3, marginLeft: 2, color: transferColor, fontWeight: 600 }}>✏️ Fill manually</div>
+                }
               </div>
             );
           })}
