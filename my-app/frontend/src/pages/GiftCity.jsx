@@ -66,8 +66,6 @@ function Highlight({ text, query, theme = "dark" }) {
 }
 
 function SearchBar({ value, onChange, placeholder, resultCount, totalCount, theme = "dark" }) {
-
-  
   const inputRef = useRef(null);
   const isActive = value.length > 0;
 
@@ -88,7 +86,7 @@ function SearchBar({ value, onChange, placeholder, resultCount, totalCount, them
   const sectionBdr   = theme === "light" ? "1px solid rgba(0,0,0,0.1)"     : "1px solid rgba(245,158,11,0.12)";
 
   return (
-    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg }}>
+    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 420 }}>
           <span style={{
@@ -177,7 +175,7 @@ function Snack({ msg, severity, onClose }) {
 }
 
 export default function GiftCity({ inline = false, onDataChange, initialTab, theme = "dark" }) {
-    const [tab,          setTab]          = useState(initialTab || "active");
+  const [tab,          setTab]          = useState(initialTab || "active");
   const [rows,         setRows]         = useState([]);
   const [search,       setSearch]       = useState("");
   const [loading,      setLoading]      = useState(false);
@@ -259,6 +257,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
     <div className={`mod-wrap${theme === "light" ? " theme-light" : ""}`}>
       <style>{GIFT_CSS}</style>
 
+      {/* ── HEADER ── */}
       <div className="mod-hdr">
         <div className="tabs-row">
           {TABS.map(t => (
@@ -269,9 +268,13 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
             </button>
           ))}
         </div>
-
+        <button className="add-btn" onClick={openAdd}
+          style={{ background: `linear-gradient(135deg,${GOLD},#d97706)`, boxShadow: "0 4px 14px rgba(245,158,11,.3)" }}>
+          <IcoPlus /> Add Row
+        </button>
       </div>
 
+      {/* ── SEARCH ── */}
       <SearchBar
         value={search}
         onChange={setSearch}
@@ -281,6 +284,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
         theme={theme}
       />
 
+      {/* ── TABLE TITLE BAR ── */}
       <div className="tbl-hdr">
         <span className="tbl-title">{TABS.find(t => t.id === tab)?.label}</span>
         {!loading && (
@@ -292,6 +296,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
         )}
       </div>
 
+      {/* ── TABLE ── */}
       {loading ? (
         <div className="fd-spin"><div className="spinner" style={{ borderTopColor: GOLD }} /></div>
       ) : (
@@ -344,6 +349,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
         </div>
       )}
 
+      {/* ── ADD / EDIT DIALOG ── */}
       {dlg && (
         <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setDlg(false)}>
           <div className="dlg-box">
@@ -364,6 +370,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
         </div>
       )}
 
+      {/* ── PROMOTE DIALOG ── */}
       {promo && (
         <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setPromo(false)}>
           <div className="dlg-box">
@@ -393,6 +400,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
         </div>
       )}
 
+      {/* ── DELETE CONFIRM ── */}
       {confirm && (
         <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setConfirm(false)}>
           <div className="dlg-box" style={{ maxWidth: 370 }}>
@@ -401,13 +409,13 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
               <div className="dlg-ttl">Confirm Delete</div>
             </div>
             <div className="dlg-body">
-             <p style={{
-          margin: 0, lineHeight: 1.6, fontSize: ".84rem",
-          color: theme === "dark" ? "white" : "#000",
-        }}>
-          Are you sure you want to delete this gift city record?
-        </p>
-        </div>
+              <p style={{
+                margin: 0, lineHeight: 1.6, fontSize: ".84rem",
+                color: theme === "dark" ? "white" : "#000",
+              }}>
+                Are you sure you want to delete this gift city record?
+              </p>
+            </div>
             <div className="dlg-foot">
               <button className="btn-cancel" onClick={() => setConfirm(false)}>Cancel</button>
               <button className="btn-ok btn-danger" onClick={del}>Delete</button>
@@ -426,6 +434,44 @@ const GIFT_CSS = `
     from { opacity:0; transform:translateX(-6px); }
     to   { opacity:1; transform:none; }
   }
+
+  /* ── Core layout: make the wrapper a flex column that fills its parent ── */
+  .mod-wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* ── Table scroll area fills remaining vertical space ── */
+  .mod-wrap .tbl-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  /* ── Spinner container should not flex-grow ── */
+  .mod-wrap .fd-spin {
+    flex-shrink: 0;
+  }
+
+  /* ── Scrollbar styling (dark theme) ── */
+  .mod-wrap .tbl-wrap::-webkit-scrollbar        { width: 4px; height: 4px; }
+  .mod-wrap .tbl-wrap::-webkit-scrollbar-track  { background: rgba(245,158,11,0.04); }
+  .mod-wrap .tbl-wrap::-webkit-scrollbar-thumb  { background: rgba(245,158,11,0.3); border-radius: 4px; }
+  .mod-wrap .tbl-wrap::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,0.55); }
+
+  /* ── Light theme overrides for scrollbar ── */
+  .mod-wrap.theme-light .tbl-wrap::-webkit-scrollbar-track  { background: rgba(42,109,217,0.04); }
+  .mod-wrap.theme-light .tbl-wrap::-webkit-scrollbar-thumb  { background: rgba(42,109,217,0.25); }
+  .mod-wrap.theme-light .tbl-wrap::-webkit-scrollbar-thumb:hover { background: rgba(42,109,217,0.45); }
+
+  /* ── Placeholders ── */
   .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
   .mod-wrap.theme-light input::placeholder { color: rgba(0,0,0,0.3); }
 `;

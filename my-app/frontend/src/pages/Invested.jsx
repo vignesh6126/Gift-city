@@ -24,44 +24,39 @@ const PENDING_COLS = [
   { key: "next_action_date", label: "Next Action Date", type: "date" },
   { key: "status", label: "Status", type: "text" },
 ];
-const AUTO_KEYS = new Set(["client_name", "amount", "amc_name", "scheme", "bank"]);
+const AUTO_KEYS   = new Set(["client_name", "amount", "amc_name", "scheme", "bank"]);
 const MANUAL_KEYS = new Set(["first_investment"]);
 
-const p2c = (r) => ({ client_name: r.client_name || "", amount: r.amount_tobe_invested || "", amc_name: r.amc_name || "", scheme: r.scheme || "", bank: r.bank || "savings", first_investment: "" });
+const p2c    = (r) => ({ client_name: r.client_name || "", amount: r.amount_tobe_invested || "", amc_name: r.amc_name || "", scheme: r.scheme || "", bank: r.bank || "savings", first_investment: "" });
 const emptyC = () => ({ client_name: "", first_investment: "", amount: "", scheme: "", amc_name: "", bank: "savings" });
 const emptyP = () => ({ client_name: "", amount_tobe_invested: "", scheme: "", amc_name: "", bank: "savings", submission_date: "", next_action_date: "", status: "" });
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
 /* ─── Icons ─── */
-const IcoEdit = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-const IcoDel = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-const IcoMove = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="2" /><circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="2" /><circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>;
-const IcoPlus = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>;
-const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>;
-const IcoClear = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>;
+const IcoEdit   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoDel    = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoMove   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="2"/><circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="2"/><circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
+const IcoPlus   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
+const IcoClear  = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
 
 const fmtAmount = (val) => {
   if (val === null || val === undefined || val === "") return "—";
   const n = Number(val);
   if (isNaN(n)) return "—";
   if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1) + "M";
-  if (n >= 1_000) return "$" + (n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1) + "K";
+  if (n >= 1_000)     return "$" + (n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1) + "K";
   return "$" + n.toLocaleString("en-US");
 };
 
 /* ─────────────────────────────────────────────────────────────────
-   Tooltip
-   - theme="dark"  → dark navy background, blue border, light text
-   - theme="light" → white background, blue border, dark text
-   - Reacts instantly when parent re-renders with new theme prop.
-   - Portal-based so it is never clipped by table overflow.
+   Tooltip — portal-based so it is never clipped by table overflow
 ───────────────────────────────────────────────────────────────── */
 function Tooltip({ text, theme = "dark", children }) {
   const [visible, setVisible] = useState(false);
   const [pos, setPos]         = useState({ x: 0, y: 0 });
   const ref = useRef(null);
 
-  /* nothing to show → only apply ellipsis clipping */
   if (!text || text === "—") {
     return (
       <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
@@ -71,82 +66,38 @@ function Tooltip({ text, theme = "dark", children }) {
   }
 
   const isDark = theme !== "light";
-
-  /* ── per-theme design tokens ── */
-  const bg     = isDark ? "rgba(8,12,45,0.97)"        : "rgba(255,255,255,0.98)";
-  const border = isDark ? "rgba(100,181,246,0.45)"     : "rgba(42,109,217,0.4)";
-  const color  = isDark ? "rgba(220,235,255,0.95)"     : "#111827";
+  const bg     = isDark ? "rgba(8,12,45,0.97)"     : "rgba(255,255,255,0.98)";
+  const border = isDark ? "rgba(100,181,246,0.45)"  : "rgba(42,109,217,0.4)";
+  const color  = isDark ? "rgba(220,235,255,0.95)"  : "#111827";
   const shadow = isDark
     ? "0 10px 32px rgba(0,0,0,0.65), 0 0 0 1px rgba(100,181,246,0.1)"
-    : "0 10px 32px rgba(10,30,100,0.2),  0 0 0 1px rgba(42,109,217,0.08)";
-  const labelClr = isDark ? "rgba(100,181,246,0.8)"   : "#2a6dd9";
+    : "0 10px 32px rgba(10,30,100,0.2), 0 0 0 1px rgba(42,109,217,0.08)";
+  const labelClr = isDark ? "rgba(100,181,246,0.8)" : "#2a6dd9";
 
-  const show = (e) => {
-    const rect = ref.current?.getBoundingClientRect();
-    setPos({ x: e.clientX, y: rect ? rect.top : e.clientY });
-    setVisible(true);
-  };
+  const show = (e) => { const rect = ref.current?.getBoundingClientRect(); setPos({ x: e.clientX, y: rect ? rect.top : e.clientY }); setVisible(true); };
   const hide = () => setVisible(false);
   const move = (e) => setPos(prev => ({ ...prev, x: e.clientX }));
-
-  const safeLeft = typeof window !== "undefined"
-    ? Math.min(pos.x + 14, window.innerWidth - 315)
-    : pos.x + 14;
+  const safeLeft = typeof window !== "undefined" ? Math.min(pos.x + 14, window.innerWidth - 315) : pos.x + 14;
 
   return (
-    <span
-      ref={ref}
-      style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", cursor: "default" }}
-      onMouseEnter={show}
-      onMouseLeave={hide}
-      onMouseMove={move}
-    >
+    <span ref={ref} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", cursor: "default" }}
+      onMouseEnter={show} onMouseLeave={hide} onMouseMove={move}>
       {children}
-
       {visible && createPortal(
         <div style={{
-          position: "fixed",
-          left: safeLeft,
-          top: pos.y - 58,
-          background: bg,
-          border: `1px solid ${border}`,
-          color,
-          padding: "9px 14px 11px",
-          borderRadius: 11,
-          fontSize: ".78rem",
-          fontFamily: "var(--fb,'Exo 2',sans-serif)",
-          maxWidth: 300,
-          wordBreak: "break-word",
-          whiteSpace: "normal",
-          lineHeight: 1.6,
-          zIndex: 999999,
-          pointerEvents: "none",
-          boxShadow: shadow,
+          position: "fixed", left: safeLeft, top: pos.y - 58,
+          background: bg, border: `1px solid ${border}`, color,
+          padding: "9px 14px 11px", borderRadius: 11,
+          fontSize: ".78rem", fontFamily: "var(--fb,'Exo 2',sans-serif)",
+          maxWidth: 300, wordBreak: "break-word", whiteSpace: "normal",
+          lineHeight: 1.6, zIndex: 999999, pointerEvents: "none", boxShadow: shadow,
         }}>
-          {/* "Full value" label */}
-          <div style={{
-            fontSize: ".63rem",
-            color: labelClr,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: ".09em",
-            marginBottom: 5,
-            fontFamily: "var(--fh,'Orbitron',sans-serif)",
-          }}>
+          <div style={{ fontSize: ".63rem", color: labelClr, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".09em", marginBottom: 5, fontFamily: "var(--fh,'Orbitron',sans-serif)" }}>
             Full value
           </div>
-
           {text}
-
-          {/* downward arrow */}
           <div style={{ position: "absolute", bottom: -7, left: 20, width: 12, height: 7, overflow: "hidden" }}>
-            <div style={{
-              width: 9, height: 9,
-              background: bg,
-              border: `1px solid ${border}`,
-              transform: "rotate(45deg)",
-              marginTop: -5, marginLeft: 1,
-            }} />
+            <div style={{ width: 9, height: 9, background: bg, border: `1px solid ${border}`, transform: "rotate(45deg)", marginTop: -5, marginLeft: 1 }} />
           </div>
         </div>,
         document.body
@@ -183,10 +134,9 @@ function SearchBar({ value, onChange, placeholder, resultCount, totalCount, them
   const isActive = value.length > 0;
   const isDark   = theme !== "light";
 
-  /* shorthand theme tokens */
-  const accent     = isDark ? "100,181,246" : "42,109,217";
-  const accentHex  = isDark ? "#64B5F6"    : "#2a6dd9";
-  const inputBg    = isActive
+  const accent    = isDark ? "100,181,246" : "42,109,217";
+  const accentHex = isDark ? "#64B5F6"    : "#2a6dd9";
+  const inputBg   = isActive
     ? (isDark ? "rgba(100,181,246,0.08)" : "rgba(42,109,217,0.07)")
     : (isDark ? "rgba(10,16,60,0.5)"     : "rgba(255,255,255,0.6)");
   const inputBorder = isActive
@@ -195,14 +145,12 @@ function SearchBar({ value, onChange, placeholder, resultCount, totalCount, them
 
   return (
     <div style={{
-      padding: "10px 16px 12px",
+      padding: "10px 16px 12px", flexShrink: 0,
       borderBottom: isDark ? "1px solid rgba(100,181,246,0.12)" : "1px solid rgba(0,0,0,0.1)",
       background:   isDark ? "rgba(100,181,246,0.02)"           : "rgba(0,0,0,0.02)",
       boxSizing: "border-box", width: "100%",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-
-        {/* ── input wrapper ── */}
         <div style={{ position: "relative", flex: "1 1 160px", minWidth: 0, maxWidth: 420 }}>
           <span style={{
             position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)",
@@ -211,11 +159,8 @@ function SearchBar({ value, onChange, placeholder, resultCount, totalCount, them
           }}>
             <IcoSearch />
           </span>
-
           <input
-            ref={inputRef}
-            type="text"
-            value={value}
+            ref={inputRef} type="text" value={value}
             onChange={e => onChange(e.target.value)}
             placeholder={placeholder}
             style={{
@@ -226,25 +171,19 @@ function SearchBar({ value, onChange, placeholder, resultCount, totalCount, them
               outline: "none", transition: "all .22s", boxSizing: "border-box",
               boxShadow: isActive ? `0 0 0 3px rgba(${accent},0.12)` : "none",
             }}
-            onFocus={e => {
-              e.target.style.borderColor = `rgba(${accent},0.7)`;
-              e.target.style.boxShadow   = `0 0 0 3px rgba(${accent},0.15)`;
-            }}
+            onFocus={e => { e.target.style.borderColor = `rgba(${accent},0.7)`; e.target.style.boxShadow = `0 0 0 3px rgba(${accent},0.15)`; }}
             onBlur={e => {
               e.target.style.borderColor = isActive ? `rgba(${accent},0.55)` : (isDark ? "rgba(100,181,246,0.22)" : "rgba(0,0,0,0.2)");
               e.target.style.boxShadow   = isActive ? `0 0 0 3px rgba(${accent},0.12)` : "none";
             }}
           />
-
           {isActive && (
-            <button
-              onClick={() => { onChange(""); inputRef.current?.focus(); }}
+            <button onClick={() => { onChange(""); inputRef.current?.focus(); }}
               style={{
                 position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
                 background: `rgba(${accent},0.18)`, border: "none", borderRadius: "50%",
                 width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: isDark ? "rgba(180,210,255,0.8)" : "rgba(0,0,0,0.55)",
-                transition: "all .15s",
+                cursor: "pointer", color: isDark ? "rgba(180,210,255,0.8)" : "rgba(0,0,0,0.55)", transition: "all .15s",
               }}
               onMouseEnter={e => { e.currentTarget.style.background = `rgba(${accent},0.35)`; e.currentTarget.style.color = "#fff"; }}
               onMouseLeave={e => { e.currentTarget.style.background = `rgba(${accent},0.18)`; e.currentTarget.style.color = isDark ? "rgba(180,210,255,0.8)" : "rgba(0,0,0,0.55)"; }}
@@ -253,8 +192,6 @@ function SearchBar({ value, onChange, placeholder, resultCount, totalCount, them
             </button>
           )}
         </div>
-
-        {/* ── result badge ── */}
         {isActive && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 5,
@@ -312,27 +249,26 @@ function Snack({ msg, severity, onClose }) {
    Main Component
 ═══════════════════════════════════════════════════════════════ */
 export default function Invested({ inline = false, onDataChange, initialTab, theme = "dark" }) {
-  const [tab, setTab]               = useState(initialTab || "completed");
-  const [rows, setRows]             = useState([]);
-  const [search, setSearch]         = useState("");
-  const [loading, setLoading]       = useState(false);
-  const [dlg, setDlg]               = useState(false);
-  const [editRow, setEditRow]       = useState(null);
-  const [form, setForm]             = useState({});
-  const [delId, setDelId]           = useState(null);
-  const [confirm, setConfirm]       = useState(false);
-  const [promo, setPromo]           = useState(false);
-  const [promoId, setPromoId]       = useState(null);
-  const [promoForm, setPromoForm]   = useState({});
+  const [tab,          setTab]          = useState(initialTab || "completed");
+  const [rows,         setRows]         = useState([]);
+  const [search,       setSearch]       = useState("");
+  const [loading,      setLoading]      = useState(false);
+  const [dlg,          setDlg]          = useState(false);
+  const [editRow,      setEditRow]      = useState(null);
+  const [form,         setForm]         = useState({});
+  const [delId,        setDelId]        = useState(null);
+  const [confirm,      setConfirm]      = useState(false);
+  const [promo,        setPromo]        = useState(false);
+  const [promoId,      setPromoId]      = useState(null);
+  const [promoForm,    setPromoForm]    = useState({});
   const [promoLoading, setPromoLoading] = useState(false);
-  const [snack, setSnack]           = useState(null);
+  const [snack,        setSnack]        = useState(null);
 
   useEffect(() => { if (initialTab) setTab(initialTab); }, [initialTab]);
   useEffect(() => { setSearch(""); }, [tab]);
 
-  const cols   = tab === "completed" ? COMPLETED_COLS : PENDING_COLS;
-  const isDark = theme !== "light";
-  /* CSS class suffix passed to portal overlays */
+  const cols       = tab === "completed" ? COMPLETED_COLS : PENDING_COLS;
+  const isDark     = theme !== "light";
   const themeClass = isDark ? "" : " theme-light";
 
   const showSnack = (msg, severity = "success") => setSnack({ msg, severity });
@@ -345,7 +281,6 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
       const data = await r.json();
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error("Invested load error:", e);
       setSnack({ msg: `Failed to load: ${e.message}`, severity: "error" });
     } finally { setLoading(false); }
   }, [tab]);
@@ -382,44 +317,25 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
   const savePromo   = async () => {
     setPromoLoading(true);
     try {
-      const a = await fetch(`${API}/invested/move/${promoId}`, {
-  method: "POST"
-});
+      const a = await fetch(`${API}/invested/move/${promoId}`, { method: "POST" });
       if (!a.ok) throw new Error("Add failed");
       showSnack("✓ Moved to Completed!"); setPromo(false); load(); onDataChange?.();
-    } catch (e) { showSnack(e.message || "Failed", "error"); } finally { setPromoLoading(false); }
+    } catch (e) { showSnack(e.message || "Failed", "error"); }
+    finally { setPromoLoading(false); }
   };
 
-  /* ── render a single table cell — passes theme to Tooltip ── */
   const renderCell = (col, row) => {
     const raw = row[col.key];
-
     if (col.type === "date") return fmtDate(raw);
-
     if (col.key === "amount" || col.key === "amount_tobe_invested") {
-      return (
-        <span style={{ color: isDark ? "#64B5F6" : "#1a50b5", fontWeight: 700 }}>
-          {fmtAmount(raw)}
-        </span>
-      );
+      return <span style={{ color: isDark ? "#64B5F6" : "#1a50b5", fontWeight: 700 }}>{fmtAmount(raw)}</span>;
     }
-
     if (col.key === "client_name" || col.key === "amc_name") {
-      return (
-        <Tooltip text={String(raw ?? "")} theme={theme}>
-          <Highlight text={raw} query={search} theme={theme} />
-        </Tooltip>
-      );
+      return <Tooltip text={String(raw ?? "")} theme={theme}><Highlight text={raw} query={search} theme={theme} /></Tooltip>;
     }
-
-    return (
-      <Tooltip text={String(raw ?? "")} theme={theme}>
-        {raw ?? "—"}
-      </Tooltip>
-    );
+    return <Tooltip text={String(raw ?? "")} theme={theme}>{raw ?? "—"}</Tooltip>;
   };
 
-  /* ─── accent colour for Add Row button changes with theme ─── */
   const addBtnStyle = {
     background: isDark
       ? "linear-gradient(135deg,#64B5F6,#2979A0)"
@@ -442,6 +358,9 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
             </button>
           ))}
         </div>
+        <button className="add-btn" style={addBtnStyle} onClick={openAdd}>
+          <IcoPlus /> Add Row
+        </button>
       </div>
 
       {/* ── Search bar ── */}
@@ -502,7 +421,7 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
                       {tab === "pending" && (
                         <button className="ab ab-promo" title="Move to Completed" onClick={() => openPromo(row)}><IcoMove /></button>
                       )}
-                      <button className="ab ab-del"   title="Delete"            onClick={() => { setDelId(row.id); setConfirm(true); }}><IcoDel /></button>
+                      <button className="ab ab-del" title="Delete" onClick={() => { setDelId(row.id); setConfirm(true); }}><IcoDel /></button>
                     </div>
                   </td>
                 </tr>
@@ -596,22 +515,54 @@ const INV_CSS = `
   @keyframes dlgIn { from{opacity:0;transform:translateY(18px) scale(.97)} to{opacity:1;transform:none} }
   @keyframes spin  { to{transform:rotate(360deg)} }
 
-  /* ── Wrapper ── */
+  /* ══════════════════════════════════════════
+     SCROLL FIX — flex column layout on wrapper
+  ══════════════════════════════════════════ */
   .mod-wrap {
-    font-family:var(--fb,'Exo 2',sans-serif);
-    color:rgba(200,220,255,.92);
-    min-width:0; max-width:100%; width:100%;
-    box-sizing:border-box; overflow:hidden; position:relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    font-family: var(--fb,'Exo 2',sans-serif);
+    color: rgba(200,220,255,.92);
+    min-width: 0; max-width: 100%; width: 100%;
+    box-sizing: border-box; position: relative;
   }
-  .mod-wrap input::placeholder { color:rgba(160,190,255,0.35); }
   /* LIGHT */
-  .mod-wrap.theme-light { color:#111827; }
+  .mod-wrap.theme-light { color: #111827; }
+
+  /* table scroll area fills remaining vertical space */
+  .mod-wrap .tbl-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  /* spinner must not flex-grow */
+  .mod-wrap .fd-spin { flex-shrink: 0; }
+
+  /* placeholders */
+  .mod-wrap input::placeholder { color:rgba(160,190,255,0.35); }
   .mod-wrap.theme-light input::placeholder { color:rgba(0,0,0,0.3); }
+
+  /* scrollbar — dark (blue accent) */
+  .mod-wrap .tbl-wrap::-webkit-scrollbar        { width:4px; height:5px; }
+  .mod-wrap .tbl-wrap::-webkit-scrollbar-track  { background:rgba(100,181,246,0.05); border-radius:4px; }
+  .mod-wrap .tbl-wrap::-webkit-scrollbar-thumb  { background:rgba(100,181,246,0.3);  border-radius:4px; }
+  .mod-wrap .tbl-wrap::-webkit-scrollbar-thumb:hover { background:rgba(100,181,246,0.55); }
+  /* scrollbar — light */
+  .mod-wrap.theme-light .tbl-wrap::-webkit-scrollbar-track { background:rgba(42,109,217,0.05); }
+  .mod-wrap.theme-light .tbl-wrap::-webkit-scrollbar-thumb { background:rgba(42,109,217,0.25); }
+  .mod-wrap.theme-light .tbl-wrap::-webkit-scrollbar-thumb:hover { background:rgba(42,109,217,0.5); }
+  /* ══════════════════════════════════════════ */
 
   /* ── Header bar ── */
   .mod-hdr {
     display:flex; flex-wrap:wrap; align-items:center; gap:8px;
-    padding:12px 20px;
+    padding:12px 20px; flex-shrink:0;
     border-bottom:1px solid rgba(100,181,246,.12);
     box-sizing:border-box; width:100%;
   }
@@ -649,41 +600,27 @@ const INV_CSS = `
   }
   .add-btn:hover { opacity:.88; transform:translateY(-1px); }
 
-  /* ── Table header row ── */
+  /* ── Table section header ── */
   .tbl-hdr {
     display:flex; flex-wrap:wrap; align-items:center; gap:8px;
-    padding:8px 20px; box-sizing:border-box; width:100%;
+    padding:8px 20px; box-sizing:border-box; width:100%; flex-shrink:0;
   }
-  /* DARK */
   .tbl-title {
     font-size:.78rem; font-weight:700; color:rgba(200,220,255,.5);
     text-transform:uppercase; letter-spacing:.06em;
     font-family:var(--fh,'Orbitron',sans-serif);
   }
-  /* LIGHT */
   .theme-light .tbl-title { color:rgba(0,0,0,0.5); }
 
-  /* DARK */
   .tbl-badge {
     font-size:.7rem; font-weight:700; padding:2px 10px; border-radius:20px;
     border:1px solid rgba(100,181,246,.22);
     color:#64B5F6; background:rgba(100,181,246,.1);
     font-family:var(--fh,'Orbitron',sans-serif);
   }
-  /* LIGHT */
   .theme-light .tbl-badge {
     color:#1a50b5; background:rgba(42,109,217,0.1); border-color:rgba(42,109,217,0.25);
   }
-
-  /* ── Table wrapper ── */
-  .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; box-sizing:border-box; }
-  .tbl-wrap::-webkit-scrollbar { height:5px; }
-  .tbl-wrap::-webkit-scrollbar-track { background:rgba(100,181,246,.05); border-radius:4px; }
-  .tbl-wrap::-webkit-scrollbar-thumb { background:rgba(100,181,246,.3); border-radius:4px; }
-  .tbl-wrap::-webkit-scrollbar-thumb:hover { background:rgba(100,181,246,.55); }
-  .theme-light .tbl-wrap::-webkit-scrollbar-track { background:rgba(42,109,217,0.05); }
-  .theme-light .tbl-wrap::-webkit-scrollbar-thumb { background:rgba(42,109,217,0.25); }
-  .theme-light .tbl-wrap::-webkit-scrollbar-thumb:hover { background:rgba(42,109,217,0.5); }
 
   /* ── Table — DARK ── */
   .fd-tbl { width:100%; min-width:560px; border-collapse:collapse; font-size:.8rem; table-layout:auto; }
@@ -711,25 +648,22 @@ const INV_CSS = `
   .fd-tbl tbody tr:hover { background:rgba(100,181,246,.06); }
   .theme-light .fd-tbl tbody tr:hover { background:rgba(42,109,217,0.05); }
 
-  /* DARK row number */
   .fd-num { color:rgba(100,181,246,.4) !important; font-size:.72rem !important; width:42px; }
-  /* LIGHT row number */
   .theme-light .fd-num { color:rgba(0,0,0,0.3) !important; }
 
   .fd-empty { text-align:center; padding:32px 20px !important; color:rgba(200,220,255,.3); font-size:.82rem; }
   .theme-light .fd-empty { color:rgba(0,0,0,0.38); }
 
-  /* ── Spinner — DARK ── */
+  /* ── Spinner ── */
   .fd-spin { display:flex; justify-content:center; padding:40px; }
   .spinner {
     width:32px; height:32px;
     border:3px solid rgba(100,181,246,.15); border-top-color:#64B5F6;
     border-radius:50%; animation:spin .7s linear infinite;
   }
-  /* LIGHT */
   .theme-light .spinner { border-color:rgba(42,109,217,0.15); border-top-color:#2a6dd9; }
 
-  /* ── Action buttons — DARK ── */
+  /* ── Action buttons ── */
   .act-cell { display:flex; align-items:center; justify-content:center; gap:5px; }
   .ab { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:7px; border:none; cursor:pointer; transition:all .15s; }
   .ab-edit  { background:rgba(100,181,246,.12); color:#64B5F6; }
@@ -738,7 +672,6 @@ const INV_CSS = `
   .ab-del:hover   { background:rgba(239,68,68,.25); }
   .ab-promo { background:rgba(52,211,153,.1);  color:#34D399; }
   .ab-promo:hover { background:rgba(52,211,153,.25); }
-  /* LIGHT */
   .theme-light .ab-edit  { background:rgba(42,109,217,0.1);  color:#1a50b5; }
   .theme-light .ab-edit:hover  { background:rgba(42,109,217,0.22); }
   .theme-light .ab-del   { background:rgba(180,50,50,0.1);   color:#9a2020; }
@@ -746,7 +679,7 @@ const INV_CSS = `
   .theme-light .ab-promo { background:rgba(15,120,85,0.1);   color:#0a7a56; }
   .theme-light .ab-promo:hover { background:rgba(15,120,85,0.22); }
 
-  /* ── Form fields — DARK ── */
+  /* ── Form fields ── */
   .fld { display:flex; flex-direction:column; gap:5px; }
   .fld-lbl {
     font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
@@ -765,7 +698,6 @@ const INV_CSS = `
   .fld-inp.fld-hi:focus { border-color:rgba(245,158,11,.7); box-shadow:0 0 0 3px rgba(245,158,11,.12); }
   .fld-inp option { background:#0d1640; color:#fff; }
   .fld-note { font-size:.68rem; font-weight:600; margin-top:2px; padding-left:2px; }
-  /* LIGHT */
   .theme-light .fld-inp { background:rgba(255,255,255,0.85); border:1px solid rgba(10,30,100,0.22); color:#111827; }
   .theme-light .fld-inp:focus { border-color:#2a6dd9; box-shadow:0 0 0 3px rgba(42,109,217,0.12); }
   .theme-light .fld-inp.fld-hi { border-color:rgba(201,124,8,0.5); background:rgba(245,158,11,0.06); }
@@ -792,8 +724,7 @@ const INV_CSS = `
 `;
 
 /* ═══════════════════════════════════════════════════════════════
-   PORTAL_CSS  —  Dialog / overlay styles injected via portals.
-   DARK default + .theme-light overrides for every element.
+   PORTAL_CSS — Dialog / overlay styles (unchanged)
 ═══════════════════════════════════════════════════════════════ */
 const PORTAL_CSS = `
   @keyframes invDlgIn {
@@ -802,7 +733,6 @@ const PORTAL_CSS = `
   }
   @keyframes fIn { from{opacity:0} to{opacity:1} }
 
-  /* ── Overlay — DARK ── */
   .dlg-ov {
     position:fixed !important; inset:0 !important;
     background:rgba(0,0,10,0.6);
@@ -813,10 +743,8 @@ const PORTAL_CSS = `
     padding:16px; box-sizing:border-box; overflow-y:auto;
     animation:fIn .18s ease;
   }
-  /* ── Overlay — LIGHT ── */
   .dlg-ov.theme-light { background:rgba(10,20,80,0.25); }
 
-  /* ── Dialog box — DARK ── */
   .inv-dlg-box {
     background:rgba(7,9,30,0.93);
     backdrop-filter:blur(44px) saturate(160%);
@@ -830,17 +758,13 @@ const PORTAL_CSS = `
   }
   .inv-dlg-box::-webkit-scrollbar { width:4px; }
   .inv-dlg-box::-webkit-scrollbar-thumb { background:rgba(79,142,247,0.25); border-radius:4px; }
-
-  /* ── Dialog box — LIGHT ── */
   .theme-light .inv-dlg-box {
     background:rgba(255,255,255,0.97) !important;
-    backdrop-filter:blur(40px) saturate(180%) !important;
     border:1px solid rgba(42,109,217,0.22) !important;
-    box-shadow:0 8px 40px rgba(10,30,100,0.15), 0 0 0 1px rgba(42,109,217,0.07) !important;
+    box-shadow:0 8px 40px rgba(10,30,100,0.15) !important;
   }
   .theme-light .inv-dlg-box::-webkit-scrollbar-thumb { background:rgba(42,109,217,0.2); }
 
-  /* ── Header — DARK ── */
   .inv-dlg-hdr {
     display:flex; align-items:center; gap:12px;
     padding:16px 20px 12px;
@@ -848,25 +772,16 @@ const PORTAL_CSS = `
     background:rgba(79,142,247,0.04);
     border-radius:18px 18px 0 0;
   }
-  /* ── Header — LIGHT ── */
-  .theme-light .inv-dlg-hdr {
-    border-bottom-color:rgba(42,109,217,0.15) !important;
-    background:rgba(42,109,217,0.06) !important;
-  }
+  .theme-light .inv-dlg-hdr { border-bottom-color:rgba(42,109,217,0.15) !important; background:rgba(42,109,217,0.06) !important; }
 
   .dlg-bar { width:4px; height:22px; border-radius:2px; flex-shrink:0; }
 
-  /* ── Title — DARK ── */
   .inv-dlg-ttl { font-weight:800; font-size:.95rem; color:#fff; letter-spacing:.01em; }
-  /* ── Title — LIGHT ── */
   .theme-light .inv-dlg-ttl { color:#111827 !important; }
 
-  /* ── Sub — DARK ── */
   .inv-dlg-sub { font-size:.72rem; color:rgba(180,210,255,0.55); margin-top:2px; }
-  /* ── Sub — LIGHT ── */
   .theme-light .inv-dlg-sub { color:rgba(0,0,0,0.5) !important; }
 
-  /* ── Body — DARK ── */
   .inv-dlg-body {
     padding:16px 20px; display:flex; flex-direction:column; gap:12px;
     max-height:55vh; overflow-y:auto; background:transparent;
@@ -875,7 +790,6 @@ const PORTAL_CSS = `
   .inv-dlg-body::-webkit-scrollbar-thumb { background:rgba(79,142,247,0.2); border-radius:4px; }
   .theme-light .inv-dlg-body::-webkit-scrollbar-thumb { background:rgba(42,109,217,0.2); }
 
-  /* ── Fields — DARK ── */
   .inv-dlg-body .fld { display:flex; flex-direction:column; gap:6px; }
   .inv-dlg-body .fld-lbl {
     font-size:.67rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
@@ -891,27 +805,15 @@ const PORTAL_CSS = `
   }
   .inv-dlg-body .fld-inp:focus { border-color:#4F8EF7; box-shadow:0 0 0 3px rgba(79,142,247,0.16); }
   .inv-dlg-body .fld-inp option { background:#0c1638; color:#fff; }
-  /* ── Fields — LIGHT ── */
-  .theme-light .inv-dlg-body .fld-inp {
-    background:rgba(255,255,255,0.78) !important;
-    border:1px solid rgba(42,109,217,0.22) !important;
-    color:#111827 !important;
-  }
-  .theme-light .inv-dlg-body .fld-inp:focus {
-    border-color:#2a6dd9 !important;
-    box-shadow:0 0 0 3px rgba(42,109,217,0.12) !important;
-  }
+  .theme-light .inv-dlg-body .fld-inp { background:rgba(255,255,255,0.78) !important; border:1px solid rgba(42,109,217,0.22) !important; color:#111827 !important; }
+  .theme-light .inv-dlg-body .fld-inp:focus { border-color:#2a6dd9 !important; box-shadow:0 0 0 3px rgba(42,109,217,0.12) !important; }
   .theme-light .inv-dlg-body .fld-inp option { background:#fff !important; color:#111827 !important; }
-
-  /* highlight field */
   .inv-dlg-body .fld-inp.fld-hi { border-color:#f59e0b !important; }
   .inv-dlg-body .fld-inp.fld-hi:focus { box-shadow:0 0 0 3px rgba(245,158,11,0.12) !important; }
 
-  /* confirm paragraph */
   .inv-dlg-p { color:rgba(210,225,255,0.88); font-size:.84rem; line-height:1.6; margin:0; }
   .theme-light .inv-dlg-p { color:rgba(0,0,0,0.65) !important; }
 
-  /* ── Footer — DARK ── */
   .inv-dlg-foot {
     display:flex; justify-content:flex-end; gap:8px;
     padding:12px 20px;
@@ -919,13 +821,8 @@ const PORTAL_CSS = `
     background:rgba(79,142,247,0.02);
     border-radius:0 0 18px 18px;
   }
-  /* ── Footer — LIGHT ── */
-  .theme-light .inv-dlg-foot {
-    border-top-color:rgba(42,109,217,0.14) !important;
-    background:rgba(42,109,217,0.03) !important;
-  }
+  .theme-light .inv-dlg-foot { border-top-color:rgba(42,109,217,0.14) !important; background:rgba(42,109,217,0.03) !important; }
 
-  /* ── Cancel — DARK ── */
   .inv-btn-cancel {
     padding:8px 14px; border-radius:10px;
     border:1px solid rgba(79,142,247,0.28); background:none;
@@ -934,17 +831,9 @@ const PORTAL_CSS = `
   }
   .inv-btn-cancel:hover { border-color:rgba(255,255,255,0.3); color:#fff; background:rgba(255,255,255,0.04); }
   .inv-btn-cancel:disabled { opacity:.4; cursor:not-allowed; }
-  /* ── Cancel — LIGHT ── */
-  .theme-light .inv-btn-cancel {
-    border:1px solid rgba(42,109,217,0.28) !important;
-    color:rgba(0,0,0,0.6) !important;
-  }
-  .theme-light .inv-btn-cancel:hover {
-    border-color:rgba(42,109,217,0.5) !important;
-    color:#111827 !important; background:rgba(42,109,217,0.06) !important;
-  }
+  .theme-light .inv-btn-cancel { border:1px solid rgba(42,109,217,0.28) !important; color:rgba(0,0,0,0.6) !important; }
+  .theme-light .inv-btn-cancel:hover { border-color:rgba(42,109,217,0.5) !important; color:#111827 !important; background:rgba(42,109,217,0.06) !important; }
 
-  /* ── OK buttons ── */
   .inv-btn-ok {
     padding:8px 16px; border-radius:10px; border:none; color:#fff;
     font-size:.8rem; font-family:'Inter',sans-serif; font-weight:700;
@@ -953,16 +842,13 @@ const PORTAL_CSS = `
   .inv-btn-ok:hover { transform:translateY(-1px); filter:brightness(1.1); }
   .inv-btn-ok:disabled { opacity:.6; cursor:not-allowed; transform:none; }
 
-  /* DARK gradients */
   .inv-btn-primary { background:linear-gradient(135deg,#4F8EF7,#7B5FFF); box-shadow:0 4px 16px rgba(79,142,247,0.35); }
   .inv-btn-success { background:linear-gradient(135deg,#34D399,#059669); box-shadow:0 4px 16px rgba(52,211,153,0.3); }
   .inv-btn-danger  { background:linear-gradient(135deg,#EF4444,#DC2626); box-shadow:0 4px 16px rgba(239,68,68,0.3); }
-  /* LIGHT gradients */
   .theme-light .inv-btn-primary { background:linear-gradient(135deg,#2a6dd9,#5a3fb5) !important; box-shadow:0 4px 14px rgba(42,109,217,.35) !important; }
   .theme-light .inv-btn-success { background:linear-gradient(135deg,#0f9e6e,#057a52) !important; box-shadow:0 4px 14px rgba(15,158,110,.3) !important; }
   .theme-light .inv-btn-danger  { background:linear-gradient(135deg,#d14040,#a82424) !important; box-shadow:0 4px 14px rgba(180,50,50,.3) !important; }
 
-  /* ── Responsive ── */
   @media (max-width:520px) {
     .inv-dlg-box { max-width:calc(100vw - 24px) !important; border-radius:18px 18px 0 0 !important; }
     .dlg-ov { align-items:flex-end !important; padding:0 !important; }

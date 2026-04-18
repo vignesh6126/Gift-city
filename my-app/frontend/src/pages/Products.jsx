@@ -98,7 +98,7 @@ function SearchBar({ value, onChange, tabLabel, resultCount, totalCount, theme =
   const sectionBdr   = isLight ? "1px solid rgba(0,0,0,0.1)"       : "1px solid rgba(52,211,153,0.12)";
 
   return (
-    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg }}>
+    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 420 }}>
           <span style={{
@@ -321,7 +321,6 @@ function CustomSelect({ options, value, onChange, isDark }) {
 function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }) {
   const isDark = theme === "dark";
 
-  // Count how many products share the same amc_name (including this one)
   const productCount = allRows.filter(
     r => (r.amc_name || "").toLowerCase() === (row.amc_name || "").toLowerCase()
   ).length;
@@ -341,7 +340,6 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
     if (!form.AMC_name.trim()) { setSnack({ msg: "AMC Name is required", severity: "error" }); return; }
     setSaving(true);
     try {
-      // ── Duplicate check: fetch existing pending rows and compare AMC_name ──
       const checkRes  = await fetch(`${API}/empanelment/pending`);
       const existing  = checkRes.ok ? await checkRes.json() : [];
       const duplicate = (Array.isArray(existing) ? existing : []).some(
@@ -352,7 +350,6 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
         setSaving(false);
         return;
       }
-
       const r = await fetch(`${API}/empanelment/pending`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -368,7 +365,6 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
     }
   };
 
-  /* Theme tokens */
   const overlayBg  = isDark ? "rgba(0,0,10,0.65)"         : "rgba(0,20,80,0.38)";
   const boxBg      = isDark ? "rgba(7,9,30,0.92)"          : "rgba(255,255,255,0.95)";
   const boxBorder  = isDark ? "rgba(245,158,11,0.5)"       : "rgba(245,158,11,0.35)";
@@ -426,7 +422,6 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
     opacity: saving ? 0.7 : 1,
   };
 
-  /* Field definitions */
   const PENDING_FIELDS = [
     { key: "AMC_name",        label: "AMC Name",       auto: true,  note: "✦ Auto-filled from product" },
     { key: "products",        label: "Products Count",  auto: true,  note: "✦ Auto-counted from products table" },
@@ -463,7 +458,6 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
         backdropFilter: "blur(44px) saturate(160%)",
         WebkitBackdropFilter: "blur(44px) saturate(160%)",
       }}>
-        {/* Header */}
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
           padding: "16px 20px 12px",
@@ -482,8 +476,6 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
             </div>
           </div>
         </div>
-
-        {/* Body */}
         <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
           {PENDING_FIELDS.map(f => (
             <div key={f.key} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
@@ -508,8 +500,6 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
               </div>
             </div>
           ))}
-
-          {/* Product preview card */}
           <div style={{
             padding: "10px 14px", borderRadius: 10,
             border: isDark ? "1px solid rgba(245,158,11,0.2)" : "1px solid rgba(245,158,11,0.25)",
@@ -527,8 +517,6 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
             </div>
           </div>
         </div>
-
-        {/* Footer */}
         <div style={{
           display: "flex", justifyContent: "flex-end", gap: 8,
           padding: "12px 20px", borderRadius: "0 0 18px 18px",
@@ -554,7 +542,6 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
           </button>
         </div>
       </div>
-
       {snack && <Snack {...snack} onClose={() => setSnack(null)} />}
     </div>,
     document.body
@@ -576,7 +563,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
   const [form,      setForm]      = useState({});
   const [delId,     setDelId]     = useState(null);
   const [confirm,   setConfirm]   = useState(false);
-  const [shareRow,  setShareRow]  = useState(null);   // row being shared to pending
+  const [shareRow,  setShareRow]  = useState(null);
   const [snack,     setSnack]     = useState(null);
 
   const load = useCallback(async () => {
@@ -762,14 +749,38 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
           from { opacity:0; transform:translateX(-6px); }
           to   { opacity:1; transform:none; }
         }
-        .mod-wrap { max-width:100%; overflow:hidden; }
+
+        /* ── mod-wrap: flex column so table area fills remaining height ── */
+        .mod-wrap {
+          max-width: 100%;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          min-height: 0;
+        }
         .mod-wrap input::placeholder { color:rgba(160,190,255,0.35); }
         .mod-wrap.theme-light input::placeholder { color:rgba(0,0,0,0.28); }
 
+        /* ── table wrapper: fills leftover space and scrolls both axes ── */
         .prod-tbl-wrap {
+          flex: 1;
+          min-height: 0;
           overflow-x: auto;
+          overflow-y: auto;
           -webkit-overflow-scrolling: touch;
         }
+
+        /* ── scrollbar styling ── */
+        .prod-tbl-wrap::-webkit-scrollbar { height: 5px; width: 5px; }
+        .prod-tbl-wrap::-webkit-scrollbar-track { background: rgba(79,142,247,0.06); border-radius: 4px; }
+        .prod-tbl-wrap::-webkit-scrollbar-thumb { background: rgba(79,142,247,0.3); border-radius: 4px; }
+        .prod-tbl-wrap::-webkit-scrollbar-thumb:hover { background: rgba(79,142,247,0.55); }
+        .theme-light .prod-tbl-wrap::-webkit-scrollbar-track { background: rgba(42,109,217,0.05); }
+        .theme-light .prod-tbl-wrap::-webkit-scrollbar-thumb { background: rgba(42,109,217,0.25); }
+        .theme-light .prod-tbl-wrap::-webkit-scrollbar-thumb:hover { background: rgba(42,109,217,0.5); }
+        .prod-tbl-wrap { scrollbar-width: thin; scrollbar-color: rgba(79,142,247,0.3) rgba(79,142,247,0.06); }
+        .theme-light .prod-tbl-wrap { scrollbar-color: rgba(42,109,217,0.25) rgba(42,109,217,0.05); }
+
         .prod-tbl {
           width: 100%;
           min-width: 780px;
@@ -795,21 +806,16 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
           word-break: break-word;
         }
 
+        /* ── keep header + search bar from shrinking ── */
+        .mod-hdr  { flex-shrink: 0; }
+        .tbl-hdr  { flex-shrink: 0; }
+        .fd-spin  { flex-shrink: 0; }
+
         /* share action button */
-        .ab-share {
-          background: rgba(245,158,11,0.12);
-          color: #f59e0b;
-        }
-        .ab-share:hover {
-          background: rgba(245,158,11,0.28);
-        }
-        .theme-light .ab-share {
-          background: rgba(180,100,0,0.1);
-          color: #92610a;
-        }
-        .theme-light .ab-share:hover {
-          background: rgba(180,100,0,0.22);
-        }
+        .ab-share { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .ab-share:hover { background: rgba(245,158,11,0.28); }
+        .theme-light .ab-share { background: rgba(180,100,0,0.1); color: #92610a; }
+        .theme-light .ab-share:hover { background: rgba(180,100,0,0.22); }
       `}</style>
 
       {/* ── Header ── */}
@@ -903,21 +909,9 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
                   <td>{row.lock_in ?? "—"}</td>
                   <td>
                     <div className="act-cell">
-                      <button className="ab ab-edit" title="Edit"
-                        onClick={() => openEdit(row)}>
-                        <IcoEdit />
-                      </button>
-                      <button
-                        className="ab ab-share"
-                        title="Send to Empanelment Pending"
-                        onClick={() => setShareRow(row)}
-                      >
-                        <IcoShare />
-                      </button>
-                      <button className="ab ab-del" title="Delete"
-                        onClick={() => { setDelId(row.id); setConfirm(true); }}>
-                        <IcoDel />
-                      </button>
+                      <button className="ab ab-edit" title="Edit" onClick={() => openEdit(row)}><IcoEdit /></button>
+                      <button className="ab ab-share" title="Send to Empanelment Pending" onClick={() => setShareRow(row)}><IcoShare /></button>
+                      <button className="ab ab-del" title="Delete" onClick={() => { setDelId(row.id); setConfirm(true); }}><IcoDel /></button>
                     </div>
                   </td>
                 </tr>
@@ -978,10 +972,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         "Confirm Delete",
         "This action cannot be undone",
         "#EF4444",
-        <p style={{
-          margin: 0, lineHeight: 1.6, fontSize: ".84rem",
-          color: isDark ? "white" : "#000",
-        }}>
+        <p style={{ margin: 0, lineHeight: 1.6, fontSize: ".84rem", color: isDark ? "white" : "#000" }}>
           Are you sure you want to delete this product record?
         </p>,
         () => setConfirm(false),

@@ -103,7 +103,7 @@ function SearchBar({ value, onChange, resultCount, totalCount, theme = "dark" })
   const sectionBdr   = theme === "light" ? "1px solid rgba(0,0,0,0.1)"      : "1px solid rgba(79,142,247,0.12)";
 
   return (
-    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg }}>
+    <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 420 }}>
           <span style={{
@@ -203,7 +203,6 @@ function AmcAutocomplete({ value, onChange, onAmcSelect, isDark }) {
   const [focused, setFocused]  = useState(false);
   const wrapRef                = useRef(null);
 
-  /* ── theme tokens ── */
   const accent        = isDark ? "#4F8EF7"                              : "#2a6dd9";
   const accentAlpha   = isDark ? "rgba(79,142,247,0.18)"               : "rgba(42,109,217,0.14)";
   const inputBg       = isDark ? "rgba(255,255,255,0.04)"              : "rgba(255,255,255,0.92)";
@@ -215,8 +214,6 @@ function AmcAutocomplete({ value, onChange, onAmcSelect, isDark }) {
   const iconColorFoc  = accent;
   const clearBg       = isDark ? "rgba(79,142,247,0.15)"               : "rgba(42,109,217,0.1)";
   const clearHov      = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.2)";
-
-  /* dropdown */
   const dropBg        = isDark ? "rgba(8,13,35,0.97)"                  : "rgba(255,255,255,0.98)";
   const dropBorder    = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.18)";
   const dropShadow    = isDark
@@ -263,42 +260,26 @@ function AmcAutocomplete({ value, onChange, onAmcSelect, isDark }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleSelect = (amc) => {
-    setQuery(amc); setOpen(false);
-    onChange("amc_name", amc); onAmcSelect?.(amc);
-  };
-  const handleChange = (e) => {
-    const v = e.target.value;
-    setQuery(v); onChange("amc_name", v);
-    if (!v) onAmcSelect?.("");
-  };
-
+  const handleSelect = (amc) => { setQuery(amc); setOpen(false); onChange("amc_name", amc); onAmcSelect?.(amc); };
+  const handleChange = (e) => { const v = e.target.value; setQuery(v); onChange("amc_name", v); if (!v) onAmcSelect?.(""); };
   const isActive = focused || open;
 
   return (
     <div ref={wrapRef} style={{ position: "relative" }}>
       <style>{DROP_STYLE}</style>
-
-      {/* ── Input wrapper with left icon ── */}
       <div style={{ position: "relative" }}>
-        {/* Search icon */}
         <span style={{
           position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)",
           display: "flex", pointerEvents: "none",
-          color: isActive ? iconColorFoc : iconColor,
-          transition: "color .2s",
+          color: isActive ? iconColorFoc : iconColor, transition: "color .2s",
         }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </span>
-
         <input
-          type="text"
-          value={query}
-          onChange={handleChange}
-          placeholder="Search AMC name…"
+          type="text" value={query} onChange={handleChange} placeholder="Search AMC name…"
           style={{
             width: "100%", padding: "9px 32px 9px 32px", borderRadius: 10,
             background: isActive ? inputBgFocus : inputBg,
@@ -307,14 +288,9 @@ function AmcAutocomplete({ value, onChange, onAmcSelect, isDark }) {
             outline: "none", transition: "all .2s", boxSizing: "border-box",
             boxShadow: isActive ? `0 0 0 3px ${accentAlpha}` : "none",
           }}
-          onFocus={e => {
-            setFocused(true);
-            if (query.trim() && suggestions.length > 0) setOpen(true);
-          }}
+          onFocus={() => { setFocused(true); if (query.trim() && suggestions.length > 0) setOpen(true); }}
           onBlur={() => setFocused(false)}
         />
-
-        {/* Clear button */}
         {query && (
           <button
             onMouseDown={e => { e.preventDefault(); setQuery(""); onChange("amc_name", ""); onAmcSelect?.(""); setSugs([]); setOpen(false); }}
@@ -335,79 +311,42 @@ function AmcAutocomplete({ value, onChange, onAmcSelect, isDark }) {
         )}
       </div>
 
-      {/* ── Dropdown panel ── */}
       {open && suggestions.length > 0 && (
         <div style={{
           position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 999999,
-          background: dropBg,
-          border: `1px solid ${dropBorder}`,
-          borderRadius: 14,
-          boxShadow: dropShadow,
-          overflow: "hidden",
+          background: dropBg, border: `1px solid ${dropBorder}`, borderRadius: 14,
+          boxShadow: dropShadow, overflow: "hidden",
           animation: "dropIn .18s cubic-bezier(0.34,1.56,0.64,1)",
         }}>
-          {/* Header bar */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "7px 12px",
-            background: headerBg,
-            borderBottom: `1px solid ${headerBdr}`,
+            padding: "7px 12px", background: headerBg, borderBottom: `1px solid ${headerBdr}`,
           }}>
-            <span style={{ fontSize: ".66rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: isDark ? "rgba(180,210,255,0.5)" : "rgba(0,0,0,0.4)", fontFamily: "'Inter',sans-serif" }}>
-              AMC Results
-            </span>
-            <span style={{
-              fontSize: ".66rem", fontWeight: 800, padding: "2px 8px", borderRadius: 20,
-              background: countBg, color: countColor, fontFamily: "'Inter',sans-serif",
-            }}>
-              {suggestions.length}
-            </span>
+            <span style={{ fontSize: ".66rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: isDark ? "rgba(180,210,255,0.5)" : "rgba(0,0,0,0.4)", fontFamily: "'Inter',sans-serif" }}>AMC Results</span>
+            <span style={{ fontSize: ".66rem", fontWeight: 800, padding: "2px 8px", borderRadius: 20, background: countBg, color: countColor, fontFamily: "'Inter',sans-serif" }}>{suggestions.length}</span>
           </div>
-
-          {/* Scrollable list */}
           <div style={{ maxHeight: 188, overflowY: "auto" }}>
-            <style>{`
-              .amc-drop-list::-webkit-scrollbar { width: 4px; }
-              .amc-drop-list::-webkit-scrollbar-track { background: transparent; }
-              .amc-drop-list::-webkit-scrollbar-thumb { background: ${scrollThumb}; border-radius: 4px; }
-            `}</style>
+            <style>{`.amc-drop-list::-webkit-scrollbar{width:4px}.amc-drop-list::-webkit-scrollbar-track{background:transparent}.amc-drop-list::-webkit-scrollbar-thumb{background:${scrollThumb};border-radius:4px}`}</style>
             <div className="amc-drop-list" style={{ maxHeight: 188, overflowY: "auto" }}>
               {suggestions.map((amc, i) => {
                 const idx = amc.toLowerCase().indexOf(query.toLowerCase());
                 return (
-                  <div
-                    key={amc}
-                    onMouseDown={() => handleSelect(amc)}
+                  <div key={amc} onMouseDown={() => handleSelect(amc)}
                     style={{
-                      padding: "9px 12px",
-                      display: "flex", alignItems: "center", gap: 9,
+                      padding: "9px 12px", display: "flex", alignItems: "center", gap: 9,
                       fontSize: ".84rem", fontFamily: "'Inter',sans-serif",
                       color: itemColor, cursor: "pointer",
                       borderBottom: i < suggestions.length - 1 ? `1px solid ${itemDivider}` : "none",
-                      borderLeft: "2px solid transparent",
-                      transition: "all .13s",
+                      borderLeft: "2px solid transparent", transition: "all .13s",
                       animation: `itemIn .15s ease ${Math.min(i * 0.03, 0.15)}s both`,
                     }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.background   = itemHoverBg;
-                      e.currentTarget.style.borderLeftColor = itemHoverBdr;
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background   = "transparent";
-                      e.currentTarget.style.borderLeftColor = "transparent";
-                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = itemHoverBg; e.currentTarget.style.borderLeftColor = itemHoverBdr; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderLeftColor = "transparent"; }}
                   >
-                    {/* dot */}
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
                     <span>
                       {idx === -1 ? amc : (
-                        <>
-                          {amc.slice(0, idx)}
-                          <mark style={{ background: markBg, color: markColor, borderRadius: 3, padding: "0 2px", fontWeight: 700 }}>
-                            {amc.slice(idx, idx + query.length)}
-                          </mark>
-                          {amc.slice(idx + query.length)}
-                        </>
+                        <>{amc.slice(0, idx)}<mark style={{ background: markBg, color: markColor, borderRadius: 3, padding: "0 2px", fontWeight: 700 }}>{amc.slice(idx, idx + query.length)}</mark>{amc.slice(idx + query.length)}</>
                       )}
                     </span>
                   </div>
@@ -430,7 +369,6 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
   const [focused, setFocused]   = useState(false);
   const wrapRef                 = useRef(null);
 
-  /* ── theme tokens (mirrors AmcAutocomplete) ── */
   const accent        = isDark ? "#4F8EF7"                              : "#2a6dd9";
   const accentAlpha   = isDark ? "rgba(79,142,247,0.18)"               : "rgba(42,109,217,0.14)";
   const inputBg       = isDark ? "rgba(255,255,255,0.04)"              : "rgba(255,255,255,0.92)";
@@ -443,8 +381,6 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
   const iconColorFoc  = accent;
   const clearBg       = isDark ? "rgba(79,142,247,0.15)"               : "rgba(42,109,217,0.1)";
   const clearHov      = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.2)";
-
-  /* dropdown */
   const dropBg        = isDark ? "rgba(8,13,35,0.97)"                  : "rgba(255,255,255,0.98)";
   const dropBorder    = isDark ? "rgba(79,142,247,0.3)"                : "rgba(42,109,217,0.18)";
   const dropShadow    = isDark
@@ -463,7 +399,6 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
     : "linear-gradient(90deg,rgba(42,109,217,0.12),rgba(42,109,217,0.04))";
   const itemSelColor  = accent;
   const itemSelBdr    = isDark ? "rgba(79,142,247,0.55)"               : "rgba(42,109,217,0.45)";
-  const subColor      = isDark ? "rgba(160,190,255,0.45)"              : "rgba(0,0,0,0.42)";
   const checkBg       = isDark ? "rgba(79,142,247,0.2)"                : "rgba(42,109,217,0.12)";
   const checkColor    = accent;
   const markBg        = isDark ? "rgba(230,126,34,0.35)"               : "rgba(42,109,217,0.16)";
@@ -473,7 +408,6 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
   const chipColor     = isDark ? "rgba(180,210,255,0.55)"              : "rgba(0,0,0,0.45)";
   const scrollThumb   = isDark ? "rgba(79,142,247,0.2)"                : "rgba(42,109,217,0.15)";
 
-  /* Reload products whenever AMC changes */
   useEffect(() => {
     setQuery(""); onChange("scheme", ""); setAllP([]); setFiltered([]); setOpen(false);
     if (!amcName?.trim()) return;
@@ -481,9 +415,7 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
       try {
         const r    = await fetch(`${API}/products`);
         const data = await r.json();
-        const prods = (data || []).filter(
-          p => (p.amc_name || "").toLowerCase() === amcName.toLowerCase()
-        );
+        const prods = (data || []).filter(p => (p.amc_name || "").toLowerCase() === amcName.toLowerCase());
         setAllP(prods); setFiltered(prods);
       } catch { setAllP([]); setFiltered([]); }
     })();
@@ -506,13 +438,10 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
   const noAmc    = !amcName?.trim();
   const disabled = noAmc;
   const placeholder = noAmc ? "Select an AMC first…" : allProducts.length === 0 ? "No products for this AMC" : "Search scheme…";
-
   const handleSelect = (p) => { setQuery(p.product_name); onChange("scheme", p.product_name); setOpen(false); };
   const handleChange = (e) => { setQuery(e.target.value); onChange("scheme", e.target.value); setOpen(true); };
-
   const isActive = focused || open;
 
-  /* structure → chip colour */
   const structureColor = (s) => {
     if (!s) return chipColor;
     if (s.includes("cat-III")) return isDark ? "#818cf8" : "#4f46e5";
@@ -522,10 +451,7 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
 
   return (
     <div ref={wrapRef} style={{ position: "relative" }}>
-
-      {/* ── Input wrapper ── */}
       <div style={{ position: "relative" }}>
-        {/* Search icon */}
         <span style={{
           position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)",
           display: "flex", pointerEvents: "none",
@@ -537,13 +463,8 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
             <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </span>
-
         <input
-          type="text"
-          value={query}
-          onChange={handleChange}
-          disabled={disabled}
-          placeholder={placeholder}
+          type="text" value={query} onChange={handleChange} disabled={disabled} placeholder={placeholder}
           style={{
             width: "100%", padding: "9px 32px 9px 32px", borderRadius: 10,
             background: disabled ? disabledBg : (isActive ? inputBgFocus : inputBg),
@@ -551,14 +472,11 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
             color: inputColor, fontSize: ".84rem", fontFamily: "'Inter',sans-serif",
             outline: "none", transition: "all .2s", boxSizing: "border-box",
             boxShadow: isActive && !disabled ? `0 0 0 3px ${accentAlpha}` : "none",
-            cursor: disabled ? "not-allowed" : "text",
-            opacity: disabled ? 0.45 : 1,
+            cursor: disabled ? "not-allowed" : "text", opacity: disabled ? 0.45 : 1,
           }}
           onFocus={() => { if (disabled) return; setFocused(true); setOpen(true); }}
           onBlur={() => setFocused(false)}
         />
-
-        {/* Clear button */}
         {query && !disabled && (
           <button
             onMouseDown={e => { e.preventDefault(); setQuery(""); onChange("scheme", ""); setFiltered(allProducts); }}
@@ -579,51 +497,26 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
         )}
       </div>
 
-      {/* ── Dropdown panel ── */}
       {open && !disabled && (
         <div style={{
           position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 999999,
-          background: dropBg,
-          border: `1px solid ${dropBorder}`,
-          borderRadius: 14,
-          boxShadow: dropShadow,
-          overflow: "hidden",
+          background: dropBg, border: `1px solid ${dropBorder}`, borderRadius: 14,
+          boxShadow: dropShadow, overflow: "hidden",
           animation: "dropIn .18s cubic-bezier(0.34,1.56,0.64,1)",
         }}>
-          {/* Header */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "7px 12px",
-            background: headerBg, borderBottom: `1px solid ${headerBdr}`,
+            padding: "7px 12px", background: headerBg, borderBottom: `1px solid ${headerBdr}`,
           }}>
-            <span style={{ fontSize: ".66rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: isDark ? "rgba(180,210,255,0.5)" : "rgba(0,0,0,0.4)", fontFamily: "'Inter',sans-serif" }}>
-              Schemes
-            </span>
-            <span style={{
-              fontSize: ".66rem", fontWeight: 800, padding: "2px 8px", borderRadius: 20,
-              background: countBg, color: countColor, fontFamily: "'Inter',sans-serif",
-            }}>
-              {filtered.length}
-            </span>
+            <span style={{ fontSize: ".66rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: isDark ? "rgba(180,210,255,0.5)" : "rgba(0,0,0,0.4)", fontFamily: "'Inter',sans-serif" }}>Schemes</span>
+            <span style={{ fontSize: ".66rem", fontWeight: 800, padding: "2px 8px", borderRadius: 20, background: countBg, color: countColor, fontFamily: "'Inter',sans-serif" }}>{filtered.length}</span>
           </div>
-
-          {/* List */}
           <div style={{ maxHeight: 210, overflowY: "auto" }}>
-            <style>{`
-              .scheme-drop-list::-webkit-scrollbar { width: 4px; }
-              .scheme-drop-list::-webkit-scrollbar-track { background: transparent; }
-              .scheme-drop-list::-webkit-scrollbar-thumb { background: ${scrollThumb}; border-radius: 4px; }
-            `}</style>
+            <style>{`.scheme-drop-list::-webkit-scrollbar{width:4px}.scheme-drop-list::-webkit-scrollbar-track{background:transparent}.scheme-drop-list::-webkit-scrollbar-thumb{background:${scrollThumb};border-radius:4px}`}</style>
             <div className="scheme-drop-list" style={{ maxHeight: 210, overflowY: "auto" }}>
               {filtered.length === 0 ? (
-                <div style={{
-                  padding: "16px 14px", display: "flex", alignItems: "center", gap: 8,
-                  fontSize: ".82rem", fontFamily: "'Inter',sans-serif", color: emptyColor,
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: .5 }}>
-                    <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
+                <div style={{ padding: "16px 14px", display: "flex", alignItems: "center", gap: 8, fontSize: ".82rem", fontFamily: "'Inter',sans-serif", color: emptyColor }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: .5 }}><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                   No matching schemes found
                 </div>
               ) : filtered.map((p, i) => {
@@ -631,86 +524,35 @@ function SchemeDropdown({ value, amcName, onChange, isDark }) {
                 const idx = query.trim() ? p.product_name.toLowerCase().indexOf(query.toLowerCase()) : -1;
                 const sColor = structureColor(p.structure);
                 return (
-                  <div
-                    key={p.id}
-                    onMouseDown={() => handleSelect(p)}
+                  <div key={p.id} onMouseDown={() => handleSelect(p)}
                     style={{
                       padding: "10px 12px", cursor: "pointer",
                       borderBottom: i < filtered.length - 1 ? `1px solid ${itemDivider}` : "none",
                       background: isSelected ? itemSelBg : "transparent",
                       borderLeft: `2px solid ${isSelected ? itemSelBdr : "transparent"}`,
-                      transition: "all .13s",
-                      display: "flex", alignItems: "flex-start", gap: 10,
+                      transition: "all .13s", display: "flex", alignItems: "flex-start", gap: 10,
                       animation: `itemIn .15s ease ${Math.min(i * 0.03, 0.15)}s both`,
                     }}
-                    onMouseEnter={e => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background     = itemHoverBg;
-                        e.currentTarget.style.borderLeftColor = itemHoverBdr;
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background     = "transparent";
-                        e.currentTarget.style.borderLeftColor = "transparent";
-                      }
-                    }}
+                    onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.background = itemHoverBg; e.currentTarget.style.borderLeftColor = itemHoverBdr; } }}
+                    onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderLeftColor = "transparent"; } }}
                   >
-                    {/* checkmark circle */}
                     <span style={{
                       width: 18, height: 18, borderRadius: "50%", flexShrink: 0, marginTop: 1,
                       background: isSelected ? checkBg : "transparent",
                       border: `1.5px solid ${isSelected ? checkColor : (isDark ? "rgba(79,142,247,0.2)" : "rgba(0,0,0,0.12)")}`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      transition: "all .15s",
+                      display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s",
                     }}>
-                      {isSelected && (
-                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none">
-                          <polyline points="20 6 9 17 4 12" stroke={checkColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
+                      {isSelected && <svg width="9" height="9" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke={checkColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                     </span>
-
-                    {/* content */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: ".84rem", fontFamily: "'Inter',sans-serif",
-                        fontWeight: isSelected ? 700 : 500,
-                        color: isSelected ? itemSelColor : itemColor,
-                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                      }}>
+                      <div style={{ fontSize: ".84rem", fontFamily: "'Inter',sans-serif", fontWeight: isSelected ? 700 : 500, color: isSelected ? itemSelColor : itemColor, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {idx === -1 || !query.trim() ? p.product_name : (
-                          <>
-                            {p.product_name.slice(0, idx)}
-                            <mark style={{ background: markBg, color: markColor, borderRadius: 3, padding: "0 2px", fontWeight: 700 }}>
-                              {p.product_name.slice(idx, idx + query.length)}
-                            </mark>
-                            {p.product_name.slice(idx + query.length)}
-                          </>
+                          <>{p.product_name.slice(0, idx)}<mark style={{ background: markBg, color: markColor, borderRadius: 3, padding: "0 2px", fontWeight: 700 }}>{p.product_name.slice(idx, idx + query.length)}</mark>{p.product_name.slice(idx + query.length)}</>
                         )}
                       </div>
-                      {/* chips row */}
                       <div style={{ display: "flex", gap: 5, marginTop: 4, flexWrap: "wrap" }}>
-                        {p.structure && (
-                          <span style={{
-                            fontSize: ".62rem", fontWeight: 700, padding: "1px 6px", borderRadius: 20,
-                            background: chipBg, color: sColor,
-                            border: `1px solid ${sColor}30`,
-                            fontFamily: "'Inter',sans-serif",
-                          }}>
-                            {p.structure}
-                          </span>
-                        )}
-                        {p.lock_in && (
-                          <span style={{
-                            fontSize: ".62rem", fontWeight: 600, padding: "1px 6px", borderRadius: 20,
-                            background: chipBg, color: chipColor,
-                            border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
-                            fontFamily: "'Inter',sans-serif",
-                          }}>
-                            🔒 {p.lock_in}
-                          </span>
-                        )}
+                        {p.structure && <span style={{ fontSize: ".62rem", fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: chipBg, color: sColor, border: `1px solid ${sColor}30`, fontFamily: "'Inter',sans-serif" }}>{p.structure}</span>}
+                        {p.lock_in   && <span style={{ fontSize: ".62rem", fontWeight: 600, padding: "1px 6px", borderRadius: 20, background: chipBg, color: chipColor, border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`, fontFamily: "'Inter',sans-serif" }}>🔒 {p.lock_in}</span>}
                       </div>
                     </div>
                   </div>
@@ -753,7 +595,6 @@ function Snack({ msg, severity, onClose }) {
 }
 
 export default function Interested({ inline = false, onDataChange, theme = "dark" }) {
-
   const isDark = theme === "dark";
   const [rows,          setRows]          = useState([]);
   const [search,        setSearch]        = useState("");
@@ -794,33 +635,25 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
       )
     : rows;
 
-  /* ─── Add / Edit ─── */
   const openAdd  = () => { setEditRow(null); setForm(emptyRow()); setDlg(true); };
   const openEdit = (row) => { setEditRow(row); setForm({ ...row }); setDlg(true); };
   const setField = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const save = async () => {
-    if (!form.client_name?.trim()) {
-      showSnack("Client name is required", "error");
-      return;
-    }
+    if (!form.client_name?.trim()) { showSnack("Client name is required", "error"); return; }
     const payload = {
       ...form,
-      client_name:     form.client_name?.trim() || "",
-      esops_rsu:       form.esops_rsu || "no",
-      discussion_date: toISODate(form.discussion_date) || null,
+      client_name:      form.client_name?.trim() || "",
+      esops_rsu:        form.esops_rsu || "no",
+      discussion_date:  toISODate(form.discussion_date) || null,
       next_action_date: toISODate(form.next_action_date) || null,
-      next_action:     form.next_action?.trim() || "",
+      next_action:      form.next_action?.trim() || "",
     };
     const url    = editRow ? `${API}/interested/${editRow.id}` : `${API}/interested`;
     const method = editRow ? "PUT" : "POST";
     setSaving(true);
     try {
-      const r = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!r.ok) {
         let errMsg = `HTTP ${r.status}`;
         try { const b = await r.json(); errMsg = b.message || b.error || errMsg; } catch {}
@@ -835,7 +668,6 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
     }
   };
 
-  /* ─── Delete ─── */
   const del = async () => {
     try {
       const r = await fetch(`${API}/interested/${delId}`, { method: "DELETE" });
@@ -847,40 +679,20 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
     }
   };
 
-  /* ─── Share → Customers Pending ─── */
-  const openShare = (row) => {
-    setShareSourceId(row.id);
-    setShareForm(interestedToPending(row));
-    setShareOpen(true);
-  };
+  const openShare = (row) => { setShareSourceId(row.id); setShareForm(interestedToPending(row)); setShareOpen(true); };
   const setShareFld = (k, v) => setShareForm(p => ({ ...p, [k]: v }));
-
-  // When AMC changes, clear scheme so stale value doesn't persist
-  const handleAmcSelect = (amc) => {
-    setShareForm(p => ({ ...p, amc_name: amc, scheme: "" }));
-  };
+  const handleAmcSelect = (amc) => { setShareForm(p => ({ ...p, amc_name: amc, scheme: "" })); };
 
   const saveShare = async () => {
     setShareSaving(true);
     try {
-      const payload = {
-        ...shareForm,
-        next_action_date: toISODate(shareForm.next_action_date) || null,
-      };
-      const postRes = await fetch(`${API}/invested/pending`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const payload = { ...shareForm, next_action_date: toISODate(shareForm.next_action_date) || null };
+      const postRes = await fetch(`${API}/invested/pending`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!postRes.ok) throw new Error(`Failed to add to Pending (HTTP ${postRes.status})`);
-
       const delRes = await fetch(`${API}/interested/${shareSourceId}`, { method: "DELETE" });
       if (!delRes.ok) throw new Error(`Failed to remove from Interested (HTTP ${delRes.status})`);
-
       showSnack("✓ Sent to Customers Pending!");
-      setShareOpen(false);
-      load();
-      onDataChange?.();
+      setShareOpen(false); load(); onDataChange?.();
     } catch (e) {
       showSnack(e.message || "Failed", "error");
     } finally {
@@ -888,53 +700,30 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
     }
   };
 
-  /* ─── Render a share form field ─── */
   const renderShareField = (col) => {
-    if (col.type === "amc_autocomplete") {
-      return (
-        <div key={col.key}>
-          <div className="fld">
-            <label className="fld-lbl">{col.label}</label>
-            <AmcAutocomplete
-              value={shareForm[col.key] || ""}
-              onChange={setShareFld}
-              onAmcSelect={handleAmcSelect}
-              isDark={isDark}
-            />
-          </div>
-          {SHARE_MANUAL_KEYS.has(col.key) && (
-            <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Search and select AMC</div>
-          )}
+    if (col.type === "amc_autocomplete") return (
+      <div key={col.key}>
+        <div className="fld">
+          <label className="fld-lbl">{col.label}</label>
+          <AmcAutocomplete value={shareForm[col.key] || ""} onChange={setShareFld} onAmcSelect={handleAmcSelect} isDark={isDark} />
         </div>
-      );
-    }
-    if (col.type === "scheme_dropdown") {
-      return (
-        <div key={col.key}>
-          <div className="fld">
-            <label className="fld-lbl">{col.label}</label>
-            <SchemeDropdown
-              value={shareForm[col.key] || ""}
-              amcName={shareForm.amc_name || ""}
-              onChange={setShareFld}
-              isDark={isDark}
-            />
-          </div>
-          {SHARE_MANUAL_KEYS.has(col.key) && (
-            <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Select scheme for chosen AMC</div>
-          )}
+        {SHARE_MANUAL_KEYS.has(col.key) && <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Search and select AMC</div>}
+      </div>
+    );
+    if (col.type === "scheme_dropdown") return (
+      <div key={col.key}>
+        <div className="fld">
+          <label className="fld-lbl">{col.label}</label>
+          <SchemeDropdown value={shareForm[col.key] || ""} amcName={shareForm.amc_name || ""} onChange={setShareFld} isDark={isDark} />
         </div>
-      );
-    }
+        {SHARE_MANUAL_KEYS.has(col.key) && <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Select scheme for chosen AMC</div>}
+      </div>
+    );
     return (
       <div key={col.key}>
         <Field col={col} value={shareForm[col.key]} onChange={setShareFld} />
-        {SHARE_AUTO_KEYS.has(col.key) && (
-          <div className="fld-note" style={{ color: "#34D399" }}>✓ Auto-filled from prospect</div>
-        )}
-        {SHARE_MANUAL_KEYS.has(col.key) && (
-          <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Fill manually</div>
-        )}
+        {SHARE_AUTO_KEYS.has(col.key)   && <div className="fld-note" style={{ color: "#34D399" }}>✓ Auto-filled from prospect</div>}
+        {SHARE_MANUAL_KEYS.has(col.key) && <div className="fld-note" style={{ color: "#f59e0b" }}>⚠ Fill manually</div>}
       </div>
     );
   };
@@ -946,10 +735,43 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   @keyframes dlgIn { from{opacity:0;transform:translateY(18px) scale(.97)} to{opacity:1;transform:none} }
   @keyframes spin  { to{transform:rotate(360deg)} }
 
+  /* ══════════════════════════════════════════
+     SCROLL FIX — same pattern as GiftCity
+  ══════════════════════════════════════════ */
+  .mod-wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    width: 100%;
+    min-width: 0;
+  }
+  .mod-wrap .tbl-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+  .mod-wrap .fd-spin { flex-shrink: 0; }
+
+  /* Scrollbar — dark theme (orange accent for Prospects) */
+  .mod-wrap .tbl-wrap::-webkit-scrollbar        { width: 4px; height: 4px; }
+  .mod-wrap .tbl-wrap::-webkit-scrollbar-track  { background: rgba(230,126,34,0.04); }
+  .mod-wrap .tbl-wrap::-webkit-scrollbar-thumb  { background: rgba(230,126,34,0.3); border-radius: 4px; }
+  .mod-wrap .tbl-wrap::-webkit-scrollbar-thumb:hover { background: rgba(230,126,34,0.55); }
+
+  /* Scrollbar — light theme */
+  .mod-wrap.theme-light .tbl-wrap::-webkit-scrollbar-track  { background: rgba(42,109,217,0.04); }
+  .mod-wrap.theme-light .tbl-wrap::-webkit-scrollbar-thumb  { background: rgba(42,109,217,0.25); }
+  .mod-wrap.theme-light .tbl-wrap::-webkit-scrollbar-thumb:hover { background: rgba(42,109,217,0.45); }
+
+  /* ══════════════════════════════════════════ */
+
   .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
   .mod-wrap.theme-light input::placeholder { color: rgba(0,0,0,0.3); }
 
-  /* ── Overlay ── */
   .dlg-ov {
     position:fixed; inset:0;
     background:rgba(0,0,10,0.65);
@@ -960,7 +782,6 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   }
   .theme-light .dlg-ov { background:rgba(10,20,80,0.28); }
 
-  /* ── Dialog box ── */
   .dlg-box {
     background:rgba(7,9,30,0.96);
     backdrop-filter:blur(44px) saturate(160%);
@@ -980,7 +801,6 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
     box-shadow:0 8px 40px rgba(10,30,100,0.15);
   }
 
-  /* ── Dialog header ── */
   .dlg-hdr {
     display:flex; align-items:center; gap:12px;
     padding:16px 20px 12px;
@@ -988,17 +808,13 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
     background:rgba(79,142,247,0.04);
     border-radius:18px 18px 0 0;
   }
-  .theme-light .dlg-hdr {
-    border-bottom-color:rgba(42,109,217,0.15);
-    background:rgba(42,109,217,0.06);
-  }
+  .theme-light .dlg-hdr { border-bottom-color:rgba(42,109,217,0.15); background:rgba(42,109,217,0.06); }
   .dlg-bar { width:4px; height:22px; border-radius:2px; flex-shrink:0; }
   .dlg-ttl { font-weight:800; font-size:.95rem; color:#fff; letter-spacing:.01em; font-family:'Inter',sans-serif; }
   .theme-light .dlg-ttl { color:#111827; }
   .dlg-sub { font-size:.72rem; color:rgba(180,210,255,0.55); margin-top:3px; font-family:'Inter',sans-serif; }
   .theme-light .dlg-sub { color:rgba(0,0,0,0.5); }
 
-  /* ── Dialog body ── */
   .dlg-body {
     padding:16px 20px; display:flex; flex-direction:column; gap:12px;
     max-height:58vh; overflow-y:auto; overflow-x:visible;
@@ -1006,7 +822,6 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   .dlg-body::-webkit-scrollbar { width:4px; }
   .dlg-body::-webkit-scrollbar-thumb { background:rgba(79,142,247,0.2); border-radius:4px; }
 
-  /* ── Form fields inside dialog ── */
   .dlg-body .fld { display:flex; flex-direction:column; gap:5px; }
   .dlg-body .fld-lbl {
     font-size:.67rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
@@ -1021,14 +836,11 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   }
   .dlg-body .fld-inp:focus { border-color:#4F8EF7; box-shadow:0 0 0 3px rgba(79,142,247,0.16); }
   .dlg-body .fld-inp option { background:#0c1638; color:#fff; }
-  .theme-light .dlg-body .fld-inp {
-    background:rgba(255,255,255,0.85); border:1px solid rgba(42,109,217,0.22); color:#111827;
-  }
+  .theme-light .dlg-body .fld-inp { background:rgba(255,255,255,0.85); border:1px solid rgba(42,109,217,0.22); color:#111827; }
   .theme-light .dlg-body .fld-inp:focus { border-color:#2a6dd9; box-shadow:0 0 0 3px rgba(42,109,217,0.12); }
   .theme-light .dlg-body .fld-inp option { background:#fff; color:#111827; }
   .dlg-body .fld-note { font-size:.68rem; font-weight:600; margin-top:2px; padding-left:2px; }
 
-  /* ── Dialog footer ── */
   .dlg-foot {
     display:flex; justify-content:flex-end; gap:8px;
     padding:12px 20px;
@@ -1036,12 +848,8 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
     background:rgba(79,142,247,0.02);
     border-radius:0 0 18px 18px;
   }
-  .theme-light .dlg-foot {
-    border-top-color:rgba(42,109,217,0.14);
-    background:rgba(42,109,217,0.03);
-  }
+  .theme-light .dlg-foot { border-top-color:rgba(42,109,217,0.14); background:rgba(42,109,217,0.03); }
 
-  /* ── Buttons ── */
   .btn-cancel {
     padding:8px 14px; border-radius:10px;
     border:1px solid rgba(79,142,247,0.28); background:none;
@@ -1065,7 +873,6 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   .theme-light .btn-danger  { background:linear-gradient(135deg,#d14040,#a82424) !important; }
   .theme-light .btn-success { background:linear-gradient(135deg,#0f9e6e,#057a52) !important; }
 
-  /* ── Snackbar ── */
   .snack {
     position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
     padding:10px 22px; border-radius:10px; font-size:.82rem; font-weight:600;
@@ -1075,7 +882,6 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
   .snack-success { background:#065f46; color:#6ee7b7; border:1px solid #34D399; }
   .snack-error   { background:#7f1d1d; color:#fca5a5; border:1px solid #EF4444; }
 
-  /* ── Responsive ── */
   @media (max-width:520px) {
     .dlg-box { border-radius:18px 18px 0 0 !important; }
     .dlg-ov  { align-items:flex-end !important; padding:0 !important; }
@@ -1087,17 +893,26 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
 
       {/* ── Top bar ── */}
       <div className="mod-hdr">
-        <span className="tbl-title" style={{ fontSize: ".9rem" }}>
-          Prospects
-          {!loading && (
-            <span className="tbl-badge" style={{ marginLeft: 8, color: ORANGE, background: "rgba(230,126,34,.1)", borderColor: "rgba(230,126,34,.22)" }}>
-              {search.trim()
-                ? <>{filteredRows.length} <span style={{ opacity: .55 }}>/ {rows.length}</span></>
-                : <>{rows.length} records</>
-              }
-            </span>
-          )}
-        </span>
+        <div className="tabs-row">
+          <span className="tbl-title" style={{ fontSize: ".9rem", display: "flex", alignItems: "center", gap: 8 }}>
+            Prospects
+            {!loading && (
+              <span className="tbl-badge" style={{ color: ORANGE, background: "rgba(230,126,34,.1)", borderColor: "rgba(230,126,34,.22)" }}>
+                {search.trim()
+                  ? <>{filteredRows.length} <span style={{ opacity: .55 }}>/ {rows.length}</span></>
+                  : <>{rows.length} records</>
+                }
+              </span>
+            )}
+          </span>
+        </div>
+        <button
+          className="add-btn"
+          onClick={openAdd}
+          style={{ background: `linear-gradient(135deg,${ORANGE},#ca6f1e)`, boxShadow: "0 4px 14px rgba(230,126,34,.3)" }}
+        >
+          <IcoPlus /> Add Row
+        </button>
       </div>
 
       {/* ── Search bar ── */}
@@ -1109,11 +924,12 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
         theme={theme}
       />
 
-      {/* ── Table header ── */}
+      {/* ── Table title bar ── */}
       <div className="tbl-hdr">
         <span className="tbl-title">All Prospects</span>
       </div>
 
+      {/* ── Table ── */}
       {loading ? (
         <div className="fd-spin"><div className="spinner" style={{ borderTopColor: ORANGE }} /></div>
       ) : (
@@ -1154,14 +970,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
                   <td>
                     <div className="act-cell">
                       <button className="ab ab-edit" title="Edit" onClick={() => openEdit(row)}><IcoEdit /></button>
-                      <button
-                        className="ab"
-                        title="Send to Customers Pending"
-                        style={{ color: "#34D399" }}
-                        onClick={() => openShare(row)}
-                      >
-                        <IcoShare />
-                      </button>
+                      <button className="ab" title="Send to Customers Pending" style={{ color: "#34D399" }} onClick={() => openShare(row)}><IcoShare /></button>
                       <button className="ab ab-del" title="Delete" onClick={() => { setDelId(row.id); setConfirm(true); }}><IcoDel /></button>
                     </div>
                   </td>
@@ -1236,9 +1045,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
               {PENDING_COLS.map(col => renderShareField(col))}
             </div>
             <div className="dlg-foot">
-              <button className="btn-cancel" onClick={() => setShareOpen(false)} disabled={shareSaving}>
-                Cancel
-              </button>
+              <button className="btn-cancel" onClick={() => setShareOpen(false)} disabled={shareSaving}>Cancel</button>
               <button className="btn-ok btn-success" onClick={saveShare} disabled={shareSaving}>
                 {shareSaving ? "Saving…" : "Save & Send to Pending"}
               </button>
