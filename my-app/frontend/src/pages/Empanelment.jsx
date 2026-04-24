@@ -225,6 +225,12 @@ const fmtAmt = (val) => {
   return "₹"+n.toLocaleString("en-IN");
 };
 
+/* ─── Helper: check if product_name is valid (not null/empty) ─── */
+const hasValidProductName = (p) =>
+  p.product_name !== null &&
+  p.product_name !== undefined &&
+  String(p.product_name).trim() !== "";
+
 /* ─── Products Popup ─── */
 function ProductsPopup({ amcName, onClose, theme="dark" }) {
   const [products, setProducts] = useState([]);
@@ -236,48 +242,96 @@ function ProductsPopup({ amcName, onClose, theme="dark" }) {
       try {
         const r = await fetch(`${API}/products`);
         const data = await r.json();
-        setProducts((Array.isArray(data)?data:[]).filter(p=>(p.amc_name||"").toLowerCase()===(amcName||"").toLowerCase()));
+        // FIX 3: filter out products with null/empty product_name
+        setProducts(
+          (Array.isArray(data) ? data : []).filter(p =>
+            (p.amc_name || "").toLowerCase() === (amcName || "").toLowerCase() &&
+            hasValidProductName(p)
+          )
+        );
       } catch { setProducts([]); } finally { setLoading(false); }
     })();
   }, [amcName]);
+
   const structChip = (val) => {
-    const map = { "outbound/cat-III":{bg:"rgba(79,142,247,0.13)",color:"#4F8EF7",border:"rgba(79,142,247,0.28)"}, "inbound/cat-III":{bg:"rgba(167,139,250,0.13)",color:"#a78bfa",border:"rgba(167,139,250,0.28)"}, "outbound/retail":{bg:"rgba(245,158,11,0.13)",color:"#f59e0b",border:"rgba(245,158,11,0.28)"}, "inbound/retail":{bg:"rgba(52,211,153,0.13)",color:"#34d399",border:"rgba(52,211,153,0.28)"} };
-    const s = map[val]||{bg:"rgba(120,120,120,0.1)",color:d?"#aaa":"#555",border:"rgba(120,120,120,0.2)"};
-    return <span style={{display:"inline-flex",alignItems:"center",padding:"3px 9px",borderRadius:20,fontSize:".68rem",fontWeight:700,background:s.bg,color:s.color,border:`1px solid ${s.border}`,whiteSpace:"nowrap"}}>{val??"—"}</span>;
+    const map = {
+      "outbound/cat-III": { bg:"rgba(79,142,247,0.13)",  color:"#4F8EF7", border:"rgba(79,142,247,0.28)"  },
+      "inbound/cat-III":  { bg:"rgba(167,139,250,0.13)", color:"#a78bfa", border:"rgba(167,139,250,0.28)" },
+      "outbound/retail":  { bg:"rgba(245,158,11,0.13)",  color:"#f59e0b", border:"rgba(245,158,11,0.28)"  },
+      "inbound/retail":   { bg:"rgba(52,211,153,0.13)",  color:"#34d399", border:"rgba(52,211,153,0.28)"  },
+    };
+    const s = map[val] || { bg:"rgba(120,120,120,0.1)", color:d?"#aaa":"#555", border:"rgba(120,120,120,0.2)" };
+    return (
+      <span style={{
+        display:"inline-flex", alignItems:"center", padding:"3px 9px", borderRadius:20,
+        fontSize:".68rem", fontWeight:700, background:s.bg, color:s.color,
+        border:`1px solid ${s.border}`, whiteSpace:"nowrap",
+      }}>
+        {val ?? "—"}
+      </span>
+    );
   };
+
   return createPortal(
-    <div style={pOv(d)} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div className="dlg-box" style={{maxWidth:"min(680px,calc(100vw - 32px))",...pBox(d)}}>
+    <div style={pOv(d)} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="dlg-box" style={{ maxWidth:"min(680px,calc(100vw - 32px))", ...pBox(d) }}>
         <div className="dlg-hdr" style={pHdr(d)}>
-          <div className="dlg-bar" style={{background:d?"#4F8EF7":"#2a6dd9"}}/>
-          <div style={{flex:1,minWidth:0}}>
+          <div className="dlg-bar" style={{ background: d ? "#4F8EF7" : "#2a6dd9" }} />
+          <div style={{ flex:1, minWidth:0 }}>
             <div className="dlg-ttl" style={pTtl(d)}>{amcName} — Products</div>
-            {!loading&&<div style={pSub(d)}>{products.length} {products.length===1?"product":"products"} found</div>}
+            {!loading && <div style={pSub(d)}>{products.length} {products.length === 1 ? "product" : "products"} found</div>}
           </div>
         </div>
-        <div className="dlg-body" style={{padding:0,maxHeight:"55vh"}}>
-          {loading ? <div className="fd-spin"><div className="spinner" style={!d?{borderColor:"rgba(42,109,217,0.15)",borderTopColor:"#2a6dd9"}:{}}/></div>
-            : products.length===0 ? <div style={pEmp(d)}>No products found for this AMC.</div>
-            : <div className="tbl-wrap"><table className="fd-tbl" style={{minWidth:520}}>
-                <thead><tr style={{borderBottom:d?"1px solid rgba(79,142,247,.15)":"1px solid rgba(10,30,100,0.18)", background:d?"linear-gradient(180deg,rgba(15,25,70,0.98) 0%,rgba(10,18,55,0.98) 100%)":"linear-gradient(180deg,rgba(224,236,255,0.99) 0%,rgba(210,228,255,0.99) 100%)"}}>
-                    <th style={{width:36,...pTh(d)}}>#</th>
-                  {["Product Name","Min. Investment","Onboarding","Structure","Lock-in"].map(h=><th key={h} style={pTh(d)}>{h}</th>)}
-                </tr></thead>
-                <tbody>{products.map((p,i)=>(
-                  <tr key={p.id||i} style={{borderBottom:`1px solid ${pTd(d).borderBottomColor}`}}>
-                    <td style={{...pNum(d),padding:"9px 14px"}}>{i+1}</td>
-                    <td style={{...pTd(d),padding:"9px 14px",whiteSpace:"normal",wordBreak:"break-word",maxWidth:180}}>{p.product_name||"—"}</td>
-                    <td style={{...pTd(d),padding:"9px 14px",fontWeight:700,color:d?"#34D399":"#059669"}}>{fmtAmt(p.min_investment)}</td>
-                    <td style={{...pTd(d),padding:"9px 14px"}}><span className={`chip ${p.onboarding_process==="online"?"chip-yes":"chip-no"}`}>{p.onboarding_process?p.onboarding_process.charAt(0).toUpperCase()+p.onboarding_process.slice(1):"—"}</span></td>
-                    <td style={{...pTd(d),padding:"9px 14px"}}>{structChip(p.structure)}</td>
-                    <td style={{...pTd(d),padding:"9px 14px"}}>{p.lock_in||"—"}</td>
-                  </tr>
-                ))}</tbody>
-              </table></div>}
+        <div className="dlg-body" style={{ padding:0, maxHeight:"55vh" }}>
+          {loading
+            ? <div className="fd-spin"><div className="spinner" style={!d ? { borderColor:"rgba(42,109,217,0.15)", borderTopColor:"#2a6dd9" } : {}} /></div>
+            : products.length === 0
+              ? <div style={pEmp(d)}>No products found for this AMC.</div>
+              : <div className="tbl-wrap">
+                  <table className="fd-tbl" style={{ minWidth:520 }}>
+                    <thead>
+                      <tr style={{
+                        borderBottom: d ? "1px solid rgba(79,142,247,.15)" : "1px solid rgba(10,30,100,0.18)",
+                        background: d
+                          ? "linear-gradient(180deg,rgba(15,25,70,0.98) 0%,rgba(10,18,55,0.98) 100%)"
+                          : "linear-gradient(180deg,rgba(224,236,255,0.99) 0%,rgba(210,228,255,0.99) 100%)",
+                      }}>
+                        <th style={{ width:36, ...pTh(d) }}>#</th>
+                        {["Product Name","Min. Investment","Onboarding","Structure","Lock-in"].map(h =>
+                          <th key={h} style={pTh(d)}>{h}</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((p, i) => (
+                        <tr key={p.id || i} style={{ borderBottom:`1px solid ${pTd(d).borderBottomColor}` }}>
+                          <td style={{ ...pNum(d), padding:"9px 14px" }}>{i + 1}</td>
+                          <td style={{ ...pTd(d), padding:"9px 14px", whiteSpace:"normal", wordBreak:"break-word", maxWidth:180 }}>
+                            {p.product_name}
+                          </td>
+                          <td style={{ ...pTd(d), padding:"9px 14px", fontWeight:700, color:d?"#34D399":"#059669" }}>
+                            {fmtAmt(p.min_investment)}
+                          </td>
+                          <td style={{ ...pTd(d), padding:"9px 14px" }}>
+                            <span className={`chip ${p.onboarding_process === "online" ? "chip-yes" : "chip-no"}`}>
+                              {p.onboarding_process ? p.onboarding_process.charAt(0).toUpperCase() + p.onboarding_process.slice(1) : "—"}
+                            </span>
+                          </td>
+                          <td style={{ ...pTd(d), padding:"9px 14px" }}>{structChip(p.structure)}</td>
+                          <td style={{ ...pTd(d), padding:"9px 14px" }}>{p.lock_in || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+          }
         </div>
-        <div className="dlg-foot" style={pFt(d)}><button className="btn-ok btn-primary" onClick={onClose}>Close</button></div>
+        <div className="dlg-foot" style={pFt(d)}>
+          <button className="btn-ok btn-primary" onClick={onClose}>Close</button>
+        </div>
       </div>
-    </div>, document.body
+    </div>,
+    document.body
   );
 }
 
@@ -296,44 +350,77 @@ function BoardingsPopup({ amcName, onClose, theme="dark" }) {
       } catch { setClients([]); } finally { setLoading(false); }
     })();
   }, [amcName]);
+
   const bankChip = (val) => {
-    const map = { gift:{bg:"rgba(79,142,247,0.13)",color:"#4F8EF7",border:"rgba(79,142,247,0.28)"}, savings:{bg:"rgba(52,211,153,0.13)",color:"#34d399",border:"rgba(52,211,153,0.28)"}, both:{bg:"rgba(245,158,11,0.13)",color:"#f59e0b",border:"rgba(245,158,11,0.28)"} };
-    const s = map[val]||{bg:"rgba(120,120,120,0.1)",color:d?"#aaa":"#555",border:"rgba(120,120,120,0.2)"};
-    return <span style={{display:"inline-flex",alignItems:"center",padding:"3px 9px",borderRadius:20,fontSize:".68rem",fontWeight:700,background:s.bg,color:s.color,border:`1px solid ${s.border}`,whiteSpace:"nowrap"}}>{val?val.charAt(0).toUpperCase()+val.slice(1):"—"}</span>;
+    const map = {
+      gift:    { bg:"rgba(79,142,247,0.13)",  color:"#4F8EF7", border:"rgba(79,142,247,0.28)"  },
+      savings: { bg:"rgba(52,211,153,0.13)",  color:"#34d399", border:"rgba(52,211,153,0.28)"  },
+      both:    { bg:"rgba(245,158,11,0.13)",  color:"#f59e0b", border:"rgba(245,158,11,0.28)"  },
+    };
+    const s = map[val] || { bg:"rgba(120,120,120,0.1)", color:d?"#aaa":"#555", border:"rgba(120,120,120,0.2)" };
+    return (
+      <span style={{
+        display:"inline-flex", alignItems:"center", padding:"3px 9px", borderRadius:20,
+        fontSize:".68rem", fontWeight:700, background:s.bg, color:s.color,
+        border:`1px solid ${s.border}`, whiteSpace:"nowrap",
+      }}>
+        {val ? val.charAt(0).toUpperCase() + val.slice(1) : "—"}
+      </span>
+    );
   };
+
   return createPortal(
-    <div style={pOv(d)} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div className="dlg-box" style={{maxWidth:"min(740px,calc(100vw - 32px))",...pBox(d)}}>
+    <div style={pOv(d)} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="dlg-box" style={{ maxWidth:"min(740px,calc(100vw - 32px))", ...pBox(d) }}>
         <div className="dlg-hdr" style={pHdr(d)}>
-          <div className="dlg-bar" style={{background:d?"#34D399":"#059669"}}/>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={pTtl(d)}><IcoUser/>{amcName} — Boarded Clients</div>
-            {!loading&&<div style={pSub(d)}>{clients.length} {clients.length===1?"client":"clients"} boarded</div>}
+          <div className="dlg-bar" style={{ background: d ? "#34D399" : "#059669" }} />
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={pTtl(d)}><IcoUser />{amcName} — Boarded Clients</div>
+            {!loading && <div style={pSub(d)}>{clients.length} {clients.length === 1 ? "client" : "clients"} boarded</div>}
           </div>
         </div>
-        <div className="dlg-body" style={{padding:0,maxHeight:"55vh"}}>
-          {loading ? <div className="fd-spin"><div className="spinner" style={!d?{borderColor:"rgba(42,109,217,0.15)",borderTopColor:"#2a6dd9"}:{}}/></div>
-            : clients.length===0 ? <div style={pEmp(d)}>No clients found for this AMC.</div>
-            : <div className="tbl-wrap"><table className="fd-tbl" style={{minWidth:580}}>
-                <thead><tr style={{borderBottom:d?"1px solid rgba(79,142,247,.15)":"1px solid rgba(10,30,100,0.18)", background:d?"linear-gradient(180deg,rgba(15,25,70,0.98) 0%,rgba(10,18,55,0.98) 100%)":"linear-gradient(180deg,rgba(224,236,255,0.99) 0%,rgba(210,228,255,0.99) 100%)"}}>
-                    <th style={{width:36,...pTh(d)}}>#</th>
-                  {["Client Name","Scheme","Amount","Bank","First Investment"].map(h=><th key={h} style={pTh(d)}>{h}</th>)}
-                </tr></thead>
-                <tbody>{clients.map((c,i)=>(
-                  <tr key={c.id||i}>
-                    <td style={{...pNum(d),padding:"9px 14px"}}>{i+1}</td>
-                    <td style={{...pTd(d),padding:"9px 14px",fontWeight:600}}>{c.client_name||"—"}</td>
-                    <td style={{...pTd(d),padding:"9px 14px",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis"}}>{c.scheme||"—"}</td>
-                    <td style={{...pTd(d),padding:"9px 14px",fontWeight:700,color:d?"#34D399":"#059669"}}>{fmtAmt(c.amount)}</td>
-                    <td style={{...pTd(d),padding:"9px 14px"}}>{bankChip(c.bank)}</td>
-                    <td style={{...pTd(d),padding:"9px 14px"}}>{fmtDate(c.first_investment)}</td>
-                  </tr>
-                ))}</tbody>
-              </table></div>}
+        <div className="dlg-body" style={{ padding:0, maxHeight:"55vh" }}>
+          {loading
+            ? <div className="fd-spin"><div className="spinner" style={!d ? { borderColor:"rgba(42,109,217,0.15)", borderTopColor:"#2a6dd9" } : {}} /></div>
+            : clients.length === 0
+              ? <div style={pEmp(d)}>No clients found for this AMC.</div>
+              : <div className="tbl-wrap">
+                  <table className="fd-tbl" style={{ minWidth:580 }}>
+                    <thead>
+                      <tr style={{
+                        borderBottom: d ? "1px solid rgba(79,142,247,.15)" : "1px solid rgba(10,30,100,0.18)",
+                        background: d
+                          ? "linear-gradient(180deg,rgba(15,25,70,0.98) 0%,rgba(10,18,55,0.98) 100%)"
+                          : "linear-gradient(180deg,rgba(224,236,255,0.99) 0%,rgba(210,228,255,0.99) 100%)",
+                      }}>
+                        <th style={{ width:36, ...pTh(d) }}>#</th>
+                        {["Client Name","Scheme","Amount","Bank","First Investment"].map(h =>
+                          <th key={h} style={pTh(d)}>{h}</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clients.map((c, i) => (
+                        <tr key={c.id || i}>
+                          <td style={{ ...pNum(d), padding:"9px 14px" }}>{i + 1}</td>
+                          <td style={{ ...pTd(d), padding:"9px 14px", fontWeight:600 }}>{c.client_name || "—"}</td>
+                          <td style={{ ...pTd(d), padding:"9px 14px", maxWidth:160, overflow:"hidden", textOverflow:"ellipsis" }}>{c.scheme || "—"}</td>
+                          <td style={{ ...pTd(d), padding:"9px 14px", fontWeight:700, color:d?"#34D399":"#059669" }}>{fmtAmt(c.amount)}</td>
+                          <td style={{ ...pTd(d), padding:"9px 14px" }}>{bankChip(c.bank)}</td>
+                          <td style={{ ...pTd(d), padding:"9px 14px" }}>{fmtDate(c.first_investment)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+          }
         </div>
-        <div className="dlg-foot" style={pFt(d)}><button className="btn-ok btn-primary" onClick={onClose}>Close</button></div>
+        <div className="dlg-foot" style={pFt(d)}>
+          <button className="btn-ok btn-primary" onClick={onClose}>Close</button>
+        </div>
       </div>
-    </div>, document.body
+    </div>,
+    document.body
   );
 }
 
@@ -342,14 +429,21 @@ async function fetchProductCount(amcName) {
   try {
     const r = await fetch(`${API}/products`);
     const data = await r.json();
-    return (Array.isArray(data)?data:[]).filter(p=>(p.amc_name||"").toLowerCase()===(amcName||"").toLowerCase()).length;
+    // FIX 1: only count products that have a valid (non-null, non-empty) product_name
+    return (Array.isArray(data) ? data : []).filter(p =>
+      (p.amc_name || "").toLowerCase() === (amcName || "").toLowerCase() &&
+      hasValidProductName(p)
+    ).length;
   } catch { return 0; }
 }
+
 async function fetchBoardingsCount(amcName) {
   try {
     const r = await fetch(`${API}/invested/completed`);
     const data = await r.json();
-    return (Array.isArray(data)?data:[]).filter(c=>(c.amc_name||"").toLowerCase()===(amcName||"").toLowerCase()).length;
+    return (Array.isArray(data) ? data : []).filter(c =>
+      (c.amc_name || "").toLowerCase() === (amcName || "").toLowerCase()
+    ).length;
   } catch { return 0; }
 }
 
@@ -393,29 +487,52 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
       setRows(loaded);
       if (loaded.length > 0) {
         try {
-          const [prodRes, invRes] = await Promise.all([fetch(`${API}/products`), fetch(`${API}/invested/completed`)]);
+          const [prodRes, invRes] = await Promise.all([
+            fetch(`${API}/products`),
+            fetch(`${API}/invested/completed`),
+          ]);
           const [prodData, invData] = await Promise.all([prodRes.json(), invRes.json()]);
+
+          // FIX 2: only count products with a valid (non-null, non-empty) product_name
           const prodMap = {};
-          (Array.isArray(prodData)?prodData:[]).forEach(p => { const k=(p.amc_name||"").toLowerCase(); prodMap[k]=(prodMap[k]||0)+1; });
+          (Array.isArray(prodData) ? prodData : [])
+            .filter(p => hasValidProductName(p))
+            .forEach(p => {
+              const k = (p.amc_name || "").toLowerCase();
+              prodMap[k] = (prodMap[k] || 0) + 1;
+            });
+
           const invMap = {};
-          (Array.isArray(invData)?invData:[]).forEach(c => { const k=(c.amc_name||"").toLowerCase(); invMap[k]=(invMap[k]||0)+1; });
-          const liveP={}, liveB={};
-          loaded.forEach(row => { const k=(row.AMC_name||"").toLowerCase(); liveP[row.AMC_name]=prodMap[k]||0; liveB[row.AMC_name]=invMap[k]||0; });
-          setLiveProducts(liveP); setLiveBoarding(liveB);
+          (Array.isArray(invData) ? invData : []).forEach(c => {
+            const k = (c.amc_name || "").toLowerCase();
+            invMap[k] = (invMap[k] || 0) + 1;
+          });
+
+          const liveP = {}, liveB = {};
+          loaded.forEach(row => {
+            const k = (row.AMC_name || "").toLowerCase();
+            liveP[row.AMC_name] = prodMap[k] || 0;
+            liveB[row.AMC_name] = invMap[k]  || 0;
+          });
+          setLiveProducts(liveP);
+          setLiveBoarding(liveB);
         } catch { /* non-critical */ }
       }
-    } catch (e) { setSnack({ msg: `Failed to load: ${e.message}`, severity: "error" }); }
-    finally { setLoading(false); }
+    } catch (e) {
+      setSnack({ msg: `Failed to load: ${e.message}`, severity: "error" });
+    } finally {
+      setLoading(false);
+    }
   }, [tab]);
 
   useEffect(() => { load(); }, [load]);
 
   const filteredRows = search.trim()
-    ? rows.filter(r => (r.AMC_name||"").toLowerCase().includes(search.trim().toLowerCase()))
+    ? rows.filter(r => (r.AMC_name || "").toLowerCase().includes(search.trim().toLowerCase()))
     : rows;
 
-  const openAdd  = () => { setEditRow(null); setForm(tab==="completed"?emptyC():emptyP()); setDlg(true); };
-  const openEdit = (row) => { setEditRow(row); setForm({...row}); setDlg(true); };
+  const openAdd  = () => { setEditRow(null); setForm(tab === "completed" ? emptyC() : emptyP()); setDlg(true); };
+  const openEdit = (row) => { setEditRow(row); setForm({ ...row }); setDlg(true); };
 
   const debounceRef = useRef(null);
   const setFieldDebounced = (k, v) => {
@@ -426,7 +543,10 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
         if (v && v.trim().length > 1) {
           setAmcFetching(true);
           try {
-            const [pCount, bCount] = await Promise.all([fetchProductCount(v.trim()), fetchBoardingsCount(v.trim())]);
+            const [pCount, bCount] = await Promise.all([
+              fetchProductCount(v.trim()),
+              fetchBoardingsCount(v.trim()),
+            ]);
             setForm(p => ({ ...p, products: pCount, boardings: bCount }));
           } catch { } finally { setAmcFetching(false); }
         }
@@ -437,18 +557,23 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
   const save = async () => {
     const url = editRow ? `${API}/empanelment/${tab}/${editRow.id}` : `${API}/empanelment/${tab}`;
     try {
-      const r = await fetch(url,{method:editRow?"PUT":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});
-      if(!r.ok) throw 0;
-      showSnack(editRow?"Updated!":"Added!"); setDlg(false); load(); onDataChange?.();
-    } catch { showSnack("Save failed","error"); }
+      const r = await fetch(url, {
+        method: editRow ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!r.ok) throw 0;
+      showSnack(editRow ? "Updated!" : "Added!");
+      setDlg(false); load(); onDataChange?.();
+    } catch { showSnack("Save failed", "error"); }
   };
 
   const del = async () => {
     try {
-      const r = await fetch(`${API}/empanelment/${tab}/${delId}`,{method:"DELETE"});
-      if(!r.ok) throw 0;
+      const r = await fetch(`${API}/empanelment/${tab}/${delId}`, { method: "DELETE" });
+      if (!r.ok) throw 0;
       showSnack("Deleted"); setConfirm(false); load(); onDataChange?.();
-    } catch { showSnack("Delete failed","error"); }
+    } catch { showSnack("Delete failed", "error"); }
   };
 
   const openPromo = async (row) => {
@@ -456,33 +581,56 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
     if (row.AMC_name) {
       setPromoLoading(true);
       try {
-        const [pCount, bCount] = await Promise.all([fetchProductCount(row.AMC_name), fetchBoardingsCount(row.AMC_name)]);
+        const [pCount, bCount] = await Promise.all([
+          fetchProductCount(row.AMC_name),
+          fetchBoardingsCount(row.AMC_name),
+        ]);
         setPromoForm(p => ({ ...p, products: pCount, boardings: bCount }));
       } catch { } finally { setPromoLoading(false); }
     }
   };
 
-  const setPromoFld = (k, v) => setPromoForm(p => ({...p, [k]: v}));
+  const setPromoFld = (k, v) => setPromoForm(p => ({ ...p, [k]: v }));
 
   const savePromo = async () => {
     setPromoLoading(true);
     try {
-      const a = await fetch(`${API}/empanelment/completed`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(promoForm)});
-      if(!a.ok) throw new Error("Add failed");
-      const d = await fetch(`${API}/empanelment/pending/${promoId}`,{method:"DELETE"});
-      if(!d.ok) throw new Error("Delete failed");
+      const a = await fetch(`${API}/empanelment/completed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(promoForm),
+      });
+      if (!a.ok) throw new Error("Add failed");
+      const d = await fetch(`${API}/empanelment/pending/${promoId}`, { method: "DELETE" });
+      if (!d.ok) throw new Error("Delete failed");
       showSnack("✓ Moved to Completed!"); setPromo(false); load(); onDataChange?.();
-    } catch(e){ showSnack(e.message||"Failed","error"); } finally { setPromoLoading(false); }
+    } catch (e) {
+      showSnack(e.message || "Failed", "error");
+    } finally {
+      setPromoLoading(false);
+    }
   };
 
   const renderCell = (col, row) => {
     if (col.key === "products") {
-      const count = liveProducts.hasOwnProperty(row.AMC_name) ? liveProducts[row.AMC_name] : (row[col.key]??0);
-      return <NumberBadge value={count} theme={theme} title={`View products for ${row.AMC_name}`} onClick={() => setProductsPopup(row.AMC_name)} />;
+      const count = liveProducts.hasOwnProperty(row.AMC_name) ? liveProducts[row.AMC_name] : (row[col.key] ?? 0);
+      return (
+        <NumberBadge
+          value={count} theme={theme}
+          title={`View products for ${row.AMC_name}`}
+          onClick={() => setProductsPopup(row.AMC_name)}
+        />
+      );
     }
     if (col.key === "boardings") {
-      const count = liveBoarding.hasOwnProperty(row.AMC_name) ? liveBoarding[row.AMC_name] : (row[col.key]??0);
-      return <NumberBadge value={count} theme={theme} title={`View boarded clients for ${row.AMC_name}`} onClick={() => setBoardingsPopup(row.AMC_name)} />;
+      const count = liveBoarding.hasOwnProperty(row.AMC_name) ? liveBoarding[row.AMC_name] : (row[col.key] ?? 0);
+      return (
+        <NumberBadge
+          value={count} theme={theme}
+          title={`View boarded clients for ${row.AMC_name}`}
+          onClick={() => setBoardingsPopup(row.AMC_name)}
+        />
+      );
     }
     if (col.type === "date") return fmtDate(row[col.key]);
     if (col.key === "AMC_name") return <Highlight text={row[col.key]} query={search} theme={theme} />;
@@ -502,7 +650,7 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
         <div className="mod-hdr">
           <div className="tabs-row">
             {TABS.map(t => (
-              <button key={t.id} className={`tab-pill ${tab===t.id?"tab-active":""}`} onClick={()=>setTab(t.id)}>
+              <button key={t.id} className={`tab-pill ${tab === t.id ? "tab-active" : ""}`} onClick={() => setTab(t.id)}>
                 {t.label}
               </button>
             ))}
@@ -512,17 +660,17 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
         {/* ── Search ── */}
         <SearchBar
           value={search} onChange={setSearch}
-          placeholder={`Search AMC name in ${tab==="completed"?"Completed":"Pending"}…`}
+          placeholder={`Search AMC name in ${tab === "completed" ? "Completed" : "Pending"}…`}
           resultCount={filteredRows.length} totalCount={rows.length} theme={theme}
         />
 
         {/* ── Table title row ── */}
         <div className="tbl-hdr">
-          <span className="tbl-title">{TABS.find(t=>t.id===tab)?.label}</span>
+          <span className="tbl-title">{TABS.find(t => t.id === tab)?.label}</span>
           {!loading && (
             <span className="tbl-badge">
               {search.trim()
-                ? <>{filteredRows.length}<span style={{opacity:.55}}> / {rows.length}</span></>
+                ? <>{filteredRows.length}<span style={{ opacity:.55 }}> / {rows.length}</span></>
                 : <>{rows.length} records</>}
             </span>
           )}
@@ -530,15 +678,15 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
 
         {/* ── Table ── */}
         {loading ? (
-          <div className="fd-spin"><div className="spinner"/></div>
+          <div className="fd-spin"><div className="spinner" /></div>
         ) : (
           <div className="tbl-wrap">
             <table className="fd-tbl">
               <thead>
                 <tr>
-                  <th style={{width:42}}>#</th>
+                  <th style={{ width:42 }}>#</th>
                   {cols.map(c => <th key={c.key}>{c.label}</th>)}
-                  <th style={{textAlign:"center", width: tab==="pending" ? 108 : 82}}>Actions</th>
+                  <th style={{ textAlign:"center", width: tab === "pending" ? 108 : 82 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -546,23 +694,27 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
                   <tr>
                     <td className="fd-empty" colSpan={cols.length + 2}>
                       {search.trim()
-                        ? <>No AMCs match "<strong style={{color:"#4F8EF7"}}>{search}</strong>"</>
-                        : tab==="pending" ? 'No records found. Click "Add Row" to get started.' : "No records found."}
+                        ? <>No AMCs match "<strong style={{ color:"#4F8EF7" }}>{search}</strong>"</>
+                        : tab === "pending"
+                          ? 'No records found. Click "Add Row" to get started.'
+                          : "No records found."}
                     </td>
                   </tr>
                 ) : filteredRows.map((row, i) => (
                   <tr key={row.id}>
-                    <td className="fd-num">{i+1}</td>
+                    <td className="fd-num">{i + 1}</td>
                     {cols.map(c => (
-                      <td key={c.key} style={(c.key==="products"||c.key==="boardings")?{paddingTop:6,paddingBottom:6}:{}}>
+                      <td key={c.key} style={(c.key === "products" || c.key === "boardings") ? { paddingTop:6, paddingBottom:6 } : {}}>
                         {renderCell(c, row)}
                       </td>
                     ))}
                     <td>
                       <div className="act-cell">
-                        <button className="ab ab-edit" title="Edit" onClick={()=>openEdit(row)}><IcoEdit/></button>
-                        {tab==="pending" && <button className="ab ab-promo" title="Move to Completed" onClick={()=>openPromo(row)}><IcoMove/></button>}
-                        <button className="ab ab-del" title="Delete" onClick={()=>{setDelId(row.id);setConfirm(true);}}><IcoDel/></button>
+                        <button className="ab ab-edit" title="Edit" onClick={() => openEdit(row)}><IcoEdit /></button>
+                        {tab === "pending" && (
+                          <button className="ab ab-promo" title="Move to Completed" onClick={() => openPromo(row)}><IcoMove /></button>
+                        )}
+                        <button className="ab ab-del" title="Delete" onClick={() => { setDelId(row.id); setConfirm(true); }}><IcoDel /></button>
                       </div>
                     </td>
                   </tr>
@@ -576,29 +728,36 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
 
       {/* ── Add / Edit Dialog ── */}
       {dlg && (
-        <div className="dlg-ov" onClick={e=>e.target===e.currentTarget&&setDlg(false)}>
+        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setDlg(false)}>
           <div className="dlg-box">
-            <div className="dlg-hdr"><div className="dlg-bar" style={{background:"#4F8EF7"}}/><div className="dlg-ttl">{editRow?"Edit Record":"Add Record"}</div></div>
+            <div className="dlg-hdr">
+              <div className="dlg-bar" style={{ background:"#4F8EF7" }} />
+              <div className="dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
+            </div>
             <div className="dlg-body">
               {cols.map(c => {
-                const isAuto = (c.key==="products"||c.key==="boardings");
+                const isAuto = (c.key === "products" || c.key === "boardings");
                 return (
                   <div key={c.key}>
                     <Field col={c} value={form[c.key]} onChange={setFieldDebounced} disabled={isAuto} />
-                    {c.key==="AMC_name" && amcFetching && (
-                      <div style={{fontSize:".67rem",color:"#4F8EF7",marginTop:3,display:"flex",alignItems:"center",gap:4}}>
-                        <span style={{display:"inline-block",width:10,height:10,border:"2px solid rgba(79,142,247,0.3)",borderTopColor:"#4F8EF7",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>
+                    {c.key === "AMC_name" && amcFetching && (
+                      <div style={{ fontSize:".67rem", color:"#4F8EF7", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
+                        <span style={{ display:"inline-block", width:10, height:10, border:"2px solid rgba(79,142,247,0.3)", borderTopColor:"#4F8EF7", borderRadius:"50%", animation:"spin .7s linear infinite" }} />
                         Fetching product &amp; boardings count…
                       </div>
                     )}
-                    {isAuto && <div className="fld-note" style={{color:"#4F8EF7"}}>{c.key==="boardings"?"✦ Auto-filled from customers_completed":"✦ Auto-filled from Products table"}</div>}
+                    {isAuto && (
+                      <div className="fld-note" style={{ color:"#4F8EF7" }}>
+                        {c.key === "boardings" ? "✦ Auto-filled from customers_completed" : "✦ Auto-filled from Products table"}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
             <div className="dlg-foot">
-              <button className="btn-cancel" onClick={()=>setDlg(false)}>Cancel</button>
-              <button className="btn-ok btn-primary" onClick={save}>{editRow?"Update":"Save"}</button>
+              <button className="btn-cancel" onClick={() => setDlg(false)}>Cancel</button>
+              <button className="btn-ok btn-primary" onClick={save}>{editRow ? "Update" : "Save"}</button>
             </div>
           </div>
         </div>
@@ -606,30 +765,43 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
 
       {/* ── Promote Dialog ── */}
       {promo && (
-        <div className="dlg-ov" onClick={e=>e.target===e.currentTarget&&setPromo(false)}>
+        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setPromo(false)}>
           <div className="dlg-box">
             <div className="dlg-hdr">
-              <div className="dlg-bar" style={{background:"#34D399"}}/>
-              <div><div className="dlg-ttl">Move to Empanelment Completed</div><div className="dlg-sub">Orange = fill manually · Green = auto-filled</div></div>
+              <div className="dlg-bar" style={{ background:"#34D399" }} />
+              <div>
+                <div className="dlg-ttl">Move to Empanelment Completed</div>
+                <div className="dlg-sub">Orange = fill manually · Green = auto-filled</div>
+              </div>
             </div>
             <div className="dlg-body">
               {COMPLETED_COLS.map(c => (
                 <div key={c.key}>
                   <Field col={c} value={promoForm[c.key]} onChange={setPromoFld} highlight={MANUAL_KEYS.has(c.key)} disabled={AUTO_KEYS.has(c.key)} />
-                  {(c.key==="products"||c.key==="boardings") && promoLoading && (
-                    <div style={{fontSize:".67rem",color:"#34D399",marginTop:3,display:"flex",alignItems:"center",gap:4}}>
-                      <span style={{display:"inline-block",width:10,height:10,border:"2px solid rgba(52,211,153,0.3)",borderTopColor:"#34D399",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>
-                      {c.key==="boardings"?"Fetching from customers_completed…":"Fetching from products…"}
+                  {(c.key === "products" || c.key === "boardings") && promoLoading && (
+                    <div style={{ fontSize:".67rem", color:"#34D399", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
+                      <span style={{ display:"inline-block", width:10, height:10, border:"2px solid rgba(52,211,153,0.3)", borderTopColor:"#34D399", borderRadius:"50%", animation:"spin .7s linear infinite" }} />
+                      {c.key === "boardings" ? "Fetching from customers_completed…" : "Fetching from products…"}
                     </div>
                   )}
-                  {MANUAL_KEYS.has(c.key) && <div className="fld-note" style={{color:"#f59e0b"}}>⚠ Fill manually</div>}
-                  {AUTO_KEYS.has(c.key) && <div className="fld-note" style={{color:"#34D399"}}>{c.key==="boardings"?"✓ Auto-filled from customers_completed":c.key==="products"?"✓ Auto-filled from Products table":"✓ Auto-filled"}</div>}
+                  {MANUAL_KEYS.has(c.key) && <div className="fld-note" style={{ color:"#f59e0b" }}>⚠ Fill manually</div>}
+                  {AUTO_KEYS.has(c.key) && (
+                    <div className="fld-note" style={{ color:"#34D399" }}>
+                      {c.key === "boardings"
+                        ? "✓ Auto-filled from customers_completed"
+                        : c.key === "products"
+                          ? "✓ Auto-filled from Products table"
+                          : "✓ Auto-filled"}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
             <div className="dlg-foot">
-              <button className="btn-cancel" onClick={()=>setPromo(false)} disabled={promoLoading}>Cancel</button>
-              <button className="btn-ok btn-success" onClick={savePromo} disabled={promoLoading}>{promoLoading?"Saving…":"Save & Move"}</button>
+              <button className="btn-cancel" onClick={() => setPromo(false)} disabled={promoLoading}>Cancel</button>
+              <button className="btn-ok btn-success" onClick={savePromo} disabled={promoLoading}>
+                {promoLoading ? "Saving…" : "Save & Move"}
+              </button>
             </div>
           </div>
         </div>
@@ -637,41 +809,35 @@ export default function Empanelment({ inline=false, onDataChange, initialTab, th
 
       {/* ── Delete Confirm ── */}
       {confirm && (
-  <div className="dlg-ov" onClick={e=>e.target===e.currentTarget&&setConfirm(false)}>
-    <div className="dlg-box" style={{
-      maxWidth:370,
-      background: theme === "light" ? "rgba(7,9,30,0.96)" : undefined,
-      border: theme === "light" ? "1px solid rgba(239,68,68,0.45)" : undefined,
-    }}>
-      <div className="dlg-hdr" style={{
-        borderBottom: theme === "light" ? "1px solid rgba(239,68,68,0.2)" : undefined,
-        background: theme === "light" ? "rgba(239,68,68,0.06)" : undefined,
-      }}>
-        <div className="dlg-bar" style={{background:"#EF4444"}}/>
-        <div className="dlg-ttl" style={{color:"#fff"}}>Confirm Delete</div>
-      </div>
-      <div className="dlg-body">
-        <p style={{
-          margin: 0, lineHeight: 1.6, fontSize: ".84rem",
-          color: theme === "dark" ? "white" : "#000",
-        }}>
-          Are you sure you want to delete this gift city record?
-        </p>
-      </div>
-      <div className="dlg-foot" style={{
-        borderTop: theme === "light" ? "1px solid rgba(239,68,68,0.15)" : undefined,
-      }}>
-        <button className="btn-cancel" style={{
-          border:"1px solid rgba(239,68,68,0.3)",
-          color:"rgba(220,235,255,0.75)"
-        }} onClick={()=>setConfirm(false)}>Cancel</button>
-        <button className="btn-ok btn-danger" onClick={del}>Delete</button>
-      </div>
-    </div>
-  </div>
-)}
+        <div className="dlg-ov" onClick={e => e.target === e.currentTarget && setConfirm(false)}>
+          <div className="dlg-box" style={{
+            maxWidth: 370,
+            background: theme === "light" ? "rgba(7,9,30,0.96)" : undefined,
+            border: theme === "light" ? "1px solid rgba(239,68,68,0.45)" : undefined,
+          }}>
+            <div className="dlg-hdr" style={{
+              borderBottom: theme === "light" ? "1px solid rgba(239,68,68,0.2)" : undefined,
+              background: theme === "light" ? "rgba(239,68,68,0.06)" : undefined,
+            }}>
+              <div className="dlg-bar" style={{ background:"#EF4444" }} />
+              <div className="dlg-ttl" style={{ color:"#fff" }}>Confirm Delete</div>
+            </div>
+            <div className="dlg-body">
+              <p style={{ margin:0, lineHeight:1.6, fontSize:".84rem", color: theme === "dark" ? "white" : "#000" }}>
+                Are you sure you want to delete this gift city record?
+              </p>
+            </div>
+            <div className="dlg-foot" style={{
+              borderTop: theme === "light" ? "1px solid rgba(239,68,68,0.15)" : undefined,
+            }}>
+              <button className="btn-cancel" style={{ border:"1px solid rgba(239,68,68,0.3)", color:"rgba(220,235,255,0.75)" }} onClick={() => setConfirm(false)}>Cancel</button>
+              <button className="btn-ok btn-danger" onClick={del}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {snack && <Snack {...snack} onClose={()=>setSnack(null)}/>}
+      {snack && <Snack {...snack} onClose={() => setSnack(null)} />}
     </div>
   );
 }
@@ -716,11 +882,6 @@ const EMP_CSS = `
   .tbl-wrap::-webkit-scrollbar        { height: 4px; }
   .tbl-wrap::-webkit-scrollbar-thumb  { background: rgba(79,142,247,0.3); border-radius: 4px; }
 
-  /* ══════════════════════════════════════════════
-     STICKY COLUMN HEADERS — DARK THEME
-     Deep navy-blue with a blue accent glow.
-     No more near-black; feels part of the UI.
-  ══════════════════════════════════════════════ */
   .fd-tbl thead {
     position: sticky;
     top: 0;
@@ -739,7 +900,6 @@ const EMP_CSS = `
       inset 0 1px 0 rgba(79,142,247,0.12);
   }
 
-  /* ── LIGHT THEME thead ── */
   .theme-light .fd-tbl thead tr {
     background: linear-gradient(180deg,
       rgba(224, 236, 255, 0.99) 0%,
@@ -754,7 +914,6 @@ const EMP_CSS = `
   .mod-wrap input::placeholder { color: rgba(160,190,255,0.35); }
   .mod-wrap.theme-light input::placeholder { color: rgba(0,0,0,0.3); }
 
-  /* ── Dialogs ── */
   .dlg-ov { position:fixed !important;inset:0 !important;background:rgba(0,0,10,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex !important;align-items:center !important;justify-content:center !important;z-index:99999 !important;padding:16px;box-sizing:border-box;overflow-y:auto;animation:fIn .18s ease; }
   .dlg-box { background:rgba(7,9,30,0.96);backdrop-filter:blur(44px) saturate(160%);border:1px solid rgba(79,142,247,0.45);border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,255,255,0.06);width:100%;max-width:min(480px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow-y:auto;animation:dlgIn .3s cubic-bezier(0.34,1.56,0.64,1);box-sizing:border-box; }
   .dlg-box::-webkit-scrollbar { width:4px; } .dlg-box::-webkit-scrollbar-thumb { background:rgba(79,142,247,0.25);border-radius:4px; }
@@ -772,7 +931,6 @@ const EMP_CSS = `
   .dlg-foot { display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid rgba(79,142,247,0.15);background:rgba(79,142,247,0.02);border-radius:0 0 18px 18px; }
   .theme-light .dlg-foot { border-top-color:rgba(10,30,100,0.12) !important;background:transparent !important; }
 
-  /* ── Form ── */
   .fld { display:flex;flex-direction:column;gap:5px; }
   .fld-lbl { font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(160,190,255,.55);font-family:var(--fh,'Orbitron',sans-serif); }
   .fld-inp { padding:9px 12px;border-radius:9px;border:1px solid rgba(79,142,247,.22);background:rgba(10,18,60,.6);color:rgba(220,235,255,.92);font-size:.84rem;font-family:var(--fb,'Exo 2',sans-serif);outline:none;transition:border-color .18s,box-shadow .18s;width:100%;box-sizing:border-box; }
@@ -786,7 +944,6 @@ const EMP_CSS = `
   .theme-light .fld-inp:focus { border-color:#2a6dd9 !important;box-shadow:0 0 0 3px rgba(42,109,217,0.12) !important; }
   .theme-light .fld-inp option { background:#fff !important;color:#111827 !important; }
 
-  /* ── Buttons ── */
   .btn-cancel { padding:8px 14px;border-radius:10px;border:1px solid rgba(79,142,247,0.28);background:none;color:rgba(180,210,255,0.75);font-size:.8rem;font-family:var(--fb,'Exo 2',sans-serif);font-weight:600;cursor:pointer;transition:all .2s; }
   .btn-cancel:hover { border-color:rgba(255,255,255,0.3);color:#fff;background:rgba(255,255,255,0.04); }
   .btn-cancel:disabled { opacity:.4;cursor:not-allowed; }
@@ -799,24 +956,20 @@ const EMP_CSS = `
   .btn-success { background:linear-gradient(135deg,#34D399,#059669);box-shadow:0 4px 16px rgba(52,211,153,0.3); }
   .btn-danger  { background:linear-gradient(135deg,#EF4444,#DC2626);box-shadow:0 4px 16px rgba(239,68,68,0.3); }
 
-  /* ── Chips ── */
   .chip { display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:700;white-space:nowrap; }
   .chip-yes { background:rgba(52,211,153,0.13);color:#34d399;border:1px solid rgba(52,211,153,0.28); }
   .chip-no  { background:rgba(248,113,113,0.13);color:#f87171;border:1px solid rgba(248,113,113,0.28); }
 
-  /* ── Spinner ── */
   .fd-spin { display:flex;justify-content:center;padding:40px; }
   .spinner { width:32px;height:32px;border:3px solid rgba(79,142,247,.15);border-top-color:#4F8EF7;border-radius:50%;animation:spin .7s linear infinite; }
   .theme-light .spinner { border-color:rgba(42,109,217,0.15);border-top-color:#2a6dd9; }
   .fd-empty { text-align:center;padding:32px 20px !important;color:rgba(200,220,255,.3);font-size:.82rem; }
   .theme-light .fd-empty { color:rgba(0,0,0,0.38); }
 
-  /* ── Snack ── */
   .snack { position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:10px;font-size:.82rem;font-weight:600;font-family:var(--fb,'Exo 2',sans-serif);z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:dlgIn .2s ease;white-space:nowrap; }
   .snack-success { background:#065f46;color:#6ee7b7;border:1px solid #34D399; }
   .snack-error   { background:#7f1d1d;color:#fca5a5;border:1px solid #EF4444; }
 
-  /* ── Table ── */
   .fd-tbl { width:100%;border-collapse:collapse;font-size:.8rem;min-width:560px; }
   .fd-tbl th {
     padding:10px 14px;
@@ -834,13 +987,11 @@ const EMP_CSS = `
   .fd-tbl tbody tr:hover { background:rgba(79,142,247,.06); }
   .fd-num { color:rgba(79,142,247,.4) !important;font-size:.72rem !important;width:42px; }
 
-  /* ── Light theme table overrides ── */
   .theme-light .fd-tbl th { color:rgba(30,65,150,0.85) !important; }
   .theme-light .fd-tbl td { color:#1e293b;border-bottom-color:rgba(10,30,100,0.09); }
   .theme-light .fd-tbl tbody tr:hover { background:rgba(42,109,217,0.05); }
   .theme-light .fd-num { color:rgba(0,0,0,0.3) !important; }
 
-  /* ── Action buttons ── */
   .act-cell { display:flex;align-items:center;justify-content:center;gap:5px; }
   .ab { display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;border:none;cursor:pointer;transition:all .15s; }
   .ab-edit  { background:rgba(79,142,247,.12);color:#4F8EF7; }  .ab-edit:hover  { background:rgba(79,142,247,.28); }
@@ -850,7 +1001,6 @@ const EMP_CSS = `
   .theme-light .ab-del   { background:rgba(180,50,50,0.1);color:#9a2020; }   .theme-light .ab-del:hover   { background:rgba(180,50,50,0.22); }
   .theme-light .ab-promo { background:rgba(15,120,85,0.1);color:#0a7a56; }   .theme-light .ab-promo:hover { background:rgba(15,120,85,0.22); }
 
-  /* ── Header / tab bar ── */
   .mod-hdr { display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 20px;border-bottom:1px solid rgba(79,142,247,.12);box-sizing:border-box;width:100%; }
   .theme-light .mod-hdr { border-bottom-color:rgba(10,30,100,0.12); }
   .tabs-row { display:flex;flex-wrap:wrap;gap:6px;flex:1 1 auto;min-width:0; }
