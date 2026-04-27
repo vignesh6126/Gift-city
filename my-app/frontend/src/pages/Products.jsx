@@ -229,18 +229,16 @@ function CustomSelect({ options, value, onChange, isDark }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const accentC  = isDark ? "#34D399"                          : "#0f9e6e";
-  const border   = isDark ? "rgba(52,211,153,0.28)"            : "rgba(10,30,100,0.18)";
-  const bg       = isDark ? "rgba(255,255,255,0.04)"           : "rgba(255,255,255,0.7)";
-  const color    = isDark ? "#fff"                             : "#111827";
-  const dropBg   = isDark ? "#0b1120"                          : "#fff";
-  const hoverBg  = isDark ? "rgba(52,211,153,0.10)"           : "rgba(15,158,110,0.07)";
-  const activeBg = isDark ? "rgba(52,211,153,0.18)"           : "rgba(15,158,110,0.14)";
-  const dropBdr  = isDark ? "rgba(52,211,153,0.35)"           : "rgba(10,30,100,0.18)";
-  const shadow   = isDark ? "0 16px 40px rgba(0,0,0,0.7)"     : "0 8px 24px rgba(0,0,0,0.12)";
-  const focusShadow = isDark
-    ? "0 0 0 3px rgba(52,211,153,0.15)"
-    : "0 0 0 3px rgba(15,158,110,0.1)";
+  const accentC     = isDark ? "#34D399"                          : "#0f9e6e";
+  const border      = isDark ? "rgba(52,211,153,0.28)"            : "rgba(10,30,100,0.18)";
+  const bg          = isDark ? "rgba(255,255,255,0.04)"           : "rgba(255,255,255,0.7)";
+  const color       = isDark ? "#fff"                             : "#111827";
+  const dropBg      = isDark ? "#0b1120"                          : "#fff";
+  const hoverBg     = isDark ? "rgba(52,211,153,0.10)"           : "rgba(15,158,110,0.07)";
+  const activeBg    = isDark ? "rgba(52,211,153,0.18)"           : "rgba(15,158,110,0.14)";
+  const dropBdr     = isDark ? "rgba(52,211,153,0.35)"           : "rgba(10,30,100,0.18)";
+  const shadow      = isDark ? "0 16px 40px rgba(0,0,0,0.7)"     : "0 8px 24px rgba(0,0,0,0.12)";
+  const focusShadow = isDark ? "0 0 0 3px rgba(52,211,153,0.15)" : "0 0 0 3px rgba(15,158,110,0.1)";
 
   return (
     <div ref={ref} style={{ position: "relative", userSelect: "none" }}>
@@ -423,7 +421,7 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
   };
 
   const PENDING_FIELDS = [
-    { key: "AMC_name",        label: "AMC Name",       auto: true,  note: "✦ Auto-filled from product" },
+    { key: "AMC_name",        label: "AMC Name",        auto: true,  note: "✦ Auto-filled from product" },
     { key: "products",        label: "Products Count",  auto: true,  note: "✦ Auto-counted from products table" },
     { key: "submission_date", label: "Submission Date", auto: false, type: "date" },
     { key: "status",          label: "Status",          auto: false },
@@ -548,23 +546,78 @@ function ShareToPendingDialog({ row, allRows, onClose, onSaved, theme = "dark" }
   );
 }
 
+/* ══════════════════════════════════════════
+   ProdField — TOP-LEVEL (outside Products)
+   KEY FIX: Moved here so React never treats
+   it as a new component type on re-render,
+   which was causing inputs to remount and
+   lose focus after every single keystroke.
+══════════════════════════════════════════ */
+function ProdField({ col, value, onChange, isDark }) {
+  const labelSt = {
+    fontSize: ".67rem", fontWeight: 700, textTransform: "uppercase",
+    letterSpacing: ".08em", fontFamily: "Inter,sans-serif",
+    color: isDark ? "rgba(180,210,255,0.75)" : "rgba(0,0,0,0.6)",
+  };
+  const inputSt = {
+    width: "100%", padding: "9px 12px", borderRadius: 10, outline: "none",
+    border: isDark ? "1px solid rgba(52,211,153,0.28)" : "1px solid rgba(10,30,100,0.18)",
+    background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
+    color: isDark ? "#fff" : "#111827",
+    fontSize: ".84rem", fontFamily: "Inter,sans-serif",
+    transition: "border-color .2s, box-shadow .2s", boxSizing: "border-box",
+  };
+  const onFocus = (e) => {
+    e.target.style.borderColor = isDark ? "#34D399" : "#0f9e6e";
+    e.target.style.boxShadow   = isDark ? "0 0 0 3px rgba(52,211,153,0.15)" : "0 0 0 3px rgba(15,158,110,0.1)";
+    if (!isDark) e.target.style.background = "#fff";
+  };
+  const onBlur = (e) => {
+    e.target.style.borderColor = isDark ? "rgba(52,211,153,0.28)" : "rgba(10,30,100,0.18)";
+    e.target.style.boxShadow   = "none";
+    if (!isDark) e.target.style.background = "rgba(255,255,255,0.7)";
+  };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+      <label style={labelSt}>{col.label}</label>
+      {col.type === "select" ? (
+        <CustomSelect
+          options={col.options}
+          value={value || ""}
+          onChange={(v) => onChange(col.key, v)}
+          isDark={isDark}
+        />
+      ) : (
+        <input
+          style={inputSt}
+          type="text"
+          value={value || ""}
+          onChange={e => onChange(col.key, e.target.value)}
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
+      )}
+    </div>
+  );
+}
+
 /* ════════════════════════════════════════
    Main Component
 ════════════════════════════════════════ */
 export default function Products({ inline = false, onDataChange, theme = "dark" }) {
   const isDark = theme === "dark";
 
-  const [rows,      setRows]      = useState([]);
-  const [search,    setSearch]    = useState("");
-  const [loading,   setLoading]   = useState(false);
-  const [tab,       setTab]       = useState("cat3");
-  const [dlg,       setDlg]       = useState(false);
-  const [editRow,   setEditRow]   = useState(null);
-  const [form,      setForm]      = useState({});
-  const [delId,     setDelId]     = useState(null);
-  const [confirm,   setConfirm]   = useState(false);
-  const [shareRow,  setShareRow]  = useState(null);
-  const [snack,     setSnack]     = useState(null);
+  const [rows,     setRows]     = useState([]);
+  const [search,   setSearch]   = useState("");
+  const [loading,  setLoading]  = useState(false);
+  const [tab,      setTab]      = useState("cat3");
+  const [dlg,      setDlg]      = useState(false);
+  const [editRow,  setEditRow]  = useState(null);
+  const [form,     setForm]     = useState({});
+  const [delId,    setDelId]    = useState(null);
+  const [confirm,  setConfirm]  = useState(false);
+  const [shareRow, setShareRow] = useState(null);
+  const [snack,    setSnack]    = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -615,7 +668,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
     c.key === "structure" ? { ...c, options: STRUCTURE_OPTIONS[tab] } : c
   );
 
-  /* Dialog styles */
+  /* ── Dialog shared styles ── */
   const dlgOverlay = {
     position: "fixed", inset: 0, zIndex: 99999,
     display: "flex", alignItems: "center", justifyContent: "center",
@@ -677,49 +730,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
     boxShadow: "0 4px 16px rgba(239,68,68,0.3)", transition: "all .2s",
   };
 
-  const ProdField = ({ col, value, onChange }) => {
-    const labelSt = {
-      fontSize: ".67rem", fontWeight: 700, textTransform: "uppercase",
-      letterSpacing: ".08em", fontFamily: "Inter,sans-serif",
-      color: isDark ? "rgba(180,210,255,0.75)" : "rgba(0,0,0,0.6)",
-    };
-    const inputSt = {
-      width: "100%", padding: "9px 12px", borderRadius: 10, outline: "none",
-      border: isDark ? "1px solid rgba(52,211,153,0.28)" : "1px solid rgba(10,30,100,0.18)",
-      background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
-      color: isDark ? "#fff" : "#111827",
-      fontSize: ".84rem", fontFamily: "Inter,sans-serif",
-      transition: "border-color .2s, box-shadow .2s", boxSizing: "border-box",
-    };
-    const onFocus = (e) => {
-      e.target.style.borderColor = isDark ? "#34D399" : "#0f9e6e";
-      e.target.style.boxShadow   = isDark ? "0 0 0 3px rgba(52,211,153,0.15)" : "0 0 0 3px rgba(15,158,110,0.1)";
-      if (!isDark) e.target.style.background = "#fff";
-    };
-    const onBlur = (e) => {
-      e.target.style.borderColor = isDark ? "rgba(52,211,153,0.28)" : "rgba(10,30,100,0.18)";
-      e.target.style.boxShadow   = "none";
-      if (!isDark) e.target.style.background = "rgba(255,255,255,0.7)";
-    };
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-        <label style={labelSt}>{col.label}</label>
-        {col.type === "select" ? (
-          <CustomSelect
-            options={col.options}
-            value={value || ""}
-            onChange={(v) => onChange(col.key, v)}
-            isDark={isDark}
-          />
-        ) : (
-          <input style={inputSt} type="text" value={value || ""}
-            onChange={e => onChange(col.key, e.target.value)}
-            onFocus={onFocus} onBlur={onBlur} />
-        )}
-      </div>
-    );
-  };
-
   const renderPortalDialog = (title, sub, barColor, bodyContent, onClose, footerContent) =>
     createPortal(
       <div style={dlgOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
@@ -750,7 +760,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
           to   { opacity:1; transform:none; }
         }
 
-        /* ── mod-wrap: flex column so table area fills remaining height ── */
         .mod-wrap {
           max-width: 100%;
           display: flex;
@@ -761,7 +770,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         .mod-wrap input::placeholder { color:rgba(160,190,255,0.35); }
         .mod-wrap.theme-light input::placeholder { color:rgba(0,0,0,0.28); }
 
-        /* ── table wrapper: fills leftover space and scrolls both axes ── */
         .prod-tbl-wrap {
           flex: 1;
           min-height: 0;
@@ -770,7 +778,6 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
           -webkit-overflow-scrolling: touch;
         }
 
-        /* ── scrollbar styling ── */
         .prod-tbl-wrap::-webkit-scrollbar { height: 5px; width: 5px; }
         .prod-tbl-wrap::-webkit-scrollbar-track { background: rgba(79,142,247,0.06); border-radius: 4px; }
         .prod-tbl-wrap::-webkit-scrollbar-thumb { background: rgba(79,142,247,0.3); border-radius: 4px; }
@@ -806,12 +813,10 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
           word-break: break-word;
         }
 
-        /* ── keep header + search bar from shrinking ── */
-        .mod-hdr  { flex-shrink: 0; }
-        .tbl-hdr  { flex-shrink: 0; }
+        .mod-hdr { flex-shrink: 0; }
+        .tbl-hdr { flex-shrink: 0; }
         .fd-spin  { flex-shrink: 0; }
 
-        /* share action button */
         .ab-share { background: rgba(245,158,11,0.12); color: #f59e0b; }
         .ab-share:hover { background: rgba(245,158,11,0.28); }
         .theme-light .ab-share { background: rgba(180,100,0,0.1); color: #92610a; }
@@ -909,9 +914,9 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
                   <td>{row.lock_in ?? "—"}</td>
                   <td>
                     <div className="act-cell">
-                      <button className="ab ab-edit" title="Edit" onClick={() => openEdit(row)}><IcoEdit /></button>
+                      <button className="ab ab-edit"  title="Edit"                        onClick={() => openEdit(row)}><IcoEdit /></button>
                       <button className="ab ab-share" title="Send to Empanelment Pending" onClick={() => setShareRow(row)}><IcoShare /></button>
-                      <button className="ab ab-del" title="Delete" onClick={() => { setDelId(row.id); setConfirm(true); }}><IcoDel /></button>
+                      <button className="ab ab-del"   title="Delete"                      onClick={() => { setDelId(row.id); setConfirm(true); }}><IcoDel /></button>
                     </div>
                   </td>
                 </tr>
@@ -932,13 +937,13 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         />
       )}
 
-      {/* ADD / EDIT DIALOG */}
+      {/* ── ADD / EDIT DIALOG ── */}
       {dlg && renderPortalDialog(
         editRow ? "Edit Product" : "Add Product",
         "Fill in the product details below",
         "#34D399",
         colsForTab.map(c => (
-          <ProdField key={c.key} col={c} value={form[c.key]} onChange={setField} />
+          <ProdField key={c.key} col={c} value={form[c.key]} onChange={setField} isDark={isDark} />
         )),
         () => setDlg(false),
         <>
@@ -967,7 +972,7 @@ export default function Products({ inline = false, onDataChange, theme = "dark" 
         </>
       )}
 
-      {/* CONFIRM DELETE */}
+      {/* ── CONFIRM DELETE ── */}
       {confirm && renderPortalDialog(
         "Confirm Delete",
         "This action cannot be undone",
