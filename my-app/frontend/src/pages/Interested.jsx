@@ -34,7 +34,6 @@ const toISODate = (val) => {
   return val;
 };
 
-const emptyRow = () => ({ client_name: "", esops_rsu: "no", discussion_date: "", next_action: "" });
 const fmtDate  = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
 const interestedToPending = (row) => ({
@@ -51,7 +50,6 @@ const interestedToPending = (row) => ({
 /* ─── Icons ─── */
 const IcoEdit   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 const IcoDel    = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-const IcoPlus   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
 const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
 const IcoClear  = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
 const IcoShare  = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="16 6 12 2 8 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="2" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
@@ -635,7 +633,6 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
       )
     : rows;
 
-  const openAdd  = () => { setEditRow(null); setForm(emptyRow()); setDlg(true); };
   const openEdit = (row) => { setEditRow(row); setForm({ ...row }); setDlg(true); };
   const setField = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -649,8 +646,10 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
       next_action_date: toISODate(form.next_action_date) || null,
       next_action:      form.next_action?.trim() || "",
     };
-    const url    = editRow ? `${API}/interested/${editRow.id}` : `${API}/interested`;
-    const method = editRow ? "PUT" : "POST";
+
+
+const url = `${API}/interested/${editRow.id}`;
+const method = "PUT";
     setSaving(true);
     try {
       const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -659,7 +658,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
         try { const b = await r.json(); errMsg = b.message || b.error || errMsg; } catch {}
         throw new Error(errMsg);
       }
-      showSnack(editRow ? "Updated!" : "Added!");
+      showSnack("Updated!");
       setDlg(false); load(); onDataChange?.();
     } catch (e) {
       showSnack(`Save failed: ${e.message}`, "error");
@@ -906,13 +905,6 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
             )}
           </span>
         </div>
-        <button
-          className="add-btn"
-          onClick={openAdd}
-          style={{ background: `linear-gradient(135deg,${ORANGE},#ca6f1e)`, boxShadow: "0 4px 14px rgba(230,126,34,.3)" }}
-        >
-          <IcoPlus /> Add Row
-        </button>
       </div>
 
       {/* ── Search bar ── */}
@@ -948,7 +940,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
                   <td className="fd-empty" colSpan={COLS.length + 2}>
                     {search.trim()
                       ? <>No results for "<strong style={{ color: ORANGE }}>{search}</strong>"</>
-                      : 'No records found. Click "Add Row" to get started.'
+                      : 'No records found.'
                     }
                   </td>
                 </tr>
@@ -987,7 +979,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
           <div className="dlg-box">
             <div className="dlg-hdr">
               <div className="dlg-bar" style={{ background: ORANGE }} />
-              <div className="dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
+              <div className="dlg-ttl">Edit Record</div>
             </div>
             <div className="dlg-body">
               {COLS.map(c => <Field key={c.key} col={c} value={form[c.key]} onChange={setField} />)}
@@ -1000,7 +992,7 @@ export default function Interested({ inline = false, onDataChange, theme = "dark
                 onClick={save}
                 disabled={saving}
               >
-                {saving ? "Saving…" : editRow ? "Update" : "Save"}
+                {saving ? "Saving…" : "Update"}
               </button>
             </div>
           </div>

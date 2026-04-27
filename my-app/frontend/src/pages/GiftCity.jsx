@@ -3,47 +3,44 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 const API = import.meta.env.VITE_API_URL;
 
 const TABS = [
-  { id:"active",   label:"Active A/C"   },
-  { id:"inactive", label:"Inactive A/C" },
+  { id: "active", label: "Active A/C" },
+  { id: "inactive", label: "Inactive A/C" },
 ];
 const ACTIVE_COLS = [
-  { key:"customer_name", label:"Customer Name", type:"text" },
-  { key:"bank_name",     label:"Bank Name",     type:"text" },
-  { key:"opened_date",   label:"Opened Date",   type:"date" },
+  { key: "customer_name", label: "Customer Name", type: "text" },
+  { key: "bank_name", label: "Bank Name", type: "text" },
+  { key: "opened_date", label: "Opened Date", type: "date" },
 ];
 const INACTIVE_COLS = [
-  { key:"customer_name", label:"Customer Name", type:"text" },
-  { key:"bank_name",     label:"Bank Name",     type:"text" },
-  { key:"delay_reason",  label:"Delay Reason",  type:"text" },
+  { key: "customer_name", label: "Customer Name", type: "text" },
+  { key: "bank_name", label: "Bank Name", type: "text" },
+  { key: "delay_reason", label: "Delay Reason", type: "text" },
 ];
 
-const AUTO_KEYS   = new Set(["customer_name", "bank_name"]);
+const AUTO_KEYS = new Set(["customer_name", "bank_name"]);
 const MANUAL_KEYS = new Set(["opened_date"]);
 
 const inactiveToActive = (r) => ({
   customer_name: r.customer_name || "",
-  bank_name:     r.bank_name     || "",
-  opened_date:   "",
+  bank_name: r.bank_name || "",
+  opened_date: "",
 });
 
-const emptyA = () => ({ customer_name:"", bank_name:"", opened_date:"" });
-const emptyI = () => ({ customer_name:"", bank_name:"", delay_reason:"" });
-const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—";
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
-const IcoEdit  = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-const IcoDel   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-const IcoPlus  = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const IcoEdit = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+const IcoDel = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 const IcoShare = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-    <circle cx="18" cy="5"  r="3" stroke="currentColor" strokeWidth="2"/>
-    <circle cx="6"  cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-    <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2"/>
-    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="15.41" y1="6.51" x2="8.59"  y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="2" />
+    <circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
-const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
-const IcoClear  = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>;
+const IcoClear = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>;
 
 function Highlight({ text, query, theme = "dark" }) {
   if (!query || !text) return <>{text ?? "—"}</>;
@@ -69,21 +66,21 @@ function SearchBar({ value, onChange, placeholder, resultCount, totalCount, them
   const inputRef = useRef(null);
   const isActive = value.length > 0;
 
-  const accentSolid  = theme === "light" ? "#c97c08"                        : "#F59E0B";
-  const accent       = theme === "light" ? "rgba(201,124,8,0.8)"            : "rgba(245,158,11,0.7)";
-  const borderIdle   = theme === "light" ? "rgba(0,0,0,0.2)"                : "rgba(245,158,11,0.22)";
-  const borderActive = theme === "light" ? "rgba(201,124,8,0.6)"            : "rgba(245,158,11,0.55)";
-  const bgIdle       = theme === "light" ? "rgba(255,255,255,0.6)"          : "rgba(10,16,60,0.5)";
-  const bgActive     = theme === "light" ? "rgba(201,124,8,0.07)"           : "rgba(245,158,11,0.08)";
-  const shadowActive = theme === "light" ? "0 0 0 3px rgba(201,124,8,0.12)": "0 0 0 3px rgba(245,158,11,0.12)";
-  const shadowFocus  = theme === "light" ? "0 0 0 3px rgba(201,124,8,0.15)": "0 0 0 3px rgba(245,158,11,0.15)";
-  const clearBg      = theme === "light" ? "rgba(201,124,8,0.14)"           : "rgba(245,158,11,0.18)";
-  const clearBgHov   = theme === "light" ? "rgba(201,124,8,0.28)"           : "rgba(245,158,11,0.35)";
-  const clearColor   = theme === "light" ? "rgba(0,0,0,0.55)"               : "rgba(180,210,255,0.8)";
-  const pillBg       = theme === "light" ? "rgba(201,124,8,0.12)"           : "rgba(245,158,11,0.12)";
-  const pillBorder   = theme === "light" ? "rgba(201,124,8,0.28)"           : "rgba(245,158,11,0.28)";
-  const sectionBg    = theme === "light" ? "rgba(0,0,0,0.02)"               : "rgba(245,158,11,0.02)";
-  const sectionBdr   = theme === "light" ? "1px solid rgba(0,0,0,0.1)"     : "1px solid rgba(245,158,11,0.12)";
+  const accentSolid = theme === "light" ? "#c97c08" : "#F59E0B";
+  const accent = theme === "light" ? "rgba(201,124,8,0.8)" : "rgba(245,158,11,0.7)";
+  const borderIdle = theme === "light" ? "rgba(0,0,0,0.2)" : "rgba(245,158,11,0.22)";
+  const borderActive = theme === "light" ? "rgba(201,124,8,0.6)" : "rgba(245,158,11,0.55)";
+  const bgIdle = theme === "light" ? "rgba(255,255,255,0.6)" : "rgba(10,16,60,0.5)";
+  const bgActive = theme === "light" ? "rgba(201,124,8,0.07)" : "rgba(245,158,11,0.08)";
+  const shadowActive = theme === "light" ? "0 0 0 3px rgba(201,124,8,0.12)" : "0 0 0 3px rgba(245,158,11,0.12)";
+  const shadowFocus = theme === "light" ? "0 0 0 3px rgba(201,124,8,0.15)" : "0 0 0 3px rgba(245,158,11,0.15)";
+  const clearBg = theme === "light" ? "rgba(201,124,8,0.14)" : "rgba(245,158,11,0.18)";
+  const clearBgHov = theme === "light" ? "rgba(201,124,8,0.28)" : "rgba(245,158,11,0.35)";
+  const clearColor = theme === "light" ? "rgba(0,0,0,0.55)" : "rgba(180,210,255,0.8)";
+  const pillBg = theme === "light" ? "rgba(201,124,8,0.12)" : "rgba(245,158,11,0.12)";
+  const pillBorder = theme === "light" ? "rgba(201,124,8,0.28)" : "rgba(245,158,11,0.28)";
+  const sectionBg = theme === "light" ? "rgba(0,0,0,0.02)" : "rgba(245,158,11,0.02)";
+  const sectionBdr = theme === "light" ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(245,158,11,0.12)";
 
   return (
     <div style={{ padding: "10px 20px 12px", borderBottom: sectionBdr, background: sectionBg, flexShrink: 0 }}>
@@ -114,7 +111,7 @@ function SearchBar({ value, onChange, placeholder, resultCount, totalCount, them
             onFocus={e => { e.target.style.borderColor = accent; e.target.style.boxShadow = shadowFocus; }}
             onBlur={e => {
               e.target.style.borderColor = isActive ? borderActive : borderIdle;
-              e.target.style.boxShadow   = isActive ? shadowActive : "none";
+              e.target.style.boxShadow = isActive ? shadowActive : "none";
             }}
           />
           {isActive && (
@@ -126,7 +123,7 @@ function SearchBar({ value, onChange, placeholder, resultCount, totalCount, them
                 cursor: "pointer", color: clearColor, transition: "all .15s",
               }}
               onMouseEnter={e => { e.currentTarget.style.background = clearBgHov; e.currentTarget.style.color = "#fff"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = clearBg;    e.currentTarget.style.color = clearColor; }}
+              onMouseLeave={e => { e.currentTarget.style.background = clearBg; e.currentTarget.style.color = clearColor; }}
             >
               <IcoClear />
             </button>
@@ -175,20 +172,20 @@ function Snack({ msg, severity, onClose }) {
 }
 
 export default function GiftCity({ inline = false, onDataChange, initialTab, theme = "dark" }) {
-  const [tab,          setTab]          = useState(initialTab || "active");
-  const [rows,         setRows]         = useState([]);
-  const [search,       setSearch]       = useState("");
-  const [loading,      setLoading]      = useState(false);
-  const [dlg,          setDlg]          = useState(false);
-  const [editRow,      setEditRow]      = useState(null);
-  const [form,         setForm]         = useState({});
-  const [delId,        setDelId]        = useState(null);
-  const [confirm,      setConfirm]      = useState(false);
-  const [promo,        setPromo]        = useState(false);
-  const [promoId,      setPromoId]      = useState(null);
-  const [promoForm,    setPromoForm]    = useState({});
+  const [tab, setTab] = useState(initialTab || "active");
+  const [rows, setRows] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [dlg, setDlg] = useState(false);
+  const [editRow, setEditRow] = useState(null);
+  const [form, setForm] = useState({});
+  const [delId, setDelId] = useState(null);
+  const [confirm, setConfirm] = useState(false);
+  const [promo, setPromo] = useState(false);
+  const [promoId, setPromoId] = useState(null);
+  const [promoForm, setPromoForm] = useState({});
   const [promoLoading, setPromoLoading] = useState(false);
-  const [snack,        setSnack]        = useState(null);
+  const [snack, setSnack] = useState(null);
 
   useEffect(() => { if (initialTab) setTab(initialTab); }, [initialTab]);
   useEffect(() => { setSearch(""); }, [tab]);
@@ -204,26 +201,42 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
 
   const filteredRows = search.trim()
     ? rows.filter(r => {
-        const q = search.trim().toLowerCase();
-        return (
-          (r.customer_name || "").toLowerCase().includes(q) ||
-          (r.bank_name     || "").toLowerCase().includes(q)
-        );
-      })
+      const q = search.trim().toLowerCase();
+      return (
+        (r.customer_name || "").toLowerCase().includes(q) ||
+        (r.bank_name || "").toLowerCase().includes(q)
+      );
+    })
     : rows;
 
-  const showSnack  = (msg, severity = "success") => setSnack({ msg, severity });
-  const openAdd    = () => { setEditRow(null); setForm(tab === "active" ? emptyA() : emptyI()); setDlg(true); };
-  const openEdit   = (row) => { setEditRow(row); setForm({ ...row }); setDlg(true); };
-  const setField   = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const showSnack = (msg, severity = "success") => setSnack({ msg, severity });
+  const openEdit = (row) => { setEditRow(row); setForm({ ...row }); setDlg(true); };
+  const setField = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const save = async () => {
-    const url = editRow ? `${API}/gift-city/${tab}/${editRow.id}` : `${API}/gift-city/${tab}`;
     try {
-      const r = await fetch(url, { method: editRow ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-      if (!r.ok) throw 0;
-      showSnack(editRow ? "Updated!" : "Added!"); setDlg(false); load(); onDataChange?.();
-    } catch { showSnack("Save failed", "error"); }
+  if (!editRow) {
+    showSnack("Adding new records is disabled", "error");
+    return;
+  }
+
+  const url = `${API}/gift-city/${tab}/${editRow.id}`;
+
+  const r = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(form)
+  });
+
+  if (!r.ok) throw new Error();
+
+  showSnack("Updated!");
+  setDlg(false);     // close dialog
+  load();            // 🔥 refresh table
+  onDataChange?.();  // optional callback
+} catch {
+  showSnack("Update failed", "error");
+}
   };
 
   const del = async () => {
@@ -234,7 +247,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
     } catch { showSnack("Delete failed", "error"); }
   };
 
-  const openPromo   = (row) => { setPromoId(row.id); setPromoForm(inactiveToActive(row)); setPromo(true); };
+  const openPromo = (row) => { setPromoId(row.id); setPromoForm(inactiveToActive(row)); setPromo(true); };
   const setPromoFld = (k, v) => setPromoForm(p => ({ ...p, [k]: v }));
 
   const savePromo = async () => {
@@ -250,7 +263,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
     finally { setPromoLoading(false); }
   };
 
-  const GOLD  = "#F59E0B";
+  const GOLD = "#F59E0B";
   const GREEN = "#10B981";
 
   return (
@@ -268,10 +281,6 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
             </button>
           ))}
         </div>
-        <button className="add-btn" onClick={openAdd}
-          style={{ background: `linear-gradient(135deg,${GOLD},#d97706)`, boxShadow: "0 4px 14px rgba(245,158,11,.3)" }}>
-          <IcoPlus /> Add Row
-        </button>
       </div>
 
       {/* ── SEARCH ── */}
@@ -314,7 +323,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
                     {search.trim()
                       ? <>No customers or banks match "<strong style={{ color: GOLD }}>{search}</strong>"</>
                       : tab === "inactive"
-                        ? 'No records found. Click "Add Row" to get started.'
+                        ? 'No records found.'
                         : "No records found."}
                   </td>
                 </tr>
@@ -355,7 +364,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
           <div className="dlg-box">
             <div className="dlg-hdr">
               <div className="dlg-bar" style={{ background: GOLD }} />
-              <div className="dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
+              <div className="dlg-ttl">Edit Record</div>
             </div>
             <div className="dlg-body">
               {cols.map(c => <Field key={c.key} col={c} value={form[c.key]} onChange={setField} />)}
@@ -363,7 +372,7 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
             <div className="dlg-foot">
               <button className="btn-cancel" onClick={() => setDlg(false)}>Cancel</button>
               <button className="btn-ok" style={{ background: `linear-gradient(135deg,${GOLD},#d97706)`, boxShadow: "0 4px 14px rgba(245,158,11,.3)" }} onClick={save}>
-                {editRow ? "Update" : "Save"}
+                Update
               </button>
             </div>
           </div>
@@ -385,8 +394,8 @@ export default function GiftCity({ inline = false, onDataChange, initialTab, the
               {ACTIVE_COLS.map(c => (
                 <div key={c.key}>
                   <Field col={c} value={promoForm[c.key]} onChange={setPromoFld} readOnly={AUTO_KEYS.has(c.key)} />
-                  {AUTO_KEYS.has(c.key)   && <div className="fld-note" style={{ color: GREEN }}>✓ Auto-filled</div>}
-                  {MANUAL_KEYS.has(c.key) && <div className="fld-note" style={{ color: GOLD  }}>⚠ Fill manually</div>}
+                  {AUTO_KEYS.has(c.key) && <div className="fld-note" style={{ color: GREEN }}>✓ Auto-filled</div>}
+                  {MANUAL_KEYS.has(c.key) && <div className="fld-note" style={{ color: GOLD }}>⚠ Fill manually</div>}
                 </div>
               ))}
             </div>

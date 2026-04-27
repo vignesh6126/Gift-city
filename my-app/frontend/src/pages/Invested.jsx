@@ -28,15 +28,12 @@ const AUTO_KEYS   = new Set(["client_name", "amount", "amc_name", "scheme", "ban
 const MANUAL_KEYS = new Set(["first_investment"]);
 
 const p2c    = (r) => ({ client_name: r.client_name || "", amount: r.amount_tobe_invested || "", amc_name: r.amc_name || "", scheme: r.scheme || "", bank: r.bank || "savings", first_investment: "" });
-const emptyC = () => ({ client_name: "", first_investment: "", amount: "", scheme: "", amc_name: "", bank: "savings" });
-const emptyP = () => ({ client_name: "", amount_tobe_invested: "", scheme: "", amc_name: "", bank: "savings", submission_date: "", next_action_date: "", status: "" });
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
 /* ─── Icons ─── */
 const IcoEdit   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 const IcoDel    = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 const IcoMove   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="2"/><circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="2"/><circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
-const IcoPlus   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
 const IcoSearch = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
 const IcoClear  = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>;
 
@@ -291,16 +288,25 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
     ? rows.filter(r => (r.client_name || "").toLowerCase().includes(q) || (r.amc_name || "").toLowerCase().includes(q))
     : rows;
 
-  const openAdd  = () => { setEditRow(null); setForm(tab === "completed" ? emptyC() : emptyP()); setDlg(true); };
   const openEdit = (row) => { setEditRow(row); setForm({ ...row }); setDlg(true); };
   const setField = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const save = async () => {
-    const url = editRow ? `${API}/invested/${tab}/${editRow.id}` : `${API}/invested/${tab}`;
-    try {
-      const r = await fetch(url, { method: editRow ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-      if (!r.ok) throw 0;
-      showSnack(editRow ? "Updated!" : "Added!"); setDlg(false); load(); onDataChange?.();
+    if (!editRow) {
+  showSnack("Adding new records is disabled", "error");
+  return;
+}
+
+const url = `${API}/invested/${tab}/${editRow.id}`;
+try {
+      const r = await fetch(url, {
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(form)
+});
+
+if (!r.ok) throw 0;
+      showSnack("Updated!"); setDlg(false); load(); onDataChange?.();
     } catch { showSnack("Save failed", "error"); }
   };
 
@@ -358,9 +364,7 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
             </button>
           ))}
         </div>
-        <button className="add-btn" style={addBtnStyle} onClick={openAdd}>
-          <IcoPlus /> Add Row
-        </button>
+        
       </div>
 
       {/* ── Search bar ── */}
@@ -406,7 +410,7 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
                     {search.trim()
                       ? <>No results for "<strong style={{ color: isDark ? "#64B5F6" : "#2a6dd9" }}>{search}</strong>"</>
                       : tab === "pending"
-                        ? 'No records found. Click "Add Row" to get started.'
+                        ? 'No records found.'
                         : "No records found."
                     }
                   </td>
@@ -437,14 +441,14 @@ export default function Invested({ inline = false, onDataChange, initialTab, the
           <div className="inv-dlg-box">
             <div className="inv-dlg-hdr">
               <div className="dlg-bar" style={{ background: isDark ? "#64B5F6" : "#2a6dd9" }} />
-              <div className="inv-dlg-ttl">{editRow ? "Edit Record" : "Add Record"}</div>
+              <div className="inv-dlg-ttl">Edit Record</div>
             </div>
             <div className="inv-dlg-body">
               {cols.map(c => <Field key={c.key} col={c} value={form[c.key]} onChange={setField} />)}
             </div>
             <div className="inv-dlg-foot">
               <button className="inv-btn-cancel" onClick={() => setDlg(false)}>Cancel</button>
-              <button className="inv-btn-ok inv-btn-primary" onClick={save}>{editRow ? "Update" : "Save"}</button>
+              <button className="inv-btn-ok inv-btn-primary" onClick={save}>Update</button>
             </div>
           </div>
         </div>,
