@@ -89,7 +89,7 @@ const Login = () => {
           </Typography>
 
           <Typography variant="body2" align="center" color="text.secondary" mb={2}>
-            Wealth Management
+            Wealth Management Platform
           </Typography>
 
           {error && (
