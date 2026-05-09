@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/fd_logo.png";
+import logo from "../assets/company-logo.png";
 
 import {
   Box,

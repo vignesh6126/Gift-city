@@ -8,6 +8,7 @@ import GiftCity from "./GiftCity";
 import Customers from "./Customers";
 import Products from "./Products";
 import AMCTable from "./AMCTable";
+import companyLogo from "../assets/company-logo.png";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -426,7 +427,17 @@ export default function DashboardLight() {
           <aside className={`side ${sideOpen ? "side-open" : ""}`}>
             <div className="side-logo">
               <div className="logo-box">
-                <div className="logo-words">
+                <img
+                  src={companyLogo}
+                  alt="Company logo"
+                  className="logo-img"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.nextElementSibling;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <div className="logo-words logo-text-fallback" style={{display:'none'}}>
                   <span className="logo-main">FINANCE DOCTOR</span>
                   <span className="logo-est">Est. 2002</span>
                 </div>
@@ -526,6 +537,10 @@ button{font-family:var(--fb)}
 .logo-words{display:flex;flex-direction:column;align-items:center;width:100%;gap:3px}
 .logo-main{font-weight:800;font-size:.85rem;color:#111827;letter-spacing:.1em;text-align:center;line-height:1.3;word-break:break-word}
 .logo-est{font-size:.63rem;color:rgba(0,0,0,0.45);letter-spacing:.16em;text-align:center;text-transform:uppercase;margin-top:2px}
+
+/* Company logo image + fallback */
+.logo-img{width:100%;max-width:140px;height:auto;object-fit:contain;display:block;margin:0 auto}
+.logo-text-fallback{display:flex;flex-direction:column;align-items:center;width:100%;gap:3px}
 .side-nav{flex:1;padding:18px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;min-height:0}
 .nav-btn{width:100%;display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;border:1px solid transparent;background:transparent;cursor:pointer;color:rgba(0,0,0,0.6);font-size:.88rem;font-weight:500;transition:all .22s var(--smooth);text-align:left;letter-spacing:.01em}
 .nav-btn:hover{color:#111827;background:rgba(42,109,217,0.08);border-color:rgba(42,109,217,0.2)}
